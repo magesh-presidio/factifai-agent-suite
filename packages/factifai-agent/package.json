@@ -1,0 +1,25 @@
+{
+  "name": "@factifai/agent",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@factifai/playwright-core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.1.6",
+    "jest": "^29.5.0",
+    "@types/jest": "^29.5.3",
+    "eslint": "^8.45.0",
+    "@typescript-eslint/eslint-plugin": "^6.2.0",
+    "@typescript-eslint/parser": "^6.2.0"
+  }
+}

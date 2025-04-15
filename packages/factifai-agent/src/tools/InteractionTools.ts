@@ -39,6 +39,7 @@ export class InteractionTools {
         y: z.number().describe("Y coordinate"),
       }),
       func: async (input) => {
+        console.log("XXXXXXXXXXXXXXXXXXXXXXXXXX");
         logger.info(`Clicking at coordinates: (${input.x}, ${input.y})`);
         try {
           const result = await click(input.sessionId, {

@@ -1,0 +1,8 @@
+{
+  "testcases": [
+    "Navigate to gloriousgaming.com",
+    "Verify homepage loads with hero banner and featured products",
+    "Click 'Shop' link on main header and verify sidebar opens from left",
+    "Click the 'keyboards' menu on the sidebar and verify expanded submenu appears"
+  ]
+}

@@ -1,4 +1,11 @@
-import { SessionManager, navigate, click, type } from "../index";
+import {
+  SessionManager,
+  navigate,
+  click,
+  type,
+  getVisibleElements,
+  getCurrentUrl,
+} from "../index";
 
 async function runLogin() {
   // Initialize the session manager
@@ -18,12 +25,31 @@ async function runLogin() {
       "Navigation"
     );
 
+    await getVisibleElements(sessionId, {
+      maxTextLength: 30,
+      screenshot: false,
+    }).then((result: any) => {
+      console.log("Visible elements:", result);
+    });
+
     // Login process
     await loginToSauceDemo(sessionId, "standard_user", "secret_sauce");
 
     // Wait for redirect after successful login
     console.log("Waiting for page transition after login...");
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    await getVisibleElements(sessionId, {
+      maxTextLength: 30,
+      screenshot: true,
+    }).then((result: any) => {
+      console.log("Visible elements:", result);
+    });
+
+    await getCurrentUrl(sessionId).then((result: any) => {
+      console.log("Current URL:", result);
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 10000));
 
     console.log("Login process completed successfully");
 

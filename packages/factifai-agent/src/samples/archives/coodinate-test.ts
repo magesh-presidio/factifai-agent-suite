@@ -84,12 +84,7 @@ export async function runAutomation(sessionId: string, task: string) {
   const sessionId = "demo-session-1"; // keep this stable!
   const task = `
     Navigate to https://www.saucedemo.com
-    Find the coordinates of the username box accurately and click it
-    After clicking, type "standard_user"
-    Find the coordinates of the password box accurately and click it
-    After clicking, type "secret_sauce"
-    Click the login button at (640,325)
-    Wait until the inventory page loads
+    Summarise what you see on the page with all the details without missing anything.
   `;
 
   await runAutomation(sessionId, task);

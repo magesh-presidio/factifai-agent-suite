@@ -1,7 +1,7 @@
 import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { NavigationTools } from "../tools/NavigationTools";
-import { bedrockModel } from "../llm/models";
+import { NavigationTools } from "../../tools/NavigationTools";
+import { bedrockModel } from "../../llm/models";
 import { z } from "zod";
 
 // ======================================================

@@ -1,85 +1,113 @@
 import { SessionManager, navigate, click, type } from "../index";
 
-async function runExample() {
+async function runLogin() {
   // Initialize the session manager
   const sessionManager = new SessionManager();
+  let sessionId: string = "";
 
   try {
     // Create a new browser session
     console.log("Creating session...");
-    const sessionId = await sessionManager.createSession();
+    sessionId = await sessionManager.createSession();
     console.log(`Session created with ID: ${sessionId}`);
 
-    // Navigate to Google
+    // Navigate to Saucedemo
     console.log("Navigating to Saucedemo...");
-    const navResult = await navigate(sessionId, "https://www.saucedemo.com");
-    if (!navResult.success) {
-      console.error("Navigation failed:", navResult.error);
-      return;
-    }
-    console.log("Navigation successful");
+    await executeStep(
+      () => navigate(sessionId, "https://www.saucedemo.com"),
+      "Navigation"
+    );
 
-    // Click on the username input (using selector)
-    console.log("Clicking on username box...");
-    const clickResult = await click(sessionId, { x: 637, y: 172 });
-    if (!clickResult.success) {
-      console.error("Click operation failed:", clickResult.error);
-      return;
-    }
-    console.log("Click successful");
+    // Login process
+    await loginToSauceDemo(sessionId, "standard_user", "secret_sauce");
 
-    // Type a search query
-    console.log("Typing username...");
-    const typeResult = await type(sessionId, "standard_user");
-    if (!typeResult.success) {
-      console.error("Type operation failed:", typeResult.error);
-      return;
-    }
-    console.log("Type operation successful");
+    // Wait for redirect after successful login
+    console.log("Waiting for page transition after login...");
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    // Click on the password input (using selector)
-    console.log("Clicking on password box...");
-    const clickResult2 = await click(sessionId, { x: 637, y: 225 });
-    if (!clickResult2.success) {
-      console.error("Click operation failed:", clickResult2.error);
-      return;
-    }
-    console.log("Click successful");
+    console.log("Login process completed successfully");
 
-    // Type a search query
-    console.log("Typing password...");
-    const typeResult2 = await type(sessionId, "secret_sauce");
-    if (!typeResult2.success) {
-      console.error("Type operation failed:", typeResult2.error);
-      return;
-    }
-    console.log("Type operation successful");
-
-    // Click search button (using coordinates - just as an example, coordinates would need to be adjusted)
-    console.log("Clicking login button via coordinates...");
-    const clickButtonResult = await click(sessionId, { x: 637, y: 325 });
-    if (!clickButtonResult.success) {
-      console.error("Button click failed:", clickButtonResult.error);
-      return;
-    }
-    console.log("Button click successful");
-
-    setTimeout(async () => {
-      // Clean up
+    return { success: true, sessionId };
+  } catch (error) {
+    console.error("Automation failed:", error);
+    return { success: false, error };
+  } finally {
+    if (sessionId) {
       console.log("Closing session...");
       await sessionManager.closeSession(sessionId);
       console.log("Session closed");
-      console.log("Waiting for search box to be ready...");
-    }, 3000);
-  } catch (error) {
-    console.error("Unexpected error:", error);
+    }
   }
 }
 
-// Execute the example
-runExample()
-  .catch(console.error)
-  .finally(() => console.log("Example completed"));
+/**
+ * Login to SauceDemo with provided credentials
+ * @param {string} sessionId - Browser session ID
+ * @param {string} username - SauceDemo username
+ * @param {string} password - SauceDemo password
+ */
+async function loginToSauceDemo(
+  sessionId: string,
+  username: string,
+  password: string
+) {
+  // Input element coordinates
+  const elements = {
+    usernameField: { x: 637, y: 172 },
+    passwordField: { x: 637, y: 225 },
+    loginButton: { x: 637, y: 325 },
+  };
 
-// Also export for use in other examples
-export { runExample };
+  // Enter username
+  console.log(`Entering username: ${username}`);
+  await executeStep(
+    () => click(sessionId, elements.usernameField),
+    "Username field click"
+  );
+  await executeStep(() => type(sessionId, username), "Username input");
+
+  // Enter password
+  console.log(`Entering password: ******`);
+  await executeStep(
+    () => click(sessionId, elements.passwordField),
+    "Password field click"
+  );
+  await executeStep(() => type(sessionId, password), "Password input");
+
+  // Click login button
+  console.log("Clicking login button...");
+  await executeStep(
+    () => click(sessionId, elements.loginButton),
+    "Login button click"
+  );
+}
+
+/**
+ * Execute a step with proper error handling
+ * @param {Function} operation - Async function to execute
+ * @param {string} stepName - Name of the step for logging
+ * @returns {Promise<any>} - Result of the operation
+ */
+async function executeStep(operation: Function, stepName: string) {
+  const result = await operation();
+  if (!result.success) {
+    throw new Error(`${stepName} failed: ${result.error}`);
+  }
+  console.log(`${stepName} successful`);
+  return result;
+}
+
+// Execute the login automation
+if (require.main === module) {
+  runLogin()
+    .then((result) => {
+      if (result.success) {
+        console.log("Login automation completed successfully");
+      } else {
+        console.error("Login automation failed");
+      }
+    })
+    .catch(console.error);
+}
+
+export { runLogin, loginToSauceDemo, executeStep };

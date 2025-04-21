@@ -1,6 +1,3 @@
-// Export main functionality
-export { BedRockAgentFactory } from "./agent/BedRockAgentFactory";
-
 // Export tools
 export { NavigationTools } from "./tools/NavigationTools";
 export { InteractionTools } from "./tools/InteractionTools";

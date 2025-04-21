@@ -12,10 +12,12 @@ import {
 } from "@langchain/core/messages";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { MemorySaver } from "@langchain/langgraph";
-import { NavigationTools } from "../tools/NavigationTools";
-import { InteractionTools } from "../tools/InteractionTools";
-import { ScreenshotTools } from "../tools/ScreenshotTools";
-import { bedrockModel } from "../llm/models";
+import { DynamicStructuredTool } from "@langchain/core/tools";
+import { z } from "zod";
+import { NavigationTools } from "../../tools/NavigationTools";
+import { InteractionTools } from "../../tools/InteractionTools";
+import { ScreenshotTools } from "../../tools/ScreenshotTools";
+import { openAiModel } from "../../llm/models";
 
 // Get all tools from different tool classes
 const TOOLS = [
@@ -111,6 +113,8 @@ async function initNode({ messages, sessionId }: S) {
   };
 }
 
+// Remove createScreenshotCleaner as it's no longer needed
+
 // Node: summarization logic
 async function summaryNode({ messages, summary, count, actionHistory }: S) {
   if (
@@ -118,9 +122,11 @@ async function summaryNode({ messages, summary, count, actionHistory }: S) {
     count > 0 &&
     messages.length > KEEP_LAST_N
   ) {
+    // First simplify messages for the LLM
     const sanitized = messages.map(simplifyMessage);
+
     try {
-      const resp = await bedrockModel().invoke([
+      const resp = await openAiModel().invoke([
         new SystemMessage(
           "Summarize the browser automation steps completed so far in 2-3 concise sentences."
         ),
@@ -130,6 +136,7 @@ async function summaryNode({ messages, summary, count, actionHistory }: S) {
       const summaryText = typeof resp.content === "string" ? resp.content : "";
       console.log(`[BrowserAgent] Summary generated: ${summaryText}`);
 
+      // Keep only the most recent messages (KEEP_LAST_N)
       const pruned = messages.slice(-KEEP_LAST_N);
       console.log(
         `[BrowserAgent] 🔪 Pruned messages: before=${messages.length}, after=${pruned.length}`
@@ -206,7 +213,7 @@ async function llmNode({
   const ctx = [new SystemMessage(sysParts.join("\n\n")), ...messages];
 
   // Add session ID to ensure tools have access to it
-  const model = bedrockModel().bindTools(TOOLS);
+  const model = openAiModel().bindTools(TOOLS);
   const reply = await model.invoke(ctx);
 
   // Process the reply content for tool calls
@@ -268,22 +275,40 @@ async function actionTrackingNode({
     };
   }
 
-  // Check tool results for success/failure
-  const toolResults = messages
-    .filter((m) => m.tool_call_id)
-    .map((m) => {
-      try {
-        return JSON.parse(m.content);
-      } catch (e) {
-        return { success: false, error: "Failed to parse tool result" };
-      }
-    });
+  // Find the latest tool result message
+  const lastToolMessage = [...messages].reverse().find((m) => m.tool_call_id);
 
-  const lastToolResult = toolResults[toolResults.length - 1];
+  if (!lastToolMessage) {
+    return {};
+  }
 
-  if (lastToolResult?.success === false) {
+  let toolResult;
+  let lastScreenshot = null;
+
+  try {
+    // Parse the result but handle screenshot specially
+    const originalContent = lastToolMessage.content;
+    toolResult = JSON.parse(originalContent);
+
+    // Extract screenshot if present
+    if (toolResult.screenshot) {
+      lastScreenshot = toolResult.screenshot;
+
+      // Modify the message content in place to remove the screenshot data
+      // This prevents the large screenshot data from being included in future context
+      lastToolMessage.content = JSON.stringify({
+        ...toolResult,
+        screenshot: "[SCREENSHOT_DATA_REMOVED]",
+      });
+    }
+  } catch (e) {
+    console.error("[BrowserAgent] Error parsing tool result:", e);
+    return { lastError: "Failed to parse tool result" };
+  }
+
+  if (toolResult?.success === false) {
     // Action failed
-    const errorMessage = lastToolResult.error || "Unknown error occurred";
+    const errorMessage = toolResult.error || "Unknown error occurred";
     console.log(`[BrowserAgent] ❌ Action failed: ${errorMessage}`);
 
     return {
@@ -291,25 +316,30 @@ async function actionTrackingNode({
       retryCount: retryCount + 1,
       actionHistory: [...actionHistory, `Failed: ${errorMessage}`],
     };
-  } else if (lastToolResult?.success === true) {
+  } else if (toolResult?.success === true) {
     // Action succeeded
     console.log(
       `[BrowserAgent] ✅ Step ${currentStep + 1} completed successfully`
     );
 
-    // Check if screenshot is available from the tool result
-    const lastScreenshot = lastToolResult.screenshot;
-
-    return {
+    const updates: any = {
       currentStep: currentStep + 1,
       lastError: null,
       retryCount: 0,
-      lastScreenshot: lastScreenshot || null,
       actionHistory: [
         ...actionHistory,
-        `Success: Step ${currentStep + 1} completed`,
+        `Success: Step ${currentStep + 1} completed${
+          lastScreenshot ? " (screenshot captured)" : ""
+        }`,
       ],
     };
+
+    // Only update lastScreenshot if we have a new one
+    if (lastScreenshot) {
+      updates.lastScreenshot = lastScreenshot;
+    }
+
+    return updates;
   }
 
   return {};
@@ -447,15 +477,15 @@ export const createBrowserSession = (sessionId: string) => {
   const browserSession = createBrowserSession(sessionId);
 
   const instructions = `
-  * Navigate to the Sauce Demo website at https://www.saucedemo.com
-  * Click on the username input field
-  * Type "standard_user" into the username field
-  * Click on the password input field
-  * Type "secret_sauce" into the password field
-  * Click on the green "Login" button at the bottom of the form
-  * Wait for the page to transition after successful login
-  * Verify successful login by confirming redirection to the inventory page
-  `;
+    * Navigate to the Sauce Demo website at https://www.saucedemo.com
+    * Click on the username input field
+    * Type "standard_user" into the username field
+    * Click on the password input field
+    * Type "secret_sauce" into the password field
+    * Click on the green "Login" button at the bottom of the form
+    * Wait for the page to transition after successful login
+    * Verify successful login by confirming redirection to the inventory page
+    `;
 
   try {
     await browserSession.execute(instructions);

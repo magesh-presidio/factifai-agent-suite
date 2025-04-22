@@ -5,19 +5,13 @@ import {
   END,
   messagesStateReducer,
 } from "@langchain/langgraph";
-import {
-  HumanMessage,
-  SystemMessage,
-  AIMessage,
-} from "@langchain/core/messages";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { MemorySaver } from "@langchain/langgraph";
-import { DynamicStructuredTool } from "@langchain/core/tools";
-import { z } from "zod";
-import { NavigationTools } from "../../tools/NavigationTools";
-import { InteractionTools } from "../../tools/InteractionTools";
-import { ScreenshotTools } from "../../tools/ScreenshotTools";
-import { openAiModel } from "../../llm/models";
+import { ScreenshotTools } from "../../src/tools/ScreenshotTools";
+import { NavigationTools } from "../../src/tools/NavigationTools";
+import { InteractionTools } from "../../src/tools/InteractionTools";
+import { openAiModel } from "../../src/llm/models";
 
 // Get all tools from different tool classes
 const TOOLS = [

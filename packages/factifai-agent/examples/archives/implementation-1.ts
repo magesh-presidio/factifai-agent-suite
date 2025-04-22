@@ -12,10 +12,10 @@ import {
 } from "@langchain/core/messages";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { MemorySaver } from "@langchain/langgraph";
-import { NavigationTools } from "../../tools/NavigationTools";
-import { InteractionTools } from "../../tools/InteractionTools";
-import { ScreenshotTools } from "../../tools/ScreenshotTools";
-import { openAiModel } from "../../llm/models";
+import { NavigationTools } from "../../src/tools/NavigationTools";
+import { InteractionTools } from "../../src/tools/InteractionTools";
+import { ScreenshotTools } from "../../src/tools/ScreenshotTools";
+import { openAiModel } from "../../src/llm/models";
 
 // Get all tools from different tool classes
 const TOOLS = [

@@ -1,11 +1,4 @@
-// Export tools
-export { NavigationTools } from "./tools/NavigationTools";
-export { InteractionTools } from "./tools/InteractionTools";
-export { ScreenshotTools } from "./tools/ScreenshotTools";
+import dotenv from "dotenv";
+dotenv.config();
 
-// Export types
-export * from "./types";
-
-// Export utils
-export { readTestFile } from "./utils/fileUtils";
-export { logger } from "./utils/logger";
+export * from "./main";

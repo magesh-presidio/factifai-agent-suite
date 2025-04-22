@@ -1,11 +1,9 @@
 import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-
-import { NavigationTools } from "../../tools/NavigationTools";
-import { InteractionTools } from "../../tools/InteractionTools";
-import { ScreenshotTools } from "../../tools/ScreenshotTools"; // ← optional
-import { bedrockModel } from "../../llm/models"; // ← your wrapper
+import { NavigationTools } from "../../src/tools/NavigationTools";
+import { InteractionTools } from "../../src/tools/InteractionTools";
+import { openAiModel } from "../../src/llm/models";
 
 /* ---------- 1.  Gather the tools ---------- */
 const TOOLS = [
@@ -26,7 +24,7 @@ type S = (typeof State)["State"];
 
 /* ---------- 3.  LLM node ---------- */
 async function llmNode({ messages, sessionId }: S) {
-  const model = bedrockModel().bindTools(TOOLS);
+  const model = openAiModel().bindTools(TOOLS);
 
   const sys = new SystemMessage(
     `You are a browser‑automation assistant.
@@ -84,7 +82,10 @@ export async function runAutomation(sessionId: string, task: string) {
   const sessionId = "demo-session-1"; // keep this stable!
   const task = `
     Navigate to https://www.saucedemo.com
-    Summarise what you see on the page with all the details without missing anything.
+    Click the username box at (640,175) and type "standard_user"
+    Click the password box at (640,225) and type "secret_sauce"
+    Click the login button at (640,325)
+    Wait until the inventory page loads
   `;
 
   await runAutomation(sessionId, task);

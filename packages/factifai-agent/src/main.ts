@@ -1,6 +1,13 @@
-import dotenv from "dotenv";
-dotenv.config();
+import { factifaiGraph } from "./graph/graph";
 
-export * from "./samples/example";
-// export * from "./samples/archives/implementaiton-filtering";
-// export * from "./samples/archives/coodinate-test";
+(async () => {
+  const sessionId = "browser-session-" + Date.now(); // Generate a unique session ID
+
+  const result = await factifaiGraph.invoke({
+    testCase: `* go to flipkart.com`,
+    sessionId: sessionId,
+  });
+
+  console.log(`Session ID: ${sessionId}`);
+  console.log("Navigation successful:", result.navigationResult?.success);
+})();

@@ -40,6 +40,10 @@ export const State = Annotation.Root({
     default: () => null,
     reducer: (_, v) => v,
   }),
+  clickResult: Annotation<any>({
+    default: () => null,
+    reducer: (_, v) => v,
+  }),
   actionType: Annotation<string | null>({
     default: () => null,
     reducer: (_, v) => v,

@@ -13,39 +13,29 @@ export const routeNode = ({ messages }: GraphStateType) => {
   return route;
 };
 
-export const shouldAnalyzeScreenshot = ({
-  currentScreenshot,
-  navigationResult,
-}: GraphStateType) => {
-  const hasScreenshot = !!currentScreenshot;
-  const navSuccess = !!navigationResult?.success;
-  const route = hasScreenshot && navSuccess ? "analyze" : "end";
-
-  console.log(
-    `[ROUTE] Screenshot analysis → ${route} (Screenshot: ${
-      hasScreenshot ? "Yes" : "No"
-    }, Navigation success: ${navSuccess ? "Yes" : "No"})`
-  );
-  return route;
-};
-
 export const determineNextActionEdge = ({
   actionType,
   testSteps,
   currentStepIndex,
-}: GraphStateType) => {
-  const route = actionType === "navigate" ? "navigate" : "unsupported";
+}: GraphStateType): string => {
   const currentStep =
     currentStepIndex >= 0 && testSteps && testSteps.length > currentStepIndex
       ? testSteps[currentStepIndex]
       : null;
 
   console.log(
-    `[ROUTE] From coordinator → ${route} (Action type: ${
+    `[ROUTE] From coordinator → ${actionType || "None"} (Action type: ${
       actionType || "None"
     }, Current step: ${currentStep ? currentStep.instruction : "None"})`
   );
-  return route;
+
+  if (actionType === "navigate") {
+    return "navigate";
+  }
+  if (actionType === "click") {
+    return "click";
+  }
+  return "unsupported";
 };
 
 // Decision function to determine if we should retry the current step

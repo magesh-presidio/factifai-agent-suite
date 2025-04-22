@@ -1,13 +1,29 @@
 import { factifaiGraph } from "./graph/graph";
 
-(async () => {
-  const sessionId = "browser-session-" + Date.now(); // Generate a unique session ID
+// Example of how to invoke the graph with thread_id
+const runTest = async (testCase: string, sessionId: string) => {
+  // Create a unique thread ID for this test run
+  const threadId = `test-session-${Date.now()}`;
 
-  const result = await factifaiGraph.invoke({
-    testCase: `* go to flipkart.com and click on the mobiles section and then click on the cart section`,
-    sessionId: sessionId,
-  });
+  const result = await factifaiGraph.invoke(
+    {
+      testCase,
+      sessionId,
+    },
+    {
+      configurable: {
+        thread_id: threadId,
+      },
+    }
+  );
 
-  console.log(`Session ID: ${sessionId}`);
+  console.log("Session ID:", sessionId);
   console.log("== TESTS COMPLETED ==");
-})();
+  return result;
+};
+
+// Usage
+runTest(
+  "Navigate to flipkart.com, click on the mobiles section, then click on the cart section",
+  "browser-session-" + Date.now()
+);

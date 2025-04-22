@@ -1,4 +1,5 @@
-import { Annotation } from "@langchain/langgraph";
+import { BaseMessage } from "@langchain/core/messages";
+import { Annotation, messagesStateReducer } from "@langchain/langgraph";
 
 export const State = Annotation.Root({
   sessionId: Annotation<string>(),
@@ -24,49 +25,9 @@ export const State = Annotation.Root({
     default: () => -1,
     reducer: (_, v) => v,
   }),
-  stepError: Annotation<string | null>({
-    default: () => null,
-    reducer: (_, v) => v,
-  }),
-  currentScreenshot: Annotation<string | null>({
-    default: () => null,
-    reducer: (_, v) => v,
-  }),
-  messages: Annotation<any[]>({
+  conversationHistory: Annotation<BaseMessage[]>({
     default: () => [],
-    reducer: (curr, a) => [...curr, ...a],
-  }),
-  navigationResult: Annotation<any>({
-    default: () => null,
-    reducer: (_, v) => v,
-  }),
-  clickResult: Annotation<any>({
-    default: () => null,
-    reducer: (_, v) => v,
-  }),
-  actionType: Annotation<string | null>({
-    default: () => null,
-    reducer: (_, v) => v,
-  }),
-  actionParams: Annotation<any>({
-    default: () => ({}),
-    reducer: (_, v) => v,
-  }),
-  actionMessage: Annotation<string | null>({
-    default: () => null,
-    reducer: (_, v) => v,
-  }),
-  verificationMessage: Annotation<string | null>({
-    default: () => null,
-    reducer: (_, v) => v,
-  }),
-  verificationResult: Annotation<any>({
-    default: () => null,
-    reducer: (_, v) => v,
-  }),
-  shouldRetry: Annotation<boolean>({
-    default: () => false,
-    reducer: (_, v) => v,
+    reducer: messagesStateReducer,
   }),
 });
 

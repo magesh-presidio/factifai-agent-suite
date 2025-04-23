@@ -5,7 +5,7 @@ type Coordinates = { x: number; y: number };
 export async function click(
   sessionId: string,
   selectorOrCoordinates: string | Coordinates
-): Promise<{ success: boolean; screenshot?: string; error?: string }> {
+): Promise<{ success: boolean; error?: string }> {
   const browserService = BrowserService.getInstance();
 
   try {
@@ -22,11 +22,11 @@ export async function click(
     }
 
     // Take screenshot after action
-    const screenshot = await browserService.takeScreenshot(sessionId);
+    //const screenshot = await browserService.takeScreenshot(sessionId);
 
     return {
       success: true,
-      screenshot: screenshot || undefined,
+      //screenshot: screenshot || undefined,
     };
   } catch (error) {
     return {
@@ -50,11 +50,11 @@ export async function type(
     await page.keyboard.type(text);
 
     // Take screenshot after action
-    const screenshot = await browserService.takeScreenshot(sessionId);
+    //const screenshot = await browserService.takeScreenshot(sessionId);
 
     return {
       success: true,
-      screenshot: screenshot || undefined,
+      //screenshot: screenshot || undefined,
     };
   } catch (error) {
     return {

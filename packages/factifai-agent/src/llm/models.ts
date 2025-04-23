@@ -7,6 +7,7 @@ export const openAiModel = (streaming?: boolean) =>
     temperature: 0,
     apiKey: process.env.OPENAI_API_KEY,
     streaming: streaming,
+    maxRetries: 0,
   });
 
 export const bedrockModel = (streaming?: boolean) =>
@@ -20,5 +21,6 @@ export const bedrockModel = (streaming?: boolean) =>
     modelKwargs: {
       anthropic_version: "bedrock-2023-05-31",
     },
-    streaming: streaming,
+    streaming: false,
+    // maxTokens: 131072,
   });

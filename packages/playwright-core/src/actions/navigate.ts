@@ -4,7 +4,7 @@ import { VisibleElement } from "../interfaces";
 export async function navigate(
   sessionId: string,
   url: string
-): Promise<{ success: boolean; screenshot?: string; error?: string }> {
+): Promise<{ success: boolean; error?: string }> {
   const browserService = BrowserService.getInstance();
 
   try {
@@ -12,11 +12,11 @@ export async function navigate(
     await page.goto(url);
 
     // Take screenshot after navigation
-    const screenshot = await browserService.takeScreenshot(sessionId);
+    //const screenshot = await browserService.takeScreenshot(sessionId);
 
     return {
       success: true,
-      screenshot: screenshot ?? undefined,
+      //screenshot: screenshot ?? undefined,
     };
   } catch (error) {
     return {

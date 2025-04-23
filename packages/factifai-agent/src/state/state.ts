@@ -9,13 +9,6 @@ export const State = Annotation.Root({
       id: number;
       instruction: string;
       status: "not_started" | "in_progress" | "passed" | "failed";
-      type:
-        | "navigation"
-        | "click"
-        | "input"
-        | "verification"
-        | "wait"
-        | "other";
     }>
   >({
     default: () => [],

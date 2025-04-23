@@ -24,6 +24,6 @@ const runTest = async (testCase: string, sessionId: string) => {
 
 // Usage
 runTest(
-  "Navigate to flipkart.com, click on the mobiles section, then click on the cart section",
+  "Navigate to flipkart.com and add a iphone to cart",
   "browser-session-" + Date.now()
 );

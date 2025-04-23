@@ -2,7 +2,6 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { bedrockModel } from "../llm/models";
 import { GraphStateType } from "../state/state";
 import { z } from "zod";
-import { logger } from "../utils/logger";
 
 const currentModel = bedrockModel();
 
@@ -18,8 +17,7 @@ export const parseTestStepsNode = async ({ testCase }: GraphStateType) => {
     // Define system prompt to guide the parsing
     const systemPrompt = new SystemMessage(
       "You are a test automation specialist who converts natural language test descriptions " +
-        "into clear, structured test steps. Extract each distinct action or verification into " +
-        "a separate step."
+        "into clear, structured test steps."
     );
 
     const userMessage = new HumanMessage(
@@ -40,16 +38,6 @@ export const parseTestStepsNode = async ({ testCase }: GraphStateType) => {
             .enum(["not_started", "in_progress", "passed", "failed"])
             .default("not_started")
             .describe("Current status of this step"),
-          type: z
-            .enum([
-              "navigation",
-              "click",
-              "type",
-              "verification",
-              "wait",
-              "other",
-            ])
-            .describe("The type of action this step represents"),
         })
       ),
     });
@@ -80,105 +68,6 @@ export const parseTestStepsNode = async ({ testCase }: GraphStateType) => {
       testSteps: [],
       currentStepIndex: -1,
       error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-};
-
-// Update testOrchestratorNode in nodes.ts
-export const testOrchestratorNode = async (
-  state: GraphStateType,
-  config?: { configurable?: { thread_id?: string } }
-) => {
-  const { testSteps, currentStepIndex, sessionId } = state;
-
-  // If no steps or invalid index, return current state
-  if (
-    testSteps.length === 0 ||
-    currentStepIndex < 0 ||
-    currentStepIndex >= testSteps.length
-  ) {
-    console.log("No steps to process or invalid step index");
-    return {};
-  }
-
-  // Get the current step
-  const currentStep = testSteps[currentStepIndex];
-  console.log(
-    `Processing step ${currentStepIndex + 1}: ${currentStep.instruction}`
-  );
-
-  try {
-    // Use LLM to rephrase the test step
-    const model = bedrockModel();
-
-    // Get or initialize conversation history
-    const conversationHistory = state.conversationHistory || [
-      new SystemMessage(
-        "You are a test automation specialist who rephrases test steps to be clearer and more actionable. " +
-          "When a website URL is mentioned, remember it and include it at the end of all future rephrased steps."
-      ),
-    ];
-
-    // Add the current step to the conversation
-    conversationHistory.push(
-      new HumanMessage(
-        `Please rephrase the following test step to be clearer and more actionable and include the website URL at the end:\n\n` +
-          `"${currentStep.instruction}"\n\n` +
-          `Step type: ${currentStep.type}`
-      )
-    );
-
-    // Send the complete conversation history to maintain context
-    const response = await model.invoke(conversationHistory);
-
-    // Add the LLM's response to the history
-    conversationHistory.push(response);
-
-    logger.info("History:", conversationHistory);
-
-    const rephrasedInstruction = response.content.toString().trim();
-
-    console.log(`Original: "${currentStep.instruction}"`);
-    console.log(`Rephrased: "${rephrasedInstruction}"`);
-    console.log(`Step ${currentStepIndex + 1} completed`);
-
-    // Create a new array with the updated step
-    const updatedSteps = [...testSteps];
-    updatedSteps[currentStepIndex] = {
-      ...currentStep,
-      instruction: rephrasedInstruction, // Update with rephrased instruction
-      status: "passed", // Mark as passed
-    };
-
-    // Determine the next step index
-    const nextStepIndex = currentStepIndex + 1;
-
-    // If there's a next step, mark it as in_progress
-    if (nextStepIndex < testSteps.length) {
-      updatedSteps[nextStepIndex] = {
-        ...updatedSteps[nextStepIndex],
-        status: "in_progress",
-      };
-    }
-
-    return {
-      testSteps: updatedSteps,
-      currentStepIndex: nextStepIndex,
-      conversationHistory, // Save the conversation history in the state
-    };
-  } catch (error) {
-    console.error(`Error processing step ${currentStepIndex + 1}:`, error);
-
-    // Mark the current step as failed
-    const updatedSteps = [...testSteps];
-    updatedSteps[currentStepIndex] = {
-      ...currentStep,
-      status: "failed",
-    };
-
-    return {
-      testSteps: updatedSteps,
-      currentStepIndex: currentStepIndex + 1,
     };
   }
 };

@@ -1,4 +1,10 @@
-import { click, type } from "@factifai/playwright-core";
+import {
+  click,
+  type,
+  scrollToNextChunk,
+  scrollToPrevChunk,
+  scrollBy,
+} from "@factifai/playwright-core";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { logger } from "../utils/logger";
@@ -16,10 +22,9 @@ export class InteractionTools {
         logger.info(`Clicking element with selector: ${input.selector}`);
         try {
           const result = await click(input.sessionId, input.selector);
-          console.log("Click by selector result:", result.success);
           return JSON.stringify(result);
         } catch (error) {
-          logger.error(`Error clicking by selector:`, error);
+          logger.error("Error clicking by selector:", error);
           return JSON.stringify({
             success: false,
             error:
@@ -45,10 +50,9 @@ export class InteractionTools {
             x: input.x,
             y: input.y,
           });
-          console.log("Click by coordinates result:", result.success);
           return JSON.stringify(result);
         } catch (error) {
-          logger.error(`Error clicking by coordinates:`, error);
+          logger.error("Error clicking by coordinates:", error);
           return JSON.stringify({
             success: false,
             error:
@@ -69,10 +73,9 @@ export class InteractionTools {
         logger.info(`Typing text: ${input.text}`);
         try {
           const result = await type(input.sessionId, input.text);
-          console.log("Type result:", result.success);
           return JSON.stringify(result);
         } catch (error) {
-          logger.error(`Error typing text:`, error);
+          logger.error("Error typing text:", error);
           return JSON.stringify({
             success: false,
             error:
@@ -82,6 +85,82 @@ export class InteractionTools {
       },
     });
 
-    return [clickByCoordinatesTool, typeTool];
+    const scrollByTool = new DynamicStructuredTool({
+      name: "scrollBy",
+      description:
+        "Scroll the current page by arbitrary pixel offsets (dx, dy)",
+      schema: z.object({
+        sessionId: z.string().describe("The browser session ID"),
+        dx: z.number().describe("Horizontal pixels (+right, -left)"),
+        dy: z.number().describe("Vertical pixels (+down, -up)"),
+      }),
+      func: async (input) => {
+        logger.info(`Scrolling by (${input.dx}, ${input.dy}) pixels`);
+        try {
+          const result = await scrollBy(input.sessionId, input.dx, input.dy);
+          return JSON.stringify(result);
+        } catch (error) {
+          logger.error("Error scrolling by:", error);
+          return JSON.stringify({
+            success: false,
+            error:
+              error instanceof Error ? error.message : "Unknown scroll error",
+          });
+        }
+      },
+    });
+
+    const scrollToNextChunkTool = new DynamicStructuredTool({
+      name: "scrollToNextChunk",
+      description: "Scroll down by one full viewport height",
+      schema: z.object({
+        sessionId: z.string().describe("The browser session ID"),
+      }),
+      func: async (input) => {
+        logger.info("Scrolling down by one viewport");
+        try {
+          const result = await scrollToNextChunk(input.sessionId);
+          return JSON.stringify(result);
+        } catch (error) {
+          logger.error("Error scrolling down:", error);
+          return JSON.stringify({
+            success: false,
+            error:
+              error instanceof Error ? error.message : "Unknown scroll error",
+          });
+        }
+      },
+    });
+
+    const scrollToPrevChunkTool = new DynamicStructuredTool({
+      name: "scrollToPrevChunk",
+      description: "Scroll up by one full viewport height",
+      schema: z.object({
+        sessionId: z.string().describe("The browser session ID"),
+      }),
+      func: async (input) => {
+        logger.info("Scrolling up by one viewport");
+        try {
+          const result = await scrollToPrevChunk(input.sessionId);
+          return JSON.stringify(result);
+        } catch (error) {
+          logger.error("Error scrolling up:", error);
+          return JSON.stringify({
+            success: false,
+            error:
+              error instanceof Error ? error.message : "Unknown scroll error",
+          });
+        }
+      },
+    });
+
+    return [
+      // clickBySelectorTool,
+      clickByCoordinatesTool,
+      typeTool,
+      scrollToNextChunkTool,
+      scrollToPrevChunkTool,
+      scrollByTool,
+    ];
   }
 }

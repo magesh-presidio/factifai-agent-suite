@@ -1,29 +1,68 @@
-import { factifaiGraph } from "./graph/graph";
+import {
+  Annotation,
+  StateGraph,
+  START,
+  END,
+  MemorySaver,
+} from "@langchain/langgraph";
+import { ToolNode } from "@langchain/langgraph/prebuilt";
+import { ALL_TOOLS } from "./tools";
+import { executeInstructionNode } from "./nodes/execution";
+import { generateReportNode } from "./nodes/report-generation";
+import { shouldContinueEdge } from "./edges/edges";
 
-// Example of how to invoke the graph with thread_id
-const runTest = async (testCase: string, sessionId: string) => {
-  // Create a unique thread ID for this test run
-  const threadId = `test-session-${Date.now()}`;
+// Enhanced state definition with test steps
+export const State = Annotation.Root({
+  instruction: Annotation<string>(),
+  sessionId: Annotation<string>(),
+  messages: Annotation<any[]>({
+    default: () => [],
+    reducer: (curr, a) => [...curr, ...a],
+  }),
+  // Add test step tracking fields
+  testSteps: Annotation<
+    Array<{
+      id: number;
+      instruction: string;
+      status: "not_started" | "in_progress" | "passed" | "failed";
+      notes?: string;
+    }>
+  >({
+    default: () => [],
+    reducer: (_, v) => v,
+  }),
+  currentStepIndex: Annotation<number>({
+    default: () => -1,
+    reducer: (_, v) => v,
+  }),
+  testSummary: Annotation<string | null>({
+    default: () => null,
+    reducer: (_, v) => v,
+  }),
+  isComplete: Annotation<boolean>({
+    default: () => false,
+    reducer: (_, v) => v,
+  }),
+  lastError: Annotation<string | null>({
+    default: () => null,
+    reducer: (_, v) => v,
+  }),
+});
 
-  const result = await factifaiGraph.invoke(
-    {
-      testCase,
-      sessionId,
-    },
-    {
-      configurable: {
-        thread_id: threadId,
-      },
-    }
-  );
+export type GraphStateType = (typeof State)["State"];
 
-  console.log("Session ID:", sessionId);
-  console.log("== TESTS COMPLETED ==");
-  return result;
-};
+const memory = new MemorySaver();
 
-// Usage
-runTest(
-  "Navigate to flipkart.com and add a iphone to cart",
-  "browser-session-" + Date.now()
-);
+export const browserAutomationGraph = new StateGraph(State)
+  .addNode("execute", executeInstructionNode)
+  .addNode("tools", new ToolNode(ALL_TOOLS))
+  .addNode("report", generateReportNode) // Add report generator node
+  .addEdge(START, "execute")
+  .addConditionalEdges("execute", shouldContinueEdge, {
+    tools: "tools",
+    continue: "execute",
+    end: "report", // Go to report instead of END
+  })
+  .addEdge("tools", "execute")
+  .addEdge("report", END) // After report, end the graph
+  .compile({ checkpointer: memory });

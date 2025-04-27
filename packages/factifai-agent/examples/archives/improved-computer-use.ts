@@ -6,7 +6,7 @@ import { InteractionTools } from "../../src/tools/InteractionTools";
 import { BrowserService } from "@factifai/playwright-core";
 import { z } from "zod"; // Add this import
 import dotenv from "dotenv";
-import { bedrockModel } from "../../src/llm/models";
+import { bedrockModel } from "../../src/models/models";
 import { logger } from "../../src/utils/logger";
 dotenv.config();
 

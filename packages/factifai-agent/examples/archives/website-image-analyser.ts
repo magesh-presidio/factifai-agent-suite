@@ -2,7 +2,7 @@ import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { z } from "zod";
 import { NavigationTools } from "../../src/tools/NavigationTools";
-import { bedrockModel } from "../../src/llm/models";
+import { bedrockModel } from "../../src/models/models";
 
 // ======================================================
 // 1. Define State Schema

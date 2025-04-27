@@ -21,12 +21,8 @@ export async function click(
       await page.mouse.click(x, y);
     }
 
-    // Take screenshot after action
-    //const screenshot = await browserService.takeScreenshot(sessionId);
-
     return {
       success: true,
-      //screenshot: screenshot || undefined,
     };
   } catch (error) {
     return {
@@ -42,19 +38,15 @@ export async function click(
 export async function type(
   sessionId: string,
   text: string
-): Promise<{ success: boolean; screenshot?: string; error?: string }> {
+): Promise<{ success: boolean; error?: string }> {
   const browserService = BrowserService.getInstance();
 
   try {
     const page = await browserService.getPage(sessionId);
     await page.keyboard.type(text);
 
-    // Take screenshot after action
-    //const screenshot = await browserService.takeScreenshot(sessionId);
-
     return {
       success: true,
-      //screenshot: screenshot || undefined,
     };
   } catch (error) {
     return {
@@ -63,6 +55,75 @@ export async function type(
         error instanceof Error
           ? error.message
           : "Unknown error during type operation",
+    };
+  }
+}
+
+export async function scrollBy(
+  sessionId: string,
+  dx: number, // pixels to move on the X-axis (left = −, right = +)
+  dy: number // pixels to move on the Y-axis (up   = −, down  = +)
+): Promise<{ success: boolean; error?: string }> {
+  const browserService = BrowserService.getInstance();
+
+  try {
+    const page = await browserService.getPage(sessionId);
+    await page.evaluate(([x, y]) => window.scrollBy(x, y), [dx, dy]);
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unknown error during scroll operation",
+    };
+  }
+}
+
+export async function scrollToNextChunk(
+  sessionId: string
+): Promise<{ success: boolean; error?: string }> {
+  const browserService = BrowserService.getInstance();
+
+  try {
+    const page = await browserService.getPage(sessionId);
+    await page.evaluate(() => {
+      window.scrollBy(0, window.innerHeight);
+    });
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unknown error during scroll operation",
+    };
+  }
+}
+
+export async function scrollToPrevChunk(
+  sessionId: string
+): Promise<{ success: boolean; error?: string }> {
+  const browserService = BrowserService.getInstance();
+
+  try {
+    const page = await browserService.getPage(sessionId);
+    await page.evaluate(() => {
+      window.scrollBy(0, -window.innerHeight);
+    });
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unknown error during scroll operation",
     };
   }
 }

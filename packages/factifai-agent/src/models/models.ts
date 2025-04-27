@@ -13,7 +13,7 @@ export const openAiModel = (streaming?: boolean) =>
 export const bedrockModel = (streaming?: boolean) =>
   new BedrockChat({
     model: "us.anthropic.claude-3-7-sonnet-20250219-v1:0", // Updated to newer model
-    region: process.env.AWS_REGION,
+    region: process.env.AWS_DEFAULT_REGION,
     credentials: {
       accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
@@ -21,6 +21,6 @@ export const bedrockModel = (streaming?: boolean) =>
     modelKwargs: {
       anthropic_version: "bedrock-2023-05-31",
     },
-    streaming: false,
+    streaming,
     // maxTokens: 131072,
   });

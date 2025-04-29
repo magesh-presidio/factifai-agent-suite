@@ -251,3 +251,24 @@ export async function getCurrentUrl(
     };
   }
 }
+
+/**
+ * Waits for the specified number of seconds in the given session
+ */
+export async function wait(
+  sessionId: string,
+  seconds: number
+): Promise<{ success: boolean; error?: string }> {
+  const browserService = BrowserService.getInstance();
+  try {
+    const page = await browserService.getPage(sessionId);
+    await page.waitForTimeout(seconds * 1000);
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Unknown error during wait",
+    };
+  }
+}

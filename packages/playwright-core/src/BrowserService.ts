@@ -42,9 +42,33 @@ export class BrowserService {
     return page;
   }
 
-  async takeScreenshot(sessionId: string): Promise<string | null> {
+  async takeScreenshot(
+    sessionId: string,
+    minWaitMs = 1000
+  ): Promise<string | null> {
     try {
       const page = await this.getPage(sessionId);
+      const start = Date.now();
+
+      // Try readiness checks (ignore time-outs)
+      try {
+        await Promise.all([
+          page.waitForLoadState("load", { timeout: 5000 }),
+          page.waitForLoadState("networkidle", { timeout: 5000 }),
+          page.waitForFunction(() => document.readyState === "complete", {
+            timeout: 5000,
+          }),
+        ]);
+      } catch {
+        /* proceed regardless */
+      }
+
+      // Enforce a minimum wait of 2 s
+      const elapsed = Date.now() - start;
+      if (elapsed < minWaitMs) {
+        await page.waitForTimeout(minWaitMs - elapsed);
+      }
+
       const buffer = await page.screenshot({
         type: "jpeg",
         quality: 80,

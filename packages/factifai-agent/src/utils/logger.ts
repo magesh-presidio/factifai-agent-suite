@@ -26,7 +26,7 @@ export interface LoggerConfig {
   logLevel: "debug" | "info" | "warn" | "error";
   useColors: boolean;
   showTimestamp: boolean;
-  timestampFormat: "iso" | "locale" | "relative";
+  timestampFormat: "iso" | "locale" | "relative" | "time12";
   logPrefix?: string;
 }
 
@@ -40,7 +40,7 @@ const defaultConfig: LoggerConfig = {
   logLevel: "info",
   useColors: true,
   showTimestamp: true,
-  timestampFormat: "iso",
+  timestampFormat: "time12",
 };
 
 // Define spinners and their states
@@ -141,6 +141,13 @@ export const logger = {
         case "relative":
           // Show time since process started
           timestamp = prettyMs(process.uptime() * 1000);
+        case "time12":
+          timestamp = now.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: true,
+          });
           break;
       }
     }

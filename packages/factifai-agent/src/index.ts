@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import { browserAutomationGraph } from "./main";
+import { saveGraphImage } from "./utils/graphVisualizer";
 
 dotenv.config();
 
@@ -68,8 +69,10 @@ export const executeBrowserTask = async (
   }
 };
 
+saveGraphImage();
+
 executeBrowserTask(
-  "go to saucedemo.com and login using standard_user and secret_sauce and add two items to cart and proceed with dummy data to checkout overview screen and finally, complete the checkout.",
+  `"go to saucedemo.com and login using standard_user and secret_sauce and add two items to cart and proceed with dummy data to checkout overview screen and finally, complete the checkout."`,
   `browser-session-${Date.now()}`
 );
 

@@ -4,16 +4,15 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { bedrockModel } from "../models/models";
 import { ALL_TOOLS } from "../tools";
 import { logger } from "../utils/logger";
+import {
+  removeImageUrlsFromMessage,
+} from "../utils/llmUtils";
 
 export const executeInstructionNode = async ({
   instruction,
   sessionId,
   messages,
 }: GraphStateType) => {
-  console.log(
-    `Executing instruction: "${instruction}" with session: ${sessionId}`
-  );
-
   // Take a screenshot to see the current state
   const browserService = BrowserService.getInstance();
   let screenshot;
@@ -76,28 +75,10 @@ export const executeInstructionNode = async ({
       response.content = response.content.filter((c) => c.type !== "tool_use");
     }
 
-    const sanitize = (msg: any, N = 1) => {
-      if (Array.isArray(msg.content)) {
-        // separate text/other chunks…
-        const textChunks = msg.content.filter(
-          (c: any) => c.type !== "image_url"
-        );
-        // …and image_url chunks
-        const imageChunks = msg.content
-          .filter((c: any) => c.type === "image_url")
-          .slice(-N); // ← only keep the last N
-        msg.content = [...textChunks, ...imageChunks];
-      }
-      return msg;
-    };
-
     // …then, after your LLM call:
-    const cleaned = [humanMessage, response].map((m) => sanitize(m, /*N=*/ 1));
+    const cleaned = [removeImageUrlsFromMessage(humanMessage), response];
 
-    // return {
-    //   messages: [humanMessage, response],
-    //   isComplete: true,
-    // };
+    logger.appendToFile(JSON.stringify(response));
 
     return {
       messages: cleaned,

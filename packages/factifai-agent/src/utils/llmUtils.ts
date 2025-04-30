@@ -26,8 +26,6 @@ export const removeImageUrlsFromMessage = (message: HumanMessage) => {
       );
     }
 
-    logger.info(JSON.stringify(filteredContent));
-
     // Create a new message with the filtered content
     return new HumanMessage({ content: filteredContent });
   }

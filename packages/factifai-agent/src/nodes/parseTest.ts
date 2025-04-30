@@ -1,71 +1,99 @@
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { GraphStateType } from "../main";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { z } from "zod";
 import { bedrockModel } from "../models/models";
+import { logger } from "../utils/logger";
 
-export const parseTestStepsNode = async ({ instruction }: GraphStateType) => {
-    if (!instruction) {
-      return {
-        testSteps: [],
-        currentStepIndex: -1,
-      };
+export const parseTestNode = async ({ instruction }: GraphStateType) => {
+  try {
+    logger.info("Parsing test instructions...");
+
+    // Create the prompt for test step extraction
+    const systemPrompt = new SystemMessage(
+      "You are a test parsing assistant. Extract clear, atomic test steps from the provided test case."
+    );
+
+    const userMessage = new HumanMessage(
+      `Parse the following test case into discrete steps:
+      
+      TEST CASE:
+      ${instruction}
+      
+      Extract each step as a separate, actionable item.`
+    );
+
+    // Define the schema for test steps
+    const outputSchema = z.object({
+      steps: z.array(
+        z.object({
+          id: z.number().describe("Sequential step number"),
+          instruction: z.string().describe("Clear instruction for this step"),
+          status: z
+            .literal("not_started")
+            .describe("Initial status is always not_started"),
+          notes: z
+            .string()
+            .optional()
+            .describe("Optional notes about this step"),
+        })
+      ),
+    });
+
+    // Get the model with structured output
+    const model = bedrockModel().withStructuredOutput(outputSchema);
+
+    // Generate the test steps
+    const response = await model.invoke([systemPrompt, userMessage]);
+
+    // Add defensive check for undefined response or steps
+    if (!response) {
+      throw new Error("LLM returned undefined response");
     }
-  
-    try {
-      // Define system prompt to guide the parsing
-      const systemPrompt = new SystemMessage(
-        "You are a test automation specialist who converts natural language test descriptions " +
-          "into clear, structured test steps."
-      );
-  
-      const userMessage = new HumanMessage(
-        `Parse the following test description into sequential, atomic test steps:\n\n${instruction}\n\n` +
-          "Format each step as a clear instruction beginning with an action verb. Don't combine " +
-          "multiple actions into a single step."
-      );
-  
-      // Define the structured output schema
-      const outputSchema = z.object({
-        steps: z.array(
-          z.object({
-            id: z.number().describe("Step number starting from 1"),
-            instruction: z
-              .string()
-              .describe("Clear instruction of what to do in this step"),
-            status: z
-              .enum(["not_started", "in_progress", "passed", "failed"])
-              .default("not_started")
-              .describe("Current status of this step"),
-          })
-        ),
-      });
-  
-      // Get the model with structured output
-      const model = bedrockModel().withStructuredOutput(outputSchema);
-  
-      // Execute the analysis
-      const result = await model.invoke([systemPrompt, userMessage]);
-  
-      // Set the first step to in_progress if there are any steps
-      const testSteps = result.steps.map((step, index) => {
-        if (index === 0) {
-          return { ...step, status: "in_progress" };
-        }
-        return step;
-      });
-  
-      console.log("Parsed test steps:", testSteps);
-  
-      return {
-        testSteps,
-        currentStepIndex: testSteps.length > 0 ? 0 : -1,
-      };
-    } catch (error) {
-      console.error("Error parsing test steps:", error);
-      return {
-        testSteps: [],
-        currentStepIndex: -1,
-        lastError: error instanceof Error ? error.message : "Unknown error",
-      };
+
+    if (!response.steps) {
+      throw new Error("LLM response missing steps array");
     }
-  };
+
+    // Now safely map the steps - with a fallback for empty arrays
+    const testSteps = (response.steps || []).map((step) => ({
+      id: step.id,
+      instruction: step.instruction,
+      status: step.id === 1 ? "in_progress" : "not_started", // Mark first step as in_progress
+      notes: step.notes || "",
+    }));
+
+    if (testSteps.length === 0) {
+      logger.warn("No test steps were extracted from the instruction");
+      // Create a fallback step if none were generated
+      testSteps.push({
+        id: 1,
+        instruction: instruction,
+        status: "in_progress",
+        notes: "Automatically created as a single step",
+      });
+    }
+
+    logger.info(`Parsed ${testSteps.length} test steps`);
+
+    return {
+      testSteps,
+      currentStep: 1,
+    };
+  } catch (error) {
+    logger.error("Error parsing test steps:", error);
+
+    // Create a fallback single test step in case of error
+    const fallbackStep = {
+      id: 1,
+      instruction: instruction,
+      status: "in_progress" as const,
+      notes: "Created as fallback due to parsing error",
+    };
+
+    return {
+      testSteps: [fallbackStep],
+      currentStep: 1,
+      parseError: error instanceof Error ? error.message : String(error),
+    };
+  }
+};

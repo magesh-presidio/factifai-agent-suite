@@ -14,6 +14,9 @@ export const executeAndVerifyNode = async ({
   lastAction,
   expectedOutcome,
   lastScreenshot,
+  retryCount = 0,
+  retryAction = "",
+  maxRetries = 3,
 }: GraphStateType) => {
   // Take a new screenshot of current state
   const browserService = BrowserService.getInstance();
@@ -34,7 +37,6 @@ export const executeAndVerifyNode = async ({
     };
   }
 
-  // Prepare system prompt based on whether we need verification
   let systemPromptContent = `You are a browser automation QA assistant that helps execute test instrcutions on web pages.
   You have access to tools for navigation, clicking elements, typing text and multiple scrolling tools for dealing with long pages.
   Use the screenshot to identify elements on the page and determine their coordinates.
@@ -47,15 +49,26 @@ export const executeAndVerifyNode = async ({
   5. Work step by step to complete the task
   6. ALWAYS include the sessionId parameter in EVERY tool call: "${sessionId}"`;
 
+  // Add retry information if we're currently retrying an action
+  if (retryCount > 0 && retryAction === lastAction) {
+    systemPromptContent += `
+    
+    RETRY INFORMATION:
+    You are currently retrying the same action for the ${retryCount} time (maximum ${maxRetries} attempts).
+    Previous action: "${lastAction}"
+    This action has failed verification. Please try a slightly different approach.`;
+  }
+
   // Add verification instructions if there was a previous action
   if (lastAction && expectedOutcome && lastScreenshot) {
     systemPromptContent += `
     
-    FIRST - VERIFICATION STEP:
+    ${retryCount > 0 ? "FIRST - " : ""}VERIFICATION STEP:
     Before planning your next action, you must verify if the previous action succeeded:
     
     Previous action: "${lastAction}"
     Expected outcome: "${expectedOutcome}"
+    ${retryCount > 0 ? `Retry attempt: ${retryCount} of ${maxRetries}` : ""}
     
     1. First, examine both screenshots and determine if the expected outcome was achieved.
     2. Start your response with "VERIFICATION:" followed by either "SUCCESS" or "FAILURE" and a brief explanation.
@@ -101,7 +114,11 @@ export const executeAndVerifyNode = async ({
                  ? "First verify if the previous action succeeded, then "
                  : ""
              }
-             use the available tools to complete the task step by step.`,
+             ${
+               retryCount > 0
+                 ? `This is retry attempt ${retryCount}/${maxRetries} for the action "${lastAction}". `
+                 : ""
+             }use the available tools to complete the task step by step.`,
     },
   ];
 
@@ -139,6 +156,13 @@ export const executeAndVerifyNode = async ({
 
   try {
     logger.info("Executing action with messages count:", messages.length);
+    if (retryCount > 0) {
+      logger.info(
+        chalk.yellow(
+          `Retry attempt ${retryCount}/${maxRetries} for action: "${lastAction}"`
+        )
+      );
+    }
 
     // Execute with model - single invocation for both verification and action
     const response = await model.invoke([
@@ -171,13 +195,56 @@ export const executeAndVerifyNode = async ({
           `Verification result: ${verificationResult} - ${verificationExplanation}`
         );
 
-        // If verification failed, end execution
+        // If verification failed, check if we should retry or end execution
         if (verificationResult === "FAILURE") {
+          // Check if we've reached the maximum retries
+          if (retryCount >= maxRetries) {
+            logger.error(
+              chalk.red(
+                `Maximum retries (${maxRetries}) reached for action: "${lastAction}"`
+              )
+            );
+            return {
+              messages: [
+                ...messages,
+                removeImageUrlsFromMessage(humanMessage),
+                response,
+              ],
+              isComplete: true,
+              lastError: `Verification failed after ${retryCount} retries: ${verificationExplanation}`,
+              retryCount: 0, // Reset retry count
+              retryAction: "",
+            };
+          }
+
+          // If we haven't reached max retries, increment and try again
+          logger.warn(
+            chalk.yellow(
+              `Verification failed. Retrying action: "${lastAction}" (${
+                retryCount + 1
+              }/${maxRetries})`
+            )
+          );
           return {
-            messages: [...messages, humanMessage, response],
-            isComplete: true,
-            lastError: `Verification failed: ${verificationExplanation}`,
+            messages: [
+              ...messages,
+              removeImageUrlsFromMessage(humanMessage),
+              response,
+            ],
+            lastScreenshot: currentScreenshot,
+            retryCount: retryCount + 1,
+            retryAction: lastAction,
+            isComplete: false,
           };
+        } else {
+          // If verification succeeded, reset retry counters
+          if (retryCount > 0) {
+            logger.info(
+              chalk.green(
+                `Action "${lastAction}" succeeded after ${retryCount} retries!`
+              )
+            );
+          }
         }
       }
     }
@@ -227,11 +294,13 @@ export const executeAndVerifyNode = async ({
     return {
       //   messages: [...messages, ...cleaned],
       // TODO: IMPLEMENT SUMMARISATION
-      messages: [...cleaned],
+      messages: cleaned,
       lastAction: nextAction,
       expectedOutcome: nextExpectedOutcome,
       lastScreenshot: currentScreenshot,
-      isComplete: false,
+      isComplete: true, // TODO HANDLE
+      retryCount: 0, // Reset retry count for new action
+      retryAction: "", // Clear retry action
     };
   } catch (error) {
     console.error("Error executing instruction:", error);

@@ -12,7 +12,8 @@ import { generateReportNode } from "./nodes/report-generation";
 import { shouldContinueEdge } from "./edges/edges";
 import { validateActionNode } from "./nodes/validation";
 import { executeAndVerifyNode } from "./nodes/executeAndVerify";
-import { trackActionsNode } from "./nodes/trackActionNode";
+import { trackAndUpdateStepsNode } from "./nodes/trackActionNode";
+import { parseTestNode } from "./nodes/parseTest";
 
 // Enhanced state definition with test steps
 export const State = Annotation.Root({
@@ -60,7 +61,22 @@ export const State = Annotation.Root({
     default: () => null,
     reducer: (_, v) => v,
   }),
-
+  currentStep: Annotation<string | null>({
+    default: () => null,
+    reducer: (_, v) => v,
+  }),
+  retryCount: Annotation<number>({
+    default: () => 0,
+    reducer: (_, v) => v,
+  }),
+  retryAction: Annotation<string | null>({
+    default: () => null,
+    reducer: (_, v) => v,
+  }),
+  maxRetries: Annotation<number>({
+    default: () => 3,
+    reducer: (_, v) => v,
+  }),
   lastScreenshot: Annotation<string | null>({
     default: () => null,
     reducer: (_, v) => v,
@@ -72,11 +88,13 @@ export type GraphStateType = (typeof State)["State"];
 const memory = new MemorySaver();
 
 export const browserAutomationGraph = new StateGraph(State)
+  .addNode("parse", parseTestNode)
   .addNode("execute", executeAndVerifyNode)
-  .addNode("track", trackActionsNode)
+  .addNode("track", trackAndUpdateStepsNode)
   .addNode("tools", new ToolNode(ALL_TOOLS))
   .addNode("report", generateReportNode) // Add report generator node
-  .addEdge(START, "execute")
+  .addEdge(START, "parse")
+  .addEdge("parse", "execute")
   .addConditionalEdges("execute", shouldContinueEdge, {
     tools: "tools",
     continue: "execute",

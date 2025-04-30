@@ -1,4 +1,4 @@
-import { navigate, getCurrentUrl } from "@factifai/playwright-core";
+import { navigate, getCurrentUrl, wait } from "@factifai/playwright-core";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { logger } from "../utils/logger";
@@ -59,6 +59,38 @@ export class NavigationTools {
       },
     });
 
-    return [navigateTool, getCurrentUrlTool];
+    const waitBySecondsTool = new DynamicStructuredTool({
+      name: "waitBySeconds",
+      description: "Wait for a specified number of seconds before continuing",
+      schema: z.object({
+        sessionId: z.string().describe("The browser session ID"),
+        seconds: z
+          .number()
+          .min(1)
+          .max(30)
+          .describe("Number of seconds to wait (between 1 and 30)"),
+      }),
+      func: async (input) => {
+        logger.info(
+          `Waiting for ${input.seconds} seconds in session ${input.sessionId}`
+        );
+        try {
+          const result = await wait(input.sessionId, input.seconds);
+          console.log(`Wait result: ${result.success}`);
+          return JSON.stringify(result);
+        } catch (error) {
+          logger.error(`Error waiting in session ${input.sessionId}:`, error);
+          return JSON.stringify({
+            success: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Unknown error during wait operation",
+          });
+        }
+      },
+    });
+
+    return [navigateTool, getCurrentUrlTool, waitBySecondsTool];
   }
 }

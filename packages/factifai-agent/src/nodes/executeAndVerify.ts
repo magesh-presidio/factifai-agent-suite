@@ -46,8 +46,9 @@ export const executeAndVerifyNode = async ({
   2. ALWAYS use clickByCoordinates instead of clickBySelector
   3. For typing, first click on the input field, then use the type tool
   4. For chunk-based scrolling use scrollToNextChunk and scrollToPrevChunk
-  5. Work step by step to complete the task
-  6. ALWAYS include the sessionId parameter in EVERY tool call: "${sessionId}"`;
+  5. For verification and observation step use waitBySecondsTool to wait and observe.
+  6. Work step by step to complete the task
+  7. ALWAYS include the sessionId parameter in EVERY tool call: "${sessionId}"`;
 
   // Add retry information if we're currently retrying an action
   if (retryCount > 0 && retryAction === lastAction) {
@@ -155,7 +156,6 @@ export const executeAndVerifyNode = async ({
   const model = bedrockModel().bindTools(ALL_TOOLS);
 
   try {
-    logger.info("Executing action with messages count:", messages.length);
     if (retryCount > 0) {
       logger.info(
         chalk.yellow(
@@ -192,7 +192,9 @@ export const executeAndVerifyNode = async ({
         const verificationExplanation = verificationMatch[2].trim();
 
         logger.info(
-          `Verification result: ${verificationResult} - ${verificationExplanation}`
+          chalk.gray(
+            `Verification result: ${verificationResult} - ${verificationExplanation}`
+          )
         );
 
         // If verification failed, check if we should retry or end execution
@@ -267,9 +269,9 @@ export const executeAndVerifyNode = async ({
               nextAction = actionInfo.action || nextAction;
               nextExpectedOutcome =
                 actionInfo.expectedOutcome || nextExpectedOutcome;
-              logger.info(
-                chalk.gray(`Found action info: ${JSON.stringify(actionInfo)}`)
-              );
+              // logger.info(
+              //   chalk.gray(`Found action info: ${JSON.stringify(actionInfo)}`)
+              // );
               break;
             }
           }

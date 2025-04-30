@@ -5,6 +5,7 @@ export {
   navigate,
   getVisibleElements,
   getCurrentUrl,
+  wait,
 } from "./actions/navigate";
 
 export {

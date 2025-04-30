@@ -220,7 +220,7 @@ export const trackAndUpdateStepsNode = async ({
           updatedInfo.status !== originalStep.status ||
           (updatedInfo.notes && updatedInfo.notes !== originalStep.notes)
         ) {
-          logger.info(
+          logger.appendToFile(
             `Test step ${originalStep.id} status changed: ${originalStep.status} -> ${updatedInfo.status}`
           );
 

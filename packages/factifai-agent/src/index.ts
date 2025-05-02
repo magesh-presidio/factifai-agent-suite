@@ -1,6 +1,9 @@
 import dotenv from "dotenv";
 import { browserAutomationGraph } from "./main";
 import { saveGraphImage } from "./utils/graphVisualizer";
+import { logger } from "./utils/logger";
+import boxen from "boxen";
+import chalk from "chalk";
 
 dotenv.config();
 
@@ -8,9 +11,9 @@ export const executeBrowserTask = async (
   instruction: string,
   sessionId: string
 ) => {
-  console.log(`Starting execution of: "${instruction}"`);
   sessionId = sessionId || `browser-session-${Date.now()}`;
-  console.log(`Session ID: ${sessionId}`);
+
+  displayFactifaiLogo();
 
   const runConfig = {
     recursionLimit: 100,
@@ -26,22 +29,6 @@ export const executeBrowserTask = async (
       runConfig
     );
 
-    console.log("== TEST EXECUTION COMPLETED ==");
-    if (result.testSummary) {
-      console.log("Test Summary:", result.testSummary);
-    }
-
-    if (result.testSteps?.length > 0) {
-      console.log("Test Step Results:");
-      result.testSteps.forEach((step) => {
-        console.log(
-          `  ${step.id}. ${step.instruction} - ${step.status}${
-            step.notes ? ` (${step.notes})` : ""
-          }`
-        );
-      });
-    }
-
     if (result.lastError) {
       console.error("Execution failed:", result.lastError);
       return {
@@ -53,6 +40,7 @@ export const executeBrowserTask = async (
     }
 
     console.log("Execution completed successfully!");
+    
     return {
       success: true,
       testSteps: result.testSteps,
@@ -69,11 +57,31 @@ export const executeBrowserTask = async (
   }
 };
 
-saveGraphImage();
+// saveGraphImage();
 
 executeBrowserTask(
-  `"go to saucedemo.com and login using standard_user and secret_sauce and verify inventory page loads"`,
+  `go to saucedemo.com and login with creds standard_user and secret_sauce`,
   `browser-session-${Date.now()}`
 );
 
 export * from "./main";
+
+/**
+ * Displays the FACTIFAI logo in a minimal, pretty box
+ */
+export function displayFactifaiLogo(): void {
+  const logo = `█▀▀ ▄▀█ █▀▀ ▀█▀ █ █▀▀ ▄▀█ █
+█▀  █▀█ █▄▄  █  █ █▀  █▀█ █`;
+
+  // Create a minimal box with the logo
+  const boxedLogo = boxen(chalk.blue(logo), {
+    padding: 1,
+    margin: { top: 1, bottom: 1 },
+    borderStyle: "round",
+    borderColor: "blue",
+    float: "left",
+  });
+
+  // Display the boxed logo
+  console.log(boxedLogo);
+}

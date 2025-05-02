@@ -24,7 +24,7 @@ export const executeAndVerifyNode = async ({
 
   try {
     currentScreenshot = await browserService.takeScreenshot(sessionId);
-    console.log("Screenshot captured successfully");
+    logger.info(chalk.cyan("📷 Screenshot captured successfully"));
 
     // Get current URL for additional context
     const currentUrl = (await getCurrentUrl(sessionId)).url;

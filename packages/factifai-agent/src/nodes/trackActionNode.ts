@@ -4,10 +4,11 @@ import { logger } from "../utils/logger";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { z } from "zod";
 import { bedrockModel } from "../models/models";
+import { enhancedLogger } from "../service/display-service";
 
 /**
  * This node uses LLM to analyze current execution state and update test steps status
- * It runs in parallel with the main execution flow
+ * It runs in parallel with the main execution flow and updates the console display in-place
  */
 export const trackAndUpdateStepsNode = async ({
   lastAction,
@@ -235,58 +236,17 @@ export const trackAndUpdateStepsNode = async ({
     });
 
     // ==========================================
-    // Display tracking information
+    // Generate track action display content
     // ==========================================
-
-    // Find the current in-progress step
-    const currentTestStep = updatedTestSteps.find(
-      (step) => step.status === "in_progress"
-    );
-    const stepDisplay = currentTestStep
-      ? `STEP ${currentTestStep.id}/${updatedTestSteps.length}`
-      : `STEPS ${
-          updatedTestSteps.filter((s) => s.status === "passed").length
-        }/${updatedTestSteps.length}`;
-
-    const actionInfo = chalk.bold.blue(`[${timestamp}] ${stepDisplay}`);
-
-    // Print to console with a divider for visibility
-    console.log("\n" + "=".repeat(80));
-    console.log(actionInfo);
-
-    // Display the current test case instruction and action
-    if (currentTestStep) {
-      console.log(chalk.yellow(`CURRENT STEP: ${currentTestStep.instruction}`));
-    }
-    console.log(chalk.green(`ACTION: ${lastAction || "No action yet"}`));
-    console.log(
-      chalk.yellow(`EXPECTED: ${expectedOutcome || "No expected outcome yet"}`)
-    );
-
-    // Add verification result if available
-    if (verificationResult) {
-      if (verificationResult === "SUCCESS") {
-        console.log(
-          chalk.green(
-            `VERIFICATION: SUCCESS - ${
-              verificationExplanation || "Step completed successfully"
-            }`
-          )
-        );
-      } else {
-        console.log(
-          chalk.red(
-            `VERIFICATION: FAILURE - ${
-              verificationExplanation || "Step failed"
-            }`
-          )
-        );
-      }
-    }
-
+    
+    const displayContent = [];
+    
+    // Start with a separator line
+    displayContent.push(chalk.dim("─".repeat(process.stdout.columns || 80)));
+    
     // Add retry information if applicable
     if (retryCount > 0) {
-      console.log(
+      displayContent.push(
         chalk.cyan(
           `RETRY: Attempt ${retryCount}/${maxRetries} for action "${
             retryAction || lastAction
@@ -299,11 +259,8 @@ export const trackAndUpdateStepsNode = async ({
         .fill("□")
         .map((char, index) => (index < retryCount ? "■" : char))
         .join(" ");
-      console.log(chalk.cyan(`RETRY PROGRESS: [${retryBar}]`));
+      displayContent.push(chalk.cyan(`RETRY PROGRESS: [${retryBar}]`));
     }
-
-    // Show test steps progress
-    console.log("\nTEST PROGRESS:");
 
     // Count status totals
     const counts = {
@@ -314,11 +271,23 @@ export const trackAndUpdateStepsNode = async ({
       notStarted: updatedTestSteps.filter((s) => s.status === "not_started")
         .length,
     };
-
-    console.log(
-      chalk.gray(
-        `Progress: ${counts.passed} passed, ${counts.failed} failed, ${counts.inProgress} in progress, ${counts.notStarted} pending`
-      )
+    
+    // Calculate completion percentage
+    const totalSteps = updatedTestSteps.length;
+    const completionPercent = Math.round((counts.passed / totalSteps) * 100);
+    
+    // Create enhanced progress stats line
+    displayContent.push(
+      chalk.bold(`Test Progress: ${completionPercent}% complete`) + 
+      chalk.gray(` [`) +
+      chalk.green(`${counts.passed} ✓`) +
+      chalk.gray(` | `) +
+      chalk.red(`${counts.failed} ✗`) +
+      chalk.gray(` | `) +
+      chalk.blue(`${counts.inProgress} ◉`) +
+      chalk.gray(` | `) +
+      chalk.gray(`${counts.notStarted} ○`) +
+      chalk.gray(`]`)
     );
 
     // Progress bar
@@ -331,7 +300,7 @@ export const trackAndUpdateStepsNode = async ({
       })
       .join("");
 
-    console.log(progressBar);
+    displayContent.push(progressBar);
 
     // Display test steps with status indicators
     updatedTestSteps.forEach((step) => {
@@ -357,7 +326,7 @@ export const trackAndUpdateStepsNode = async ({
       }`;
 
       // Highlight the current step
-      console.log(
+      displayContent.push(
         isCurrentStep
           ? chalk.bold(statusColor(stepText))
           : statusColor(stepText)
@@ -365,11 +334,15 @@ export const trackAndUpdateStepsNode = async ({
 
       // Show notes for the current/failed steps
       if ((isCurrentStep || step.status === "failed") && step.notes) {
-        console.log(chalk.gray(`   └─ ${step.notes}`));
+        displayContent.push(chalk.gray(`   └─ ${step.notes}`));
       }
     });
 
-    console.log("=".repeat(80) + "\n");
+    // Add a bottom separator line
+    displayContent.push(chalk.dim("─".repeat(process.stdout.columns || 80)));
+
+    // Update the track action display
+    enhancedLogger.trackAction(displayContent);
 
     // Return the updated test steps
     return {
@@ -389,23 +362,19 @@ export const trackAndUpdateStepsNode = async ({
       logger.error(`Error stringified: ${JSON.stringify(error)}`);
     }
 
-    // In case of error, display basic tracking info without updating steps
-    console.log("\n" + "=".repeat(80));
-    console.log(chalk.bold.blue(`[${timestamp}] TRACKING (Error occurred)`));
-    console.log(chalk.green(`ACTION: ${lastAction || "No action yet"}`));
-    console.log(
-      chalk.yellow(`EXPECTED: ${expectedOutcome || "No expected outcome yet"}`)
-    );
+    // Generate error display content with separator line
+    const errorContent = [
+      chalk.dim("─".repeat(process.stdout.columns || 80)),
+      chalk.bold.red(`[${timestamp}] TRACKING ERROR`),
+      chalk.green(`ACTION: ${lastAction || "No action yet"}`),
+      chalk.yellow(`EXPECTED: ${expectedOutcome || "No expected outcome yet"}`),
+      chalk.red(`ERROR: Failed to update test steps: ${error instanceof Error ? error.message : String(error)}`),
+      chalk.gray("Test steps will not be updated this cycle. Next tracking update will try again."),
+      chalk.dim("─".repeat(process.stdout.columns || 80))
+    ];
 
-    // More descriptive error message
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    console.log(chalk.red(`ERROR: Failed to update test steps: ${errorMsg}`));
-    console.log(
-      chalk.gray(
-        "Test steps will not be updated this cycle. Next tracking update will try again."
-      )
-    );
-    console.log("=".repeat(80) + "\n");
+    // Update the track action display with error content
+    enhancedLogger.trackAction(errorContent);
 
     // Return original steps unchanged
     return {};

@@ -1,11 +1,30 @@
 import dotenv from "dotenv";
-import { browserAutomationGraph } from "./main";
-import { saveGraphImage } from "./utils/graphVisualizer";
-import { logger } from "./utils/logger";
+import { browserAutomationGraph } from "./core/graph/graph";
 import boxen from "boxen";
 import chalk from "chalk";
+import { saveGraphImage } from "./common/utils/graph-visualizer";
 
 dotenv.config();
+
+/**
+ * Displays the FACTIFAI logo in a minimal, pretty box
+ */
+export const displayFactifaiLogo = (): void => {
+  const logo = `█▀▀ ▄▀█ █▀▀ ▀█▀ █ █▀▀ ▄▀█ █
+█▀  █▀█ █▄▄  █  █ █▀  █▀█ █`;
+
+  // Create a minimal box with the logo
+  const boxedLogo = boxen(chalk.blue(logo), {
+    padding: 1,
+    margin: { top: 1, bottom: 1 },
+    borderStyle: "round",
+    borderColor: "blue",
+    float: "left",
+  });
+
+  // Display the boxed logo
+  console.log(boxedLogo);
+};
 
 export const executeBrowserTask = async (
   instruction: string,
@@ -40,7 +59,7 @@ export const executeBrowserTask = async (
     }
 
     console.log("Execution completed successfully!");
-    
+
     return {
       success: true,
       testSteps: result.testSteps,
@@ -57,31 +76,11 @@ export const executeBrowserTask = async (
   }
 };
 
-// saveGraphImage();
+saveGraphImage();
 
 executeBrowserTask(
   `go to saucedemo.com and login with creds standard_user and secret_sauce`,
   `browser-session-${Date.now()}`
 );
 
-export * from "./main";
-
-/**
- * Displays the FACTIFAI logo in a minimal, pretty box
- */
-export function displayFactifaiLogo(): void {
-  const logo = `█▀▀ ▄▀█ █▀▀ ▀█▀ █ █▀▀ ▄▀█ █
-█▀  █▀█ █▄▄  █  █ █▀  █▀█ █`;
-
-  // Create a minimal box with the logo
-  const boxedLogo = boxen(chalk.blue(logo), {
-    padding: 1,
-    margin: { top: 1, bottom: 1 },
-    borderStyle: "round",
-    borderColor: "blue",
-    float: "left",
-  });
-
-  // Display the boxed logo
-  console.log(boxedLogo);
-}
+export * from "./core/graph/graph";

@@ -1,0 +1,26 @@
+import { ChatOpenAI } from "@langchain/openai";
+import { BedrockChat } from "@langchain/community/chat_models/bedrock";
+
+export const OpenAIModel = (streaming?: boolean) =>
+  new ChatOpenAI({
+    modelName: "gpt-4.1",
+    temperature: 0,
+    apiKey: process.env.OPENAI_API_KEY,
+    streaming: streaming,
+    maxRetries: 0,
+  });
+
+export const BedrockModel = (streaming?: boolean) =>
+  new BedrockChat({
+    model: process.env.BEDROCK_MODEL, // Updated to newer model
+    region: process.env.AWS_DEFAULT_REGION,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
+    },
+    modelKwargs: {
+      anthropic_version: "bedrock-2023-05-31",
+    },
+    streaming,
+    // maxTokens: 131072,
+  });

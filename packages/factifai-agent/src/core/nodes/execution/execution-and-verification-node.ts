@@ -7,36 +7,33 @@ import { BedrockModel } from "../../models/models";
 import { ALL_TOOLS } from "../../../tools";
 import { removeImageUrlsFromMessage } from "../../../common/utils/llm-utils";
 
-export const executeAndVerifyNode = async ({
-  instruction,
-  sessionId,
-  messages,
-  lastAction,
-  expectedOutcome,
-  lastScreenshot,
-  retryCount = 0,
-  retryAction = "",
-  maxRetries = 3,
-}: GraphStateType) => {
-  // Take a new screenshot of current state
+// Helper function to capture current browser state
+const captureCurrentState = async (sessionId: string) => {
   const browserService = BrowserService.getInstance();
-  let currentScreenshot;
-
   try {
-    currentScreenshot = await browserService.takeScreenshot(sessionId);
+    const screenshot = await browserService.takeScreenshot(sessionId);
     logger.info(chalk.cyan("📷 Screenshot captured successfully"));
 
-    // Get current URL for additional context
     const currentUrl = (await getCurrentUrl(sessionId)).url;
     console.log(`Current URL: ${currentUrl}`);
+
+    return { screenshot, url: currentUrl, error: null };
   } catch (error) {
     console.error("Failed to capture screenshot:", error);
-    return {
-      isComplete: true,
-      lastError: `Failed to capture screenshot: ${error}`,
-    };
+    return { screenshot: null, url: null, error };
   }
+};
 
+// Helper function to build the system prompt
+const buildSystemPrompt = (
+  sessionId: string,
+  lastAction: string | null,
+  expectedOutcome: string | null,
+  lastScreenshot: string | null,
+  retryCount: number,
+  retryAction: string | null,
+  maxRetries: number
+) => {
   let systemPromptContent = `You are a browser automation QA assistant that helps execute test instrcutions on web pages.
   You have access to tools for navigation, clicking elements, typing text and multiple scrolling tools for dealing with long pages.
   Use the screenshot to identify elements on the page and determine their coordinates.
@@ -103,9 +100,19 @@ export const executeAndVerifyNode = async ({
   I'll use the clickByCoordinates tool to click the login button...
   [tool use follows]`;
 
-  const systemPrompt = new SystemMessage(systemPromptContent);
+  return new SystemMessage(systemPromptContent);
+};
 
-  // Create human message content array
+// Helper function to create a human message with screenshots
+const createHumanMessage = (
+  instruction: string,
+  lastAction: string | null,
+  expectedOutcome: string | null,
+  lastScreenshot: string | null,
+  currentScreenshot: string,
+  retryCount: number,
+  maxRetries: number
+) => {
   const humanMessageContent: any = [
     {
       type: "text",
@@ -150,19 +157,118 @@ export const executeAndVerifyNode = async ({
     }
   );
 
-  const humanMessage = new HumanMessage({ content: humanMessageContent });
+  return new HumanMessage({ content: humanMessageContent });
+};
 
-  // Get model with tools
-  const model = BedrockModel().bindTools(ALL_TOOLS);
+// Helper function to extract verification result
+const parseVerificationResult = (responseText: string) => {
+  const verificationMatch = responseText.match(
+    /VERIFICATION:\s*(SUCCESS|FAILURE)\s*-\s*([\s\S]*?)(?=ACTION INFO:|$)/i
+  );
+
+  if (!verificationMatch) return null;
+
+  return {
+    result: verificationMatch[1].trim().toUpperCase(),
+    explanation: verificationMatch[2].trim(),
+  };
+};
+
+// Helper function to extract action info
+const extractActionInfo = (responseContent: any) => {
+  let nextAction = "Browser action";
+  let nextExpectedOutcome = "Page should update appropriately";
 
   try {
-    if (retryCount > 0) {
-      logger.info(
-        chalk.yellow(
-          `Retry attempt ${retryCount}/${maxRetries} for action: "${lastAction}"`
-        )
-      );
+    // If response.content is an array and has text items
+    if (Array.isArray(responseContent)) {
+      // Look through each text item for our marker
+      for (const item of responseContent) {
+        if (item && item.type === "text" && typeof item.text === "string") {
+          // Try to find the ACTION INFO section
+          const match = item.text.match(/ACTION INFO:?\s*(\{[\s\S]*?\})/i);
+          if (match && match[1]) {
+            // Parse the JSON object
+            const actionInfo = JSON.parse(match[1]);
+            nextAction = actionInfo.action || nextAction;
+            nextExpectedOutcome =
+              actionInfo.expectedOutcome || nextExpectedOutcome;
+            break;
+          }
+        }
+      }
+    } else if (typeof responseContent === "string") {
+      // Plain string response - look for our marker
+      const match = responseContent.match(/ACTION INFO:?\s*(\{[\s\S]*?\})/i);
+      if (match && match[1]) {
+        const actionInfo = JSON.parse(match[1]);
+        nextAction = actionInfo.action || nextAction;
+        nextExpectedOutcome = actionInfo.expectedOutcome || nextExpectedOutcome;
+      }
     }
+  } catch (error) {
+    logger.warn("Error extracting action info:", error);
+  }
+
+  return { nextAction, nextExpectedOutcome };
+};
+
+export const executeAndVerifyNode = async ({
+  instruction,
+  sessionId,
+  messages,
+  lastAction,
+  expectedOutcome,
+  lastScreenshot,
+  retryCount = 0,
+  retryAction = "",
+  maxRetries = 3,
+}: GraphStateType) => {
+  // Capture current browser state
+  const { screenshot: currentScreenshot, error: captureError } =
+    await captureCurrentState(sessionId);
+
+  if (captureError || !currentScreenshot) {
+    return {
+      isComplete: true,
+      lastError: `Failed to capture screenshot: ${captureError}`,
+    };
+  }
+
+  // Build system prompt
+  const systemPrompt = buildSystemPrompt(
+    sessionId,
+    lastAction,
+    expectedOutcome,
+    lastScreenshot,
+    retryCount,
+    retryAction,
+    maxRetries
+  );
+
+  // Create human message with screenshots
+  const humanMessage = createHumanMessage(
+    instruction,
+    lastAction,
+    expectedOutcome,
+    lastScreenshot,
+    currentScreenshot,
+    retryCount,
+    maxRetries
+  );
+
+  // Log retry attempts
+  if (retryCount > 0) {
+    logger.info(
+      chalk.yellow(
+        `Retry attempt ${retryCount}/${maxRetries} for action: "${lastAction}"`
+      )
+    );
+  }
+
+  try {
+    // Get model with tools
+    const model = BedrockModel().bindTools(ALL_TOOLS);
 
     // Execute with model - single invocation for both verification and action
     const response = await model.invoke([
@@ -171,34 +277,30 @@ export const executeAndVerifyNode = async ({
       humanMessage,
     ]);
 
+    // Filter out duplicate tool_use elements
     if (typeof response.content !== "string") {
       response.content = response.content.filter((c) => c.type !== "tool_use");
     }
 
+    // Convert response content to string for processing
     const responseText =
       typeof response.content === "string"
         ? response.content
         : JSON.stringify(response.content);
 
-    // Check for verification failure first if there was a previous action
+    // Process verification if there was a previous action
     if (lastAction && expectedOutcome) {
-      // Extract verification result with a more compatible regex
-      const verificationMatch = responseText.match(
-        /VERIFICATION:\s*(SUCCESS|FAILURE)\s*-\s*([\s\S]*?)(?=ACTION INFO:|$)/i
-      );
+      const verification = parseVerificationResult(responseText);
 
-      if (verificationMatch) {
-        const verificationResult = verificationMatch[1].trim().toUpperCase();
-        const verificationExplanation = verificationMatch[2].trim();
-
+      if (verification) {
         logger.info(
           chalk.gray(
-            `Verification result: ${verificationResult} - ${verificationExplanation}`
+            `Verification result: ${verification.result} - ${verification.explanation}`
           )
         );
 
-        // If verification failed, check if we should retry or end execution
-        if (verificationResult === "FAILURE") {
+        // Handle verification failure
+        if (verification.result === "FAILURE") {
           // Check if we've reached the maximum retries
           if (retryCount >= maxRetries) {
             logger.error(
@@ -213,7 +315,7 @@ export const executeAndVerifyNode = async ({
                 response,
               ],
               isComplete: true,
-              lastError: `Verification failed after ${retryCount} retries: ${verificationExplanation}`,
+              lastError: `Verification failed after ${retryCount} retries: ${verification.explanation}`,
               retryCount: 0, // Reset retry count
               retryAction: "",
             };
@@ -238,57 +340,21 @@ export const executeAndVerifyNode = async ({
             retryAction: lastAction,
             isComplete: false,
           };
-        } else {
-          // If verification succeeded, reset retry counters
-          if (retryCount > 0) {
-            logger.info(
-              chalk.green(
-                `Action "${lastAction}" succeeded after ${retryCount} retries!`
-              )
-            );
-          }
+        } else if (retryCount > 0) {
+          // Log success after retries
+          logger.info(
+            chalk.green(
+              `Action "${lastAction}" succeeded after ${retryCount} retries!`
+            )
+          );
         }
       }
     }
 
-    // Extract action info for next step using the previous working implementation
-    let nextAction = "Browser action";
-    let nextExpectedOutcome = "Page should update appropriately";
-
-    try {
-      // If response.content is an array and has text items
-      if (Array.isArray(response.content)) {
-        // Look through each text item for our marker
-        for (const item of response.content) {
-          if (item && item.type === "text" && typeof item.text === "string") {
-            // Try to find the ACTION INFO section
-            const match = item.text.match(/ACTION INFO:?\s*(\{[\s\S]*?\})/i);
-            if (match && match[1]) {
-              // Parse the JSON object
-              const actionInfo = JSON.parse(match[1]);
-              nextAction = actionInfo.action || nextAction;
-              nextExpectedOutcome =
-                actionInfo.expectedOutcome || nextExpectedOutcome;
-              // logger.info(
-              //   chalk.gray(`Found action info: ${JSON.stringify(actionInfo)}`)
-              // );
-              break;
-            }
-          }
-        }
-      } else if (typeof response.content === "string") {
-        // Plain string response - look for our marker
-        const match = response.content.match(/ACTION INFO:?\s*(\{[\s\S]*?\})/i);
-        if (match && match[1]) {
-          const actionInfo = JSON.parse(match[1]);
-          nextAction = actionInfo.action || nextAction;
-          nextExpectedOutcome =
-            actionInfo.expectedOutcome || nextExpectedOutcome;
-        }
-      }
-    } catch (error) {
-      logger.warn("Error extracting action info:", error);
-    }
+    // Extract action info for next step
+    const { nextAction, nextExpectedOutcome } = extractActionInfo(
+      response.content
+    );
 
     // Clean messages for storage
     const cleaned = [removeImageUrlsFromMessage(humanMessage), response];

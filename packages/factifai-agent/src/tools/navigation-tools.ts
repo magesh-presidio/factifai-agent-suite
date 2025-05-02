@@ -1,4 +1,11 @@
-import { navigate, getCurrentUrl, wait } from "@factifai/playwright-core";
+import {
+  navigate,
+  getCurrentUrl,
+  wait,
+  reload,
+  goBack,
+  goForward,
+} from "@factifai/playwright-core";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { logger } from "../common/utils/logger";
@@ -91,6 +98,72 @@ export class NavigationTools {
       },
     });
 
-    return [navigateTool, getCurrentUrlTool, waitBySecondsTool];
+    const reloadTool = new DynamicStructuredTool({
+      name: "reload",
+      description: "Reload the current page in the browser",
+      schema: z.object({
+        sessionId: z.string().describe("The browser session ID"),
+      }),
+      func: async (input) => {
+        logger.info(`Reloading page for session ${input.sessionId}`);
+        try {
+          const result = await reload(input.sessionId);
+          logger.info(`Reload result: ${result.success}, URL: ${result.url}`);
+          return JSON.stringify(result);
+        } catch (error) {
+          logger.error(`Error reloading page for session ${input.sessionId}:`, error);
+          return JSON.stringify({
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error during page reload",
+          });
+        }
+      },
+    });
+
+    const goBackTool = new DynamicStructuredTool({
+      name: "goBack",
+      description: "Navigate back in browser history",
+      schema: z.object({
+        sessionId: z.string().describe("The browser session ID"),
+      }),
+      func: async (input) => {
+        logger.info(`Navigating back in history for session ${input.sessionId}`);
+        try {
+          const result = await goBack(input.sessionId);
+          logger.info(`Go back result: ${result.success}, URL: ${result.url}`);
+          return JSON.stringify(result);
+        } catch (error) {
+          logger.error(`Error navigating back for session ${input.sessionId}:`, error);
+          return JSON.stringify({
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error during navigation back",
+          });
+        }
+      },
+    });
+
+    const goForwardTool = new DynamicStructuredTool({
+      name: "goForward",
+      description: "Navigate forward in browser history",
+      schema: z.object({
+        sessionId: z.string().describe("The browser session ID"),
+      }),
+      func: async (input) => {
+        logger.info(`Navigating forward in history for session ${input.sessionId}`);
+        try {
+          const result = await goForward(input.sessionId);
+          logger.info(`Go forward result: ${result.success}, URL: ${result.url}`);
+          return JSON.stringify(result);
+        } catch (error) {
+          logger.error(`Error navigating forward for session ${input.sessionId}:`, error);
+          return JSON.stringify({
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error during navigation forward",
+          });
+        }
+      },
+    });
+
+    return [navigateTool, getCurrentUrlTool, waitBySecondsTool, reloadTool, goBackTool, goForwardTool];
   }
 }

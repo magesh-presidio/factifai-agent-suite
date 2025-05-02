@@ -6,6 +6,9 @@ export {
   getVisibleElements,
   getCurrentUrl,
   wait,
+  reload,
+  goBack,
+  goForward,
 } from "./actions/navigate";
 
 export {

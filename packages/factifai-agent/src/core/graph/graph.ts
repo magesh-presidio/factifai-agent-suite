@@ -7,11 +7,11 @@ import {
 } from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { ALL_TOOLS } from "../../tools";
-import { generateReportNode } from "../nodes/reporting/test-report-generation-node";
-import { executeAndVerifyNode } from "../nodes/execution/test-execution-and-verification-node";
-import { trackAndUpdateStepsNode } from "../nodes/tracking/test-tracking-node";
-import { parseTestStepsNode } from "../nodes/parsing/test-parsing-node";
-import { preprocessTestInputNode } from "../nodes/preprocessing/test-preprocessing-node";
+import { generateReportNode } from "../nodes/reporting/report-generation-node";
+import { executeAndVerifyNode } from "../nodes/execution/execution-and-verification-node";
+import { trackAndUpdateStepsNode } from "../nodes/tracking/tracking-node";
+import { parseTestStepsNode } from "../nodes/parsing/parsing-node";
+import { preprocessTestInputNode } from "../nodes/preprocessing/preprocessing-node";
 import { shouldContinueEdge } from "../edges/edges";
 
 export const State = Annotation.Root({

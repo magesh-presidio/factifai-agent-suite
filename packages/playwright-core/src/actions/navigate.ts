@@ -272,3 +272,78 @@ export async function wait(
     };
   }
 }
+
+/**
+ * Reloads the current page for the given session
+ * @param sessionId The session identifier
+ * @returns Promise with success flag, current URL, or error
+ */
+export async function reload(
+  sessionId: string
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  const browserService = BrowserService.getInstance();
+  try {
+    const page = await browserService.getPage(sessionId);
+    await page.reload();
+    const url = page.url();
+    return { success: true, url };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unknown error during page reload",
+    };
+  }
+}
+
+/**
+ * Navigates back in the browser history for the given session
+ * @param sessionId The session identifier
+ * @returns Promise with success flag, current URL, or error
+ */
+export async function goBack(
+  sessionId: string
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  const browserService = BrowserService.getInstance();
+  try {
+    const page = await browserService.getPage(sessionId);
+    await page.goBack();
+    const url = page.url();
+    return { success: true, url };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unknown error during navigation back",
+    };
+  }
+}
+
+/**
+ * Navigates forward in the browser history for the given session
+ * @param sessionId The session identifier
+ * @returns Promise with success flag, current URL, or error
+ */
+export async function goForward(
+  sessionId: string
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  const browserService = BrowserService.getInstance();
+  try {
+    const page = await browserService.getPage(sessionId);
+    await page.goForward();
+    const url = page.url();
+    return { success: true, url };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unknown error during navigation forward",
+    };
+  }
+}

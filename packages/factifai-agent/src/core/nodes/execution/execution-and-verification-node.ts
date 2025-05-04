@@ -334,6 +334,7 @@ export const executeAndVerifyNode = async ({
                 removeImageUrlsFromMessage(humanMessage),
                 response,
               ],
+              isComplete: true,
               lastError: `Verification failed after ${retryCount} retries: ${verification.explanation}`,
               retryCount: 0, // Reset retry count
               retryAction: "",

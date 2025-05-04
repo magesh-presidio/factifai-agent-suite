@@ -169,7 +169,6 @@ export const trackAndUpdateStepsNode = async ({
             .describe("Updated status of this step"),
           notes: z
             .string()
-            .optional()
             .describe(
               "A detailed report note explaining why this status was assigned and what happened during this step"
             ),

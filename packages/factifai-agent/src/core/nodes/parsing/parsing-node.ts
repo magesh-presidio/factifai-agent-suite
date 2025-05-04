@@ -70,17 +70,11 @@ export const parseTestStepsNode = async ({ instruction }: GraphStateType) => {
       steps: z.array(
         z.object({
           id: z.number().describe("Step number starting from 1"),
-          instruction: z
-            .string()
-            .describe("Clear instruction of what to do in this step"),
+          instruction: z.string().describe("Clear instruction of what to do"),
           status: z
             .enum(["not_started", "in_progress", "passed", "failed"])
-            .default("not_started")
             .describe("Current status of this step"),
-          expected_result: z
-            .string()
-            .optional()
-            .describe("Expected outcome after completing this step"),
+          expected_result: z.string().describe("Expected outcome"),
         })
       ),
     });
@@ -223,7 +217,9 @@ export const parseTestStepsNode = async ({ instruction }: GraphStateType) => {
             break;
           } else {
             // If regex didn't work, try a simple line-by-line approach
-            const lines = content.split("\n").filter((line: string) => line.trim());
+            const lines = content
+              .split("\n")
+              .filter((line: string) => line.trim());
             testSteps = lines.map((line: string, index: number) => ({
               id: index + 1,
               instruction: line.replace(/^Step \d+:/, "").trim(),
@@ -436,48 +432,32 @@ async function rateTestCase(testCase: string) {
 
     // Define the rating schema
     const ratingSchema = z.object({
-      rating: z
-        .number()
-        .min(1)
-        .max(10)
-        .describe("Overall quality rating from 1-10"),
+      rating: z.number().describe("Overall quality rating from 1-10"),
       strengths: z.array(z.string()).describe("Key strengths of the test case"),
       weaknesses: z.array(z.string()).describe("Areas for improvement"),
       improvementSuggestions: z
         .string()
         .describe("Specific suggestions to improve the test case"),
       criteriaRatings: z.object({
-        clarity: z.number().min(1).max(10).describe("Rating for clarity"),
+        clarity: z.number().describe("Rating for clarity from 1-10"),
         atomicity: z
           .number()
-          .min(1)
-          .max(10)
-          .describe("Rating for step atomicity"),
+          .describe("Rating for step atomicity from 1 to 10"),
         verifiability: z
           .number()
-          .min(1)
-          .max(10)
-          .describe("Rating for clear expected results"),
+          .describe("Rating for clear expected results from 1 to 10"),
         completeness: z
           .number()
-          .min(1)
-          .max(10)
-          .describe("Rating for workflow coverage"),
+          .describe("Rating for workflow coverage from 1 to 10"),
         errorHandling: z
           .number()
-          .min(1)
-          .max(10)
-          .describe("Rating for error scenario handling"),
+          .describe("Rating for error scenario handling from 1 to 10"),
         testData: z
           .number()
-          .min(1)
-          .max(10)
-          .describe("Rating for specific test data definition"),
+          .describe("Rating for specific test data definition from 1 to 10"),
         independence: z
           .number()
-          .min(1)
-          .max(10)
-          .describe("Rating for test independence"),
+          .describe("Rating for test independence from 1 to 10"),
       }),
     });
 

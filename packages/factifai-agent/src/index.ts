@@ -76,7 +76,7 @@ export const executeBrowserTask = async (
 };
 
 executeBrowserTask(
-  `go to saucedemo.com and login with username: standard_user and password: secret_sauce and ensure the login is successful and verify the presence of navigation bar with cart icon and verify alteast two products are visible`,
+  `go to saucedemo.com and login with username: standard_user and password: tomato_sauce and ensure the login is successful`,
   `browser-session-${Date.now()}`
 );
 

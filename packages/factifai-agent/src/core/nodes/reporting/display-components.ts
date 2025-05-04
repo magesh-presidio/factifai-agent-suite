@@ -161,7 +161,10 @@ export const displayComponents = {
   /**
    * Display an error box
    */
-  displayErrorBox(lastError: string, errorAnalysis?: string): void {
+  displayErrorBox(
+    lastError: string,
+    errorAnalysis: string | null = null
+  ): void {
     console.log(
       boxen(
         chalk.bold.red("Last Error:") +

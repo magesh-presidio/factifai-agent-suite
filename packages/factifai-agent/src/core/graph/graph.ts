@@ -29,7 +29,7 @@ export const State = Annotation.Root({
       id: number;
       instruction: string;
       status: "not_started" | "in_progress" | "passed" | "failed";
-      notes?: string;
+      notes: string;
     }>
   >({
     default: () => [],

@@ -8,24 +8,24 @@ import { BedrockModel } from "../../models/models";
 import { TEST_STATUS } from "./schemas";
 import { displayComponents } from "./display-components";
 
-const reportOutputSchema = z.object({
+export const reportOutputSchema = z.object({
   summary: z.string().describe("Overall test execution summary"),
   passRate: z.number().describe("Percentage of test steps that passed (0-100)"),
   executionTime: z
     .string()
-    .optional()
-    .describe("Estimated test execution time"),
+    .nullable()                                     
+    .describe("Estimated test execution time; null if unavailable"),
   recommendations: z
     .array(z.string())
     .describe("Recommendations for improving the test"),
   criticalIssues: z
     .array(z.string())
-    .optional()
-    .describe("Critical issues found during testing"),
+    .nullable()                                      
+    .describe("Critical issues found during testing; null if none"),
   errorAnalysis: z
     .string()
-    .optional()
-    .describe("Analysis of the last error if present"),
+    .nullable()                                     
+    .describe("Analysis of the last error, or null"),
 });
 
 // Helper functions
@@ -90,8 +90,10 @@ function createStepsDescription(testSteps: any[]) {
  */
 function calculatePassRate(testSteps: any[]) {
   if (!testSteps || testSteps.length === 0) return 0;
-  
-  const passedSteps = testSteps.filter(step => step.status === TEST_STATUS.PASSED);
+
+  const passedSteps = testSteps.filter(
+    (step) => step.status === TEST_STATUS.PASSED
+  );
   return Math.round((passedSteps.length / testSteps.length) * 100);
 }
 
@@ -115,7 +117,6 @@ export const generateReportNode = async ({
   messages,
   lastError,
 }: GraphStateType) => {
-
   if (!testSteps || testSteps.length === 0) {
     enhancedLogger.warn("No test steps to analyze for report");
     return {};

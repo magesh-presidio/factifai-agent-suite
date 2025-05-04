@@ -52,9 +52,8 @@ const buildSystemPrompt = (
   2. ALWAYS use clickByCoordinates instead of clickBySelector
   3. For typing and clearing on inputs, first click on the input field, then use the type tool
   4. For chunk-based scrolling use scrollToNextChunk and scrollToPrevChunk
-  5. For verification and observation step use waitBySecondsTool to wait and observe.
-  6. Work step by step to complete the task
-  7. ALWAYS include the sessionId parameter in EVERY tool call: "${sessionId}"`;
+  5. Work step by step to complete the task
+  6. ALWAYS include the sessionId parameter in EVERY tool call: "${sessionId}"`;
 
   // Add retry information if we're currently retrying an action
   if (retryCount > 0 && retryAction === lastAction) {
@@ -81,12 +80,14 @@ const buildSystemPrompt = (
     2. Start your response with "VERIFICATION:" followed by either "SUCCESS" or "FAILURE" and a brief explanation.
     3. If you respond with "FAILURE", DO NOT USE ANY TOOLS and explain why the action failed.
     4. If you respond with "SUCCESS", continue with planning the next action as described below.
+    5. ALWAYS check if any other verification has to be done as per test case before proceeding.
+    6. Include intricate and visual details in your verification explanation.
     
     Example of verification failure:
-    VERIFICATION: FAILURE - The login form was not submitted as expected. The page still shows the login form and there's an error message visible.
+    VERIFICATION: FAILURE - The login form was not submitted as expected after clicking the login button. The page still shows the login form and there's an error message titled "Invalid password" visible on the page indicating incorrect credentials.
     
     Example of verification success:
-    VERIFICATION: SUCCESS - The login was successful. The page has redirected to the dashboard as expected.
+    VERIFICATION: SUCCESS - The login was successful. The page has redirected to the dashboard as expected after clicking on the green login button. I also verified that the header contains the expected logo.
     `;
   }
 

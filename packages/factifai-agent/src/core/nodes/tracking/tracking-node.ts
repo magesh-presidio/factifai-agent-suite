@@ -24,6 +24,8 @@ export const trackAndUpdateStepsNode = async ({
   // Create a timestamp for logging
   const timestamp = new Date().toISOString();
 
+  enhancedLogger.info(chalk.bgBlue(`[${timestamp}] Tracking test steps...`));
+
   if (!testSteps || testSteps.length === 0) {
     logger.warn("No test steps to track and update");
     return {};
@@ -51,7 +53,7 @@ export const trackAndUpdateStepsNode = async ({
     // Check for verification results in the latest message
     const lastMessageContent =
       recentMessages.length > 0
-        ? recentMessages[recentMessages.length - 1]?.content
+        ? recentMessages[recentMessages.length - (isComplete ? 1 : 2)]?.content // Adjust index based on isComplete because after completion, the last message is the final analysis
         : "";
     const lastMessageText =
       typeof lastMessageContent === "string"
@@ -74,6 +76,13 @@ export const trackAndUpdateStepsNode = async ({
       ? verificationMatch[2].trim()
       : null;
 
+    enhancedLogger.info(
+      chalk.bgBlue(
+        `[${timestamp}] Verificaation result`,
+        verificationExplanation
+      )
+    );
+
     // Define system prompt for test progress analysis
     const systemPrompt = new SystemMessage(
       `You are a real-time test progress analyzer. Examine the current execution state and update the test steps accordingly.
@@ -84,6 +93,9 @@ export const trackAndUpdateStepsNode = async ({
        2. "in_progress" - Step is currently being executed
        3. "passed" - Step was executed successfully (verified or completed without errors)
        4. "failed" - Step failed after retries or encountered an error
+       
+       IMPORTANT: Verification results (SUCCESS/FAILURE) take precedence over all other signals, even if there are no tool calls.
+       When a verification result is present, it is the definitive source of truth about whether a step passed or failed.
        
        Your goal is to provide an accurate real-time assessment of the test execution state.`
     );
@@ -120,10 +132,11 @@ export const trackAndUpdateStepsNode = async ({
        CURRENT EXECUTION STATE:
        - Current/Last Action: ${lastAction || "None"}
        - Expected Outcome: ${expectedOutcome || "None"}
-       - Verification Result: ${
+       ${
          verificationResult
-           ? `${verificationResult} - ${verificationExplanation}`
-           : "None"
+           ? `- IMPORTANT - VERIFICATION RESULT: ${verificationResult} - ${verificationExplanation}
+          (This verification should be treated as definitive even if no tool calls were made)`
+           : "- Verification Result: None"
        }
        - Retry Count: ${retryCount} / ${maxRetries}${
         retryCount > 0 ? ` for "${retryAction}"` : ""
@@ -138,11 +151,10 @@ export const trackAndUpdateStepsNode = async ({
        ${actionsSummary || "No recent actions"}
        
        Based on this information, update the status of each test step. Pay special attention to:
-       1. If verification shows SUCCESS, mark the relevant step as passed
-       2. If verification shows FAILURE and max retries are reached, mark as failed
-       3. If there are errors, mark the current step as failed
-       4. If a tool was just executed successfully without verification, the step is likely in_progress
-       5. If one step is passed, the next one should typically be in_progress
+       1. VERIFICATION RESULTS TAKE PRECEDENCE OVER TOOL CALLS - If there's a verification result, it should determine step status regardless of tool calls
+       2. If verification shows SUCCESS, mark the relevant step as passed
+       3. If verification shows FAILURE and max retries are reached, mark as failed
+       4. If there are errors, mark the current step as failed
        
        IMPORTANT: Your response MUST include ALL test steps with their updated status, even if the status hasn't changed.`
     );
@@ -158,7 +170,9 @@ export const trackAndUpdateStepsNode = async ({
           notes: z
             .string()
             .optional()
-            .describe("Notes explaining why this status was assigned"),
+            .describe(
+              "A detailed report note explaining why this status was assigned and what happened during this step"
+            ),
         })
       ),
     });

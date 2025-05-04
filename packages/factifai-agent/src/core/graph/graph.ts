@@ -97,13 +97,13 @@ export const browserAutomationGraph = new StateGraph(State)
   .addEdge("parse", "execute")
   .addConditionalEdges("execute", shouldContinueEdge, {
     tools: "tools",
-    end: "track",
+    end: "track", // call track for final verification
   })
   .addConditionalEdges("track", shouldGenerateReport, {
     report: "report",
     end: END,
   })
-  .addEdge("tools", "track")
   .addEdge("tools", "execute")
+  .addEdge("tools", "track") // parallely execute track node along with execute node
   .addEdge("report", END) // After report, end the graph
   .compile({ checkpointer: memory });

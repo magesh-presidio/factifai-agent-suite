@@ -6,6 +6,7 @@ export const shouldContinueEdge = (state: GraphStateType) => {
     return "tools";
   }
 
+  console.log("CALLING FINAL TRACK NODE FOR FINAL VERIFIATION")
   return "end";
 };
 

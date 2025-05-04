@@ -9,23 +9,6 @@ import { TEST_STATUS } from "./schemas";
 import { displayComponents } from "./display-components";
 
 const reportOutputSchema = z.object({
-  updatedSteps: z.array(
-    z.object({
-      id: z.number().describe("Step number"),
-      status: z
-        .enum([
-          TEST_STATUS.NOT_STARTED,
-          TEST_STATUS.IN_PROGRESS,
-          TEST_STATUS.PASSED,
-          TEST_STATUS.FAILED,
-        ])
-        .describe("Final status of this step"),
-      notes: z
-        .string()
-        .optional()
-        .describe("Optional notes explaining status determination"),
-    })
-  ),
   summary: z.string().describe("Overall test execution summary"),
   passRate: z.number().describe("Percentage of test steps that passed (0-100)"),
   executionTime: z
@@ -103,24 +86,13 @@ function createStepsDescription(testSteps: any[]) {
 }
 
 /**
- * Update test steps with the report results
+ * Calculate pass rate from test steps
  */
-function updateTestStepsWithResults(originalSteps: any[], updatedInfo: any[]) {
-  return originalSteps.map((originalStep) => {
-    const updatedStep = updatedInfo.find(
-      (updated) => updated.id === originalStep.id
-    );
-
-    if (updatedStep) {
-      return {
-        id: originalStep.id,
-        instruction: originalStep.instruction,
-        status: updatedStep.status,
-        notes: updatedStep.notes,
-      };
-    }
-    return originalStep;
-  });
+function calculatePassRate(testSteps: any[]) {
+  if (!testSteps || testSteps.length === 0) return 0;
+  
+  const passedSteps = testSteps.filter(step => step.status === TEST_STATUS.PASSED);
+  return Math.round((passedSteps.length / testSteps.length) * 100);
 }
 
 /**
@@ -143,8 +115,6 @@ export const generateReportNode = async ({
   messages,
   lastError,
 }: GraphStateType) => {
-  const displayService = enhancedLogger.service;
-  displayService.cleanup();
 
   if (!testSteps || testSteps.length === 0) {
     enhancedLogger.warn("No test steps to analyze for report");
@@ -172,7 +142,9 @@ export const generateReportNode = async ({
 
     // Define system prompt for report generation
     const systemPrompt = new SystemMessage(
-      "You are a test results analyzer. Review the conversation history and update the status of each test step."
+      `You are a test results analyzer. Review the test execution data and generate insights.
+      Focus on providing a meaningful summary, useful recommendations, and analysis of any issues.
+      DO NOT reassess the status of test steps - the provided step statuses are final and accurate.`
     );
 
     // Create a summary of the test actions for the LLM
@@ -182,10 +154,9 @@ export const generateReportNode = async ({
     const stepsDesc = createStepsDescription(testSteps);
 
     const userMessage = new HumanMessage(
-      `Review the browser automation test session and determine which steps were completed successfully, 
-         which failed, and which were never attempted.
+      `Analyze this browser automation test session and provide insights.
          
-         TEST STEPS:
+         TEST STEPS WITH FINAL STATUS:
          ${stepsDesc}
          
          TEST ACTIONS PERFORMED:
@@ -193,7 +164,9 @@ export const generateReportNode = async ({
          
          ${lastError ? `TEST ERROR: ${lastError}` : ""}
          
-         Update the status of each test step based on the actions performed.`
+         Generate a comprehensive summary of the test execution, recommendations for improvement, 
+         and analysis of any issues encountered. The step statuses are already final and accurate - 
+         focus on providing valuable insights rather than reassessing step statuses.`
     );
 
     enhancedLogger.info(
@@ -203,21 +176,18 @@ export const generateReportNode = async ({
     // Generate the report using the LLM
     const report = await generateTestReport(systemPrompt, userMessage);
 
-    // Update test steps with the results
-    const updatedTestSteps = updateTestStepsWithResults(
-      testSteps,
-      report.updatedSteps
-    );
+    // Calculate pass rate if not provided by the LLM
+    const passRate = report.passRate || calculatePassRate(testSteps);
 
     enhancedLogger.success(
       `${chalk.green(figures.tick)} Report generation completed successfully`
     );
 
     // Display the summary report
-    displayComponents.displaySummaryReport(report, updatedTestSteps);
+    displayComponents.displaySummaryReport(report, testSteps);
 
     // Display test steps in a nice table
-    displayComponents.displayTestResultsTable(updatedTestSteps);
+    displayComponents.displayTestResultsTable(testSteps);
 
     // Display last error if present
     if (lastError) {
@@ -235,9 +205,9 @@ export const generateReportNode = async ({
     }
 
     return {
-      testSteps: updatedTestSteps,
+      // Keep the original test steps - don't modify them
       testSummary: report.summary,
-      passRate: report.passRate,
+      passRate: passRate,
       recommendations: report.recommendations,
       criticalIssues: report.criticalIssues,
       errorAnalysis: report.errorAnalysis,

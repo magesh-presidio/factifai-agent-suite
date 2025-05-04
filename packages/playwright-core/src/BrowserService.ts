@@ -73,7 +73,7 @@ export class BrowserService {
         type: "jpeg",
         quality: 80,
         fullPage: false,
-        timeout: 3000,
+        timeout: 5000,
       });
       return buffer.toString("base64");
     } catch (error) {

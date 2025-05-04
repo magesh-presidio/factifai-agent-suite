@@ -1,20 +1,18 @@
+import { END } from "@langchain/langgraph";
 import { GraphStateType } from "../graph/graph";
 
 export const shouldContinueEdge = (state: GraphStateType) => {
-  // Check if we have a message with tool calls
-  const lastMessage = state.messages[state.messages.length - 1];
-
-  if (
-    lastMessage &&
-    "tool_calls" in lastMessage &&
-    lastMessage.tool_calls?.length > 0
-  ) {
+  if (state.isComplete === false) {
     return "tools";
   }
 
-  if (state.isComplete || state.lastError) {
-    return "end";
+  return "end";
+};
+
+export const shouldGenerateReport = (state: GraphStateType) => {
+  if (state.isComplete === true) {
+    return "report";
   }
 
-  return "continue";
+  return "end";
 };

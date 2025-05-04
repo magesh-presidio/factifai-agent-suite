@@ -1,5 +1,9 @@
 import { BrowserService, getCurrentUrl } from "@factifai/playwright-core";
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import {
+  HumanMessage,
+  MessageContentComplex,
+  SystemMessage,
+} from "@langchain/core/messages";
 import chalk from "chalk";
 import { GraphStateType } from "../../graph/graph";
 import { logger } from "../../../common/utils/logger";
@@ -14,7 +18,7 @@ const captureCurrentState = async (sessionId: string) => {
     const screenshot = await browserService.takeScreenshot(sessionId);
     logger.info(chalk.cyan("📷 Screenshot captured successfully"));
 
-    const currentUrl = (await getCurrentUrl(sessionId)).url;
+    const currentUrl = (await getCurrentUrl(sessionId)).url ?? null;
     console.log(`Current URL: ${currentUrl}`);
 
     return { screenshot, url: currentUrl, error: null };
@@ -30,18 +34,23 @@ const buildSystemPrompt = (
   lastAction: string | null,
   expectedOutcome: string | null,
   lastScreenshot: string | null,
+  currentUrl: string | null,
   retryCount: number,
   retryAction: string | null,
   maxRetries: number
 ) => {
-  let systemPromptContent = `You are a browser automation QA assistant that helps execute test instrcutions on web pages.
+  let systemPromptContent = `You are a browser automation QA assistant that helps execute test instructions on web pages.
   You have access to tools for navigation, clicking elements, typing text and multiple scrolling tools for dealing with long pages.
   Use the screenshot to identify elements on the page and determine their coordinates.
+  
+  CURRENT PAGE URL: ${
+    currentUrl || "Unknown"
+  }
   
   IMPORTANT GUIDELINES:
   1. ALWAYS use screenshots to identify where to click
   2. ALWAYS use clickByCoordinates instead of clickBySelector
-  3. For typing, first click on the input field, then use the type tool
+  3. For typing and clearing on inputs, first click on the input field, then use the type tool
   4. For chunk-based scrolling use scrollToNextChunk and scrollToPrevChunk
   5. For verification and observation step use waitBySecondsTool to wait and observe.
   6. Work step by step to complete the task
@@ -110,6 +119,7 @@ const createHumanMessage = (
   expectedOutcome: string | null,
   lastScreenshot: string | null,
   currentScreenshot: string,
+  currentUrl: string | null,
   retryCount: number,
   maxRetries: number
 ) => {
@@ -117,6 +127,9 @@ const createHumanMessage = (
     {
       type: "text",
       text: `Execute this test case: "${instruction}"
+             Current URL: ${
+               currentUrl || "Unknown"
+             }
              ${
                lastAction && expectedOutcome
                  ? "First verify if the previous action succeeded, then "
@@ -225,12 +238,14 @@ export const executeAndVerifyNode = async ({
   maxRetries = 3,
 }: GraphStateType) => {
   // Capture current browser state
-  const { screenshot: currentScreenshot, error: captureError } =
-    await captureCurrentState(sessionId);
+  const {
+    screenshot: currentScreenshot,
+    error: captureError,
+    url: currentUrl,
+  } = await captureCurrentState(sessionId);
 
   if (captureError || !currentScreenshot) {
     return {
-      isComplete: true,
       lastError: `Failed to capture screenshot: ${captureError}`,
     };
   }
@@ -241,6 +256,7 @@ export const executeAndVerifyNode = async ({
     lastAction,
     expectedOutcome,
     lastScreenshot,
+    currentUrl,
     retryCount,
     retryAction,
     maxRetries
@@ -253,6 +269,7 @@ export const executeAndVerifyNode = async ({
     expectedOutcome,
     lastScreenshot,
     currentScreenshot,
+    currentUrl,
     retryCount,
     maxRetries
   );
@@ -279,7 +296,9 @@ export const executeAndVerifyNode = async ({
 
     // Filter out duplicate tool_use elements
     if (typeof response.content !== "string") {
-      response.content = response.content.filter((c) => c.type !== "tool_use");
+      response.content = response.content.filter(
+        (c: MessageContentComplex) => c.type !== "tool_use"
+      );
     }
 
     // Convert response content to string for processing
@@ -314,7 +333,6 @@ export const executeAndVerifyNode = async ({
                 removeImageUrlsFromMessage(humanMessage),
                 response,
               ],
-              isComplete: true,
               lastError: `Verification failed after ${retryCount} retries: ${verification.explanation}`,
               retryCount: 0, // Reset retry count
               retryAction: "",
@@ -338,7 +356,6 @@ export const executeAndVerifyNode = async ({
             lastScreenshot: currentScreenshot,
             retryCount: retryCount + 1,
             retryAction: lastAction,
-            isComplete: false,
           };
         } else if (retryCount > 0) {
           // Log success after retries
@@ -359,21 +376,34 @@ export const executeAndVerifyNode = async ({
     // Clean messages for storage
     const cleaned = [removeImageUrlsFromMessage(humanMessage), response];
 
+    // Check if the last message contains tool calls
+    const lastMessage: MessageContentComplex = cleaned[cleaned.length - 1];
+    let shouldComplete = false;
+
+    if (
+      lastMessage &&
+      "tool_calls" in lastMessage &&
+      lastMessage.tool_calls?.length > 0
+    ) {
+      shouldComplete = false;
+    } else {
+      shouldComplete = true;
+    }
+
     return {
       //   messages: [...messages, ...cleaned],
       // TODO: IMPLEMENT SUMMARISATION
       messages: cleaned,
+      isComplete: shouldComplete,
       lastAction: nextAction,
       expectedOutcome: nextExpectedOutcome,
       lastScreenshot: currentScreenshot,
-      isComplete: true, // TODO HANDLE
       retryCount: 0, // Reset retry count for new action
       retryAction: "", // Clear retry action
     };
   } catch (error) {
     console.error("Error executing instruction:", error);
     return {
-      isComplete: true,
       lastError: `Error executing instruction: ${error}`,
     };
   }

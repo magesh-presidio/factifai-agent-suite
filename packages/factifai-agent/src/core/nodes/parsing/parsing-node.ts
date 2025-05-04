@@ -65,18 +65,6 @@ export const parseTestStepsNode = async ({ instruction }: GraphStateType) => {
     const parsingSpinnerId = "parsing-steps";
     logger.spinner("Parsing test steps...", parsingSpinnerId);
 
-    // Define system prompt to guide the parsing
-    const systemPrompt = new SystemMessage(
-      "You are a test automation specialist who converts natural language test descriptions " +
-        "into clear, structured test steps."
-    );
-
-    const userMessage = new HumanMessage(
-      `Parse the following test description into sequential, atomic test steps:\n\n${instruction}\n\n` +
-        "Format each step as a clear instruction beginning with an action verb. Don't combine " +
-        "multiple actions into a single step."
-    );
-
     // Define the structured output schema
     const outputSchema = z.object({
       steps: z.array(
@@ -89,7 +77,6 @@ export const parseTestStepsNode = async ({ instruction }: GraphStateType) => {
             .enum(["not_started", "in_progress", "passed", "failed"])
             .default("not_started")
             .describe("Current status of this step"),
-          // Add expected_result to each step
           expected_result: z
             .string()
             .optional()
@@ -98,19 +85,173 @@ export const parseTestStepsNode = async ({ instruction }: GraphStateType) => {
       ),
     });
 
+    let systemPrompt = new SystemMessage(
+      `You are a test automation specialist who converts natural language test descriptions into 
+      clear, structured test steps.
+      
+      You MUST output your response in this exact JSON format:
+      {
+        "steps": [
+          {
+            "id": 1,
+            "instruction": "Clear action-oriented step",
+            "status": "not_started",
+            "expected_result": "What should happen after this step"
+          },
+          ...more steps...
+        ]
+      }
+      
+      Always include a "steps" array, even if empty.
+      Each step MUST have all the required fields: id, instruction, status, and expected_result (which can be empty).
+      The output must be valid JSON that matches this exact structure.`
+    );
+
+    const userMessage = new HumanMessage(
+      `Parse the following test description into sequential, atomic test steps:\n\n${instruction}\n\n` +
+        "Rules for good test steps:\n" +
+        "1. Each step must begin with an action verb (Click, Enter, Navigate, etc.)\n" +
+        "2. Each step should be atomic - only one action per step\n" +
+        "3. Include an expected result for each step when applicable\n" +
+        "4. Number steps sequentially starting from 1\n" +
+        "5. Make steps clear and unambiguous\n\n" +
+        "Your response MUST be valid JSON in the exact format specified."
+    );
+
     // Get the model with structured output
     const model = BedrockModel().withStructuredOutput(outputSchema);
 
-    // Execute the analysis
-    const result = await model.invoke([systemPrompt, userMessage]);
+    // RETRY MECHANISM - Try up to 3 times with different approaches
+    let result;
+    let retryCount = 0;
+    const maxRetries = 3;
+    let testSteps: string | any[] = [];
+    let parseError = null;
 
-    // Set the first step to in_progress if there are any steps
-    const testSteps = result.steps.map((step, index) => {
-      if (index === 0) {
-        return { ...step, status: "in_progress" };
+    while (retryCount < maxRetries) {
+      try {
+        // Execute the analysis
+        result = await model.invoke([systemPrompt, userMessage]);
+
+        // VALIDATION - Check if steps is defined before using it
+        if (result && result.steps && Array.isArray(result.steps)) {
+          testSteps = result.steps.map((step: any, index: number) => {
+            if (index === 0) {
+              return { ...step, status: "in_progress" };
+            }
+            return step;
+          });
+
+          // If we got valid steps, break out of the retry loop
+          break;
+        } else {
+          // If steps is undefined but we didn't get an exception,
+          // throw a custom error to trigger retry
+          throw new Error(
+            "Received invalid response format: 'steps' property is undefined or not an array"
+          );
+        }
+      } catch (error) {
+        parseError = error;
+        retryCount++;
+
+        if (retryCount < maxRetries) {
+          logger.warn(
+            `Retry ${retryCount}/${maxRetries} - Adjusting prompt strategy...`
+          );
+
+          // Different prompt strategies for different retry attempts
+          if (retryCount === 1) {
+            // First retry: Be more explicit about JSON format
+            systemPrompt = new SystemMessage(
+              `You are a test automation specialist. Your task is to parse test descriptions into steps.
+              You MUST respond with ONLY JSON in this exact format, with no additional text:
+              {"steps": [{"id": 1, "instruction": "...", "status": "not_started", "expected_result": "..."}]}`
+            );
+          } else if (retryCount === 2) {
+            // Second retry: Try a more direct approach with an example
+            systemPrompt = new SystemMessage(
+              `Parse test steps into JSON. Example output:
+              {"steps": [{"id": 1, "instruction": "Click login button", "status": "not_started", "expected_result": "Login form appears"}]}
+              Return ONLY JSON with this structure.`
+            );
+          }
+
+          // Continue to next retry
+          continue;
+        }
+
+        // If we've exhausted retries, implement a manual fallback parser
+        logger.warn(
+          `Failed to parse with structured output after ${maxRetries} tries. Using fallback parser.`
+        );
+
+        // Fallback: Use a simpler prompt without structured output and parse manually
+        try {
+          const fallbackSystemPrompt = new SystemMessage(
+            "You are a test step parser. List each step on a new line with format: 'Step X: [instruction] -> [expected result]'"
+          );
+
+          const regularModel = BedrockModel();
+          const textResponse = await regularModel.invoke([
+            fallbackSystemPrompt,
+            userMessage,
+          ]);
+
+          const content =
+            typeof textResponse.content === "string"
+              ? textResponse.content
+              : JSON.stringify(textResponse.content);
+
+          // Manual parsing with regex
+          const stepPattern = /Step (\d+): (.*?)(?:\s*->\s*(.*?))?(?:\n|$)/g;
+          let match;
+          const manuallyParsedSteps = [];
+          let stepId = 1;
+
+          while ((match = stepPattern.exec(content)) !== null) {
+            manuallyParsedSteps.push({
+              id: stepId++,
+              instruction: match[2].trim(),
+              status: stepId === 1 ? "in_progress" : "not_started",
+              expected_result: match[3] ? match[3].trim() : undefined,
+            });
+          }
+
+          if (manuallyParsedSteps.length > 0) {
+            testSteps = manuallyParsedSteps;
+            break;
+          } else {
+            // If regex didn't work, try a simple line-by-line approach
+            const lines = content.split("\n").filter((line: string) => line.trim());
+            testSteps = lines.map((line: string, index: number) => ({
+              id: index + 1,
+              instruction: line.replace(/^Step \d+:/, "").trim(),
+              status: index === 0 ? "in_progress" : "not_started",
+              expected_result: undefined,
+            }));
+          }
+        } catch (fallbackError) {
+          // If even the fallback fails, return the original error
+          throw parseError;
+        }
       }
-      return step;
-    });
+    }
+
+    // *** ENSURE NON-EMPTY RESULT - If still empty after all retries, provide default ***
+    if (!testSteps || testSteps.length === 0) {
+      logger.warn(
+        "Could not parse test steps. Creating a single generic step."
+      );
+      testSteps = [
+        {
+          id: 1,
+          instruction: "Execute the test as described",
+          status: "in_progress",
+          expected_result: "Test completes successfully",
+        },
+      ];
+    }
 
     // Complete the spinner with success - keep it simple
     logger.spinnerSuccess(

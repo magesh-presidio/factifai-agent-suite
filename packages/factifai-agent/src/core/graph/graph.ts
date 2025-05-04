@@ -12,7 +12,7 @@ import { executeAndVerifyNode } from "../nodes/execution/execution-and-verificat
 import { trackAndUpdateStepsNode } from "../nodes/tracking/tracking-node";
 import { parseTestStepsNode } from "../nodes/parsing/parsing-node";
 import { preprocessTestInputNode } from "../nodes/preprocessing/preprocessing-node";
-import { shouldContinueEdge } from "../edges/edges";
+import { shouldContinueEdge, shouldGenerateReport } from "../edges/edges";
 
 export const State = Annotation.Root({
   // Base fields
@@ -97,8 +97,11 @@ export const browserAutomationGraph = new StateGraph(State)
   .addEdge("parse", "execute")
   .addConditionalEdges("execute", shouldContinueEdge, {
     tools: "tools",
-    continue: "execute",
-    end: "report", // Go to report instead of END
+    end: "track",
+  })
+  .addConditionalEdges("track", shouldGenerateReport, {
+    report: "report",
+    end: END,
   })
   .addEdge("tools", "track")
   .addEdge("tools", "execute")

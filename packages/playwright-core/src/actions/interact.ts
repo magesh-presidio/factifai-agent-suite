@@ -59,6 +59,31 @@ export async function type(
   }
 }
 
+export async function clear(
+  sessionId: string
+): Promise<{ success: boolean; error?: string }> {
+  const browserService = BrowserService.getInstance();
+
+  try {
+    const page = await browserService.getPage(sessionId);
+
+    await page.keyboard.press(
+      process.platform === "darwin" ? "Meta+A" : "Control+A"
+    );
+    await page.keyboard.press("Backspace");
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unknown error during clear operation",
+    };
+  }
+}
+
 export async function scrollBy(
   sessionId: string,
   dx: number, // pixels to move on the X-axis (left = −, right = +)

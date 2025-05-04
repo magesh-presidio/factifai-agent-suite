@@ -1,6 +1,7 @@
 import {
   click,
   type,
+  clear,
   scrollToNextChunk,
   scrollToPrevChunk,
   scrollBy,
@@ -154,10 +155,33 @@ export class InteractionTools {
       },
     });
 
+    const clearInputTool = new DynamicStructuredTool({
+      name: "clearInput",
+      description: "Clear text from the currently focused input field",
+      schema: z.object({
+        sessionId: z.string().describe("The browser session ID"),
+      }),
+      func: async (input) => {
+        logger.info("Clearing currently focused input field");
+        try {
+          const result = await clear(input.sessionId);
+          return JSON.stringify(result);
+        } catch (error) {
+          logger.error("Error clearing input field:", error);
+          return JSON.stringify({
+            success: false,
+            error:
+              error instanceof Error ? error.message : "Unknown clear error",
+          });
+        }
+      },
+    });
+
     return [
       // clickBySelectorTool,
       clickByCoordinatesTool,
       typeTool,
+      clearInputTool,
       scrollToNextChunkTool,
       scrollToPrevChunkTool,
       scrollByTool,

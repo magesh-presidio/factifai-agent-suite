@@ -14,6 +14,7 @@ export {
 export {
   click,
   type,
+  clear,
   scrollToNextChunk,
   scrollToPrevChunk,
   scrollBy,

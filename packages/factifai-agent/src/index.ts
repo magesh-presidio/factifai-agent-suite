@@ -2,7 +2,6 @@ import dotenv from "dotenv";
 import { browserAutomationGraph } from "./core/graph/graph";
 import boxen from "boxen";
 import chalk from "chalk";
-import { saveGraphImage } from "./common/utils/graph-visualizer";
 
 dotenv.config();
 
@@ -76,10 +75,8 @@ export const executeBrowserTask = async (
   }
 };
 
-saveGraphImage();
-
 executeBrowserTask(
-  `go to saucedemo.com and login with creds standard_user and secret_sauce`,
+  `go to saucedemo.com and login with username: standard_user and password: secret_sauce and ensure the login is successful`,
   `browser-session-${Date.now()}`
 );
 

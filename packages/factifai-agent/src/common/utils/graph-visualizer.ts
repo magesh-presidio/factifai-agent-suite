@@ -1,7 +1,7 @@
 import { writeFileSync } from "fs";
 import { browserAutomationGraph } from "../../core/graph/graph";
 
-export const saveGraphImage = async () => {
+const saveGraphImage = async () => {
   try {
     // Generate the graph visualization
     const drawableGraph = await browserAutomationGraph.getGraphAsync();
@@ -19,3 +19,5 @@ export const saveGraphImage = async () => {
     console.error("Error saving the graph image:", error);
   }
 };
+
+saveGraphImage();

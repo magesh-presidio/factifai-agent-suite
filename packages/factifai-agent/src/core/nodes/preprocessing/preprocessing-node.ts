@@ -44,14 +44,14 @@ export const preprocessTestInputNode = async ({
     );
 
     // Update spinner to show progress
-    logger.updateSpinner(preprocessingId, "Normalizing text...");
+    logger.updateSpinner(preprocessingId, "Normalizixng text...");
 
     // 4. Remove other markdown formatting while preserving content
     processedText = processedText.replace(/\*\*/g, "");
 
     // 5. Normalize indentation
     const lines = processedText.split("\n");
-    processedText = lines.map((line) => line.trim()).join("\n");
+    processedText = lines.map((line: string) => line.trim()).join("\n");
 
     // Update spinner for final step
     logger.updateSpinner(preprocessingId, "Structuring test steps...");

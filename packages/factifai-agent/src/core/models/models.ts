@@ -1,16 +1,17 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { BedrockChat } from "@langchain/community/chat_models/bedrock";
 
-export const OpenAIModel = (streaming?: boolean) =>
+export const OpenAIModel = (streaming?: boolean, maxTokens = 12000) =>
   new ChatOpenAI({
     modelName: "gpt-4.1",
     temperature: 0,
     apiKey: process.env.OPENAI_API_KEY,
     streaming: streaming,
     maxRetries: 0,
+    maxTokens,
   });
 
-export const BedrockModel = (streaming?: boolean) =>
+export const BedrockModel = (streaming?: boolean, maxTokens = 12000) =>
   new BedrockChat({
     model: process.env.BEDROCK_MODEL, // Updated to newer model
     region: process.env.AWS_DEFAULT_REGION,
@@ -22,5 +23,5 @@ export const BedrockModel = (streaming?: boolean) =>
       anthropic_version: "bedrock-2023-05-31",
     },
     streaming,
-    // maxTokens: 131072,
+    maxTokens,
   });

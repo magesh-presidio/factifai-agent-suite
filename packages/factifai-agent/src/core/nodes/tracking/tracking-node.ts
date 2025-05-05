@@ -177,7 +177,7 @@ export const trackAndUpdateStepsNode = async ({
     });
 
     // Use a model with fast inference for real-time updates
-    const model = BedrockModel().withStructuredOutput(outputSchema);
+    const model = BedrockModel(false, 32000).withStructuredOutput(outputSchema);
 
     // Generate the step updates
     const analysisResult = await model.invoke([systemPrompt, userMessage]);

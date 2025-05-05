@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc",
     "start": "npx ts-node src/index.ts",
-    "generate-graph-image": "npx ts-node src/common/utils/graph-visualizer.ts",
+    "generate-graph": "npx ts-node src/common/utils/graph-visualizer.ts",
     "test": "jest",
     "lint": "eslint src --ext .ts"
   },

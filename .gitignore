@@ -48,3 +48,4 @@ desktop.ini
 *.swp
 *.swo
 .hai/
+/packages/factifai-agent/logs

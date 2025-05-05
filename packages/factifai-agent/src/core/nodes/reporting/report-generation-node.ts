@@ -2,11 +2,15 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { z } from "zod";
 import chalk from "chalk";
 import figures from "figures";
+import boxen from "boxen";
+import * as fs from "fs";
+import * as path from "path";
 import { enhancedLogger } from "../../../common/services/console-display-service";
 import { GraphStateType } from "../../graph/graph";
 import { BedrockModel } from "../../models/models";
 import { TEST_STATUS } from "./schemas";
 import { displayComponents } from "./display-components";
+import { logger } from "../../../common/utils/logger";
 
 export const reportOutputSchema = z.object({
   summary: z.string().describe("Overall test execution summary"),
@@ -17,7 +21,8 @@ export const reportOutputSchema = z.object({
     .describe("Estimated test execution time; null if unavailable"),
   recommendations: z
     .array(z.string())
-    .describe("Recommendations for improving the test"),
+    .nullable()
+    .describe("Recommendations for improving the test; null if unavailable"),
   criticalIssues: z
     .array(z.string())
     .nullable()                                      
@@ -105,10 +110,119 @@ async function generateTestReport(
   userMessage: HumanMessage
 ) {
   // Get the model with structured output
-  const model = BedrockModel().withStructuredOutput(reportOutputSchema);
+  const model = BedrockModel(false, 32000).withStructuredOutput(reportOutputSchema);
 
   // Generate the report
   return await model.invoke([systemPrompt, userMessage]);
+}
+
+/**
+ * Generate JUnit XML report from test steps
+ */
+function generateJUnitXmlReport(
+  testSteps: any[],
+  testSummary: string,
+  executionTime: string | null,
+  lastError: string | null
+): string {
+  // Count test statistics
+  const totalTests = testSteps.length;
+  const failures = testSteps.filter(step => step.status === TEST_STATUS.FAILED).length;
+  const skipped = testSteps.filter(step => 
+    step.status === TEST_STATUS.NOT_STARTED || 
+    step.status === TEST_STATUS.IN_PROGRESS
+  ).length;
+  
+  // Parse execution time if available, default to 0
+  let timeValue = "0";
+  if (executionTime) {
+    // Try to extract numeric value from time string (e.g. "5.2 seconds" -> "5.2")
+    const timeMatch = executionTime.match(/(\d+(\.\d+)?)/);
+    if (timeMatch && timeMatch[1]) {
+      timeValue = timeMatch[1];
+    }
+  }
+  
+  // Start building XML
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  xml += '<testsuites>\n';
+  xml += `  <testsuite name="FactifAI Test Suite" tests="${totalTests}" failures="${failures}" errors="0" skipped="${skipped}" time="${timeValue}">\n`;
+  
+  // Add test summary as a property
+  xml += '    <properties>\n';
+  xml += `      <property name="summary" value="${escapeXml(testSummary)}"/>\n`;
+  xml += '    </properties>\n';
+  
+  // Add each test step as a test case
+  testSteps.forEach(step => {
+    const testName = `Step ${step.id}: ${step.instruction}`;
+    
+    xml += `    <testcase classname="factifai.tests" name="${escapeXml(testName)}" time="0">\n`;
+    
+    // Add failure information if the test failed
+    if (step.status === TEST_STATUS.FAILED) {
+      const message = step.notes || "Test step failed";
+      xml += `      <failure message="${escapeXml(message)}" type="AssertionError">${escapeXml(message)}</failure>\n`;
+    }
+    
+    // Add skipped tag if the test was not started or is in progress
+    if (step.status === TEST_STATUS.NOT_STARTED || step.status === TEST_STATUS.IN_PROGRESS) {
+      xml += '      <skipped/>\n';
+    }
+    
+    xml += '    </testcase>\n';
+  });
+  
+  // Add system-out with any error information
+  if (lastError) {
+    xml += '    <system-out>\n';
+    xml += `      ${escapeXml(lastError)}\n`;
+    xml += '    </system-out>\n';
+  }
+  
+  // Close the testsuite and testsuites tags
+  xml += '  </testsuite>\n';
+  xml += '</testsuites>';
+  
+  return xml;
+}
+
+/**
+ * Escape special characters for XML
+ */
+function escapeXml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+/**
+ * Write JUnit XML report to file
+ */
+function writeJUnitXmlReport(xml: string): string {
+  try {
+    // Create logs directory if it doesn't exist
+    const logsDir = path.join(process.cwd(), 'logs');
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+    
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '');
+    const filename = `test-report-${timestamp}.xml`;
+    const filePath = path.join(logsDir, filename);
+    
+    // Write the XML to file
+    fs.writeFileSync(filePath, xml);
+    
+    return filePath;
+  } catch (error) {
+    logger.error(`Failed to write JUnit XML report: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
+  }
 }
 
 // Main node function
@@ -203,6 +317,47 @@ export const generateReportNode = async ({
     // Display critical issues if any
     if (report.criticalIssues && report.criticalIssues.length > 0) {
       displayComponents.displayCriticalIssues(report.criticalIssues);
+    }
+    
+    // Generate JUnit XML report
+    try {
+      enhancedLogger.info(
+        `${chalk.blue(figures.pointer)} Generating JUnit XML report...`
+      );
+      
+      const junitXml = generateJUnitXmlReport(
+        testSteps,
+        report.summary,
+        report.executionTime,
+        lastError
+      );
+      
+      const xmlFilePath = writeJUnitXmlReport(junitXml);
+      
+      enhancedLogger.success(
+        `${chalk.green(figures.tick)} JUnit XML report saved to: ${xmlFilePath}`
+      );
+      
+      // Display the XML report path in a box
+      console.log(
+        boxen(
+          chalk.bold.green("JUnit XML Report Generated") +
+            "\n\n" +
+            chalk.white(`File: ${xmlFilePath}`),
+          {
+            padding: 1,
+            margin: { top: 1, bottom: 1 },
+            borderStyle: "round",
+            borderColor: "green",
+          }
+        )
+      );
+    } catch (xmlError) {
+      enhancedLogger.error(
+        `${chalk.red(figures.cross)} Failed to generate JUnit XML report: ${
+          xmlError instanceof Error ? xmlError.message : "Unknown error"
+        }`
+      );
     }
 
     return {

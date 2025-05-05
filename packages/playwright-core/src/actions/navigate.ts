@@ -10,13 +10,8 @@ export async function navigate(
   try {
     const page = await browserService.getPage(sessionId);
     await page.goto(url);
-
-    // Take screenshot after navigation
-    //const screenshot = await browserService.takeScreenshot(sessionId);
-
     return {
       success: true,
-      //screenshot: screenshot ?? undefined,
     };
   } catch (error) {
     return {

@@ -5,6 +5,7 @@ import {
   type,
   getVisibleElements,
   getCurrentUrl,
+  wait,
 } from "../index";
 
 async function runLogin() {
@@ -90,6 +91,7 @@ async function loginToSauceDemo(
     () => click(sessionId, elements.usernameField),
     "Username field click"
   );
+  await wait(sessionId, 4);
   await executeStep(() => type(sessionId, username), "Username input");
 
   // Enter password
@@ -98,6 +100,7 @@ async function loginToSauceDemo(
     () => click(sessionId, elements.passwordField),
     "Password field click"
   );
+  await wait(sessionId, 4);
   await executeStep(() => type(sessionId, password), "Password input");
 
   // Click login button

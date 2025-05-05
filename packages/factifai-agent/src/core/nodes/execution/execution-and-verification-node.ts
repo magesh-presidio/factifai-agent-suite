@@ -41,14 +41,14 @@ const buildSystemPrompt = (
 ) => {
   let systemPromptContent = `You are a browser automation QA assistant that helps execute test instructions on web pages.
   You have access to tools for navigation, clicking elements, typing text and multiple scrolling tools for dealing with long pages.
-  Use the screenshot to identify elements on the page and determine their coordinates.
+  Use the screenshot to identify elements on the page and determine their coordinates. 
   
   CURRENT PAGE URL: ${
     currentUrl || "Unknown"
   }
   
   IMPORTANT GUIDELINES:
-  1. ALWAYS use screenshots to identify where to click
+  1. ALWAYS use screenshots to identify where to click and be aware that whenever you do a click action a red rounded cursor will appear in the last clicked location/element.
   2. ALWAYS use clickByCoordinates instead of clickBySelector
   3. For typing and clearing on inputs, first click on the input field, then use the type tool
   4. For chunk-based scrolling use scrollToNextChunk and scrollToPrevChunk

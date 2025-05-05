@@ -18,4 +18,5 @@ export {
   scrollToNextChunk,
   scrollToPrevChunk,
   scrollBy,
+  setCursorVisibility,
 } from "./actions/interact";

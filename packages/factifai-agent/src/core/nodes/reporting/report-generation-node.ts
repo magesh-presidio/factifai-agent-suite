@@ -123,7 +123,9 @@ function generateJUnitXmlReport(
   testSteps: any[],
   testSummary: string,
   executionTime: string | null,
-  lastError: string | null
+  lastError: string | null,
+  recommendations: string[] | null = null,
+  criticalIssues: string[] | null = null
 ): string {
   // Count test statistics
   const totalTests = testSteps.length;
@@ -148,9 +150,28 @@ function generateJUnitXmlReport(
   xml += '<testsuites>\n';
   xml += `  <testsuite name="FactifAI Test Suite" tests="${totalTests}" failures="${failures}" errors="0" skipped="${skipped}" time="${timeValue}">\n`;
   
-  // Add test summary as a property
+  // Calculate pass rate percentage
+  const passRate = totalTests > 0 ? Math.round(((totalTests - failures - skipped) / totalTests) * 100) : 0;
+  
+  // Add test summary and recommendations as properties
   xml += '    <properties>\n';
   xml += `      <property name="summary" value="${escapeXml(testSummary)}"/>\n`;
+  xml += `      <property name="passRate" value="${passRate}%"/>\n`;
+  
+  // Add recommendations as properties
+  if (recommendations && recommendations.length > 0) {
+    recommendations.forEach((recommendation, index) => {
+      xml += `      <property name="recommendation.${index + 1}" value="${escapeXml(recommendation)}"/>\n`;
+    });
+  }
+  
+  // Add critical issues as properties
+  if (criticalIssues && criticalIssues.length > 0) {
+    criticalIssues.forEach((issue, index) => {
+      xml += `      <property name="criticalIssue.${index + 1}" value="${escapeXml(issue)}"/>\n`;
+    });
+  }
+  
   xml += '    </properties>\n';
   
   // Add each test step as a test case
@@ -168,6 +189,13 @@ function generateJUnitXmlReport(
     // Add skipped tag if the test was not started or is in progress
     if (step.status === TEST_STATUS.NOT_STARTED || step.status === TEST_STATUS.IN_PROGRESS) {
       xml += '      <skipped/>\n';
+    }
+    
+    // Add notes for all test steps that have them (regardless of status)
+    if (step.notes) {
+      xml += '      <system-out>\n';
+      xml += `        ${escapeXml(step.notes)}\n`;
+      xml += '      </system-out>\n';
     }
     
     xml += '    </testcase>\n';
@@ -329,7 +357,9 @@ export const generateReportNode = async ({
         testSteps,
         report.summary,
         report.executionTime,
-        lastError
+        lastError,
+        report.recommendations,
+        report.criticalIssues
       );
       
       const xmlFilePath = writeJUnitXmlReport(junitXml);

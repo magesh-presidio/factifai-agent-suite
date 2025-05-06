@@ -9,6 +9,8 @@ export {
   reload,
   goBack,
   goForward,
+  markVisibleElements,
+  removeElementMarkers,
 } from "./actions/navigate";
 
 export {

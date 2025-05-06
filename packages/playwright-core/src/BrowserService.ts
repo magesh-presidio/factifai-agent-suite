@@ -1,6 +1,7 @@
 import { Browser, BrowserContext, Page } from "playwright";
 import * as playwright from "playwright";
 import { BrowserInferenceData, IClickableElement } from "./interfaces";
+import { markVisibleElements, removeElementMarkers } from "./actions/navigate";
 
 export class BrowserService {
   private static instance: BrowserService;
@@ -70,8 +71,8 @@ export class BrowserService {
       }
 
       const buffer = await page.screenshot({
-        type: "jpeg",
-        quality: 80,
+        type: "png",
+        quality: 90,
         fullPage: false,
         timeout: 5000,
       });
@@ -332,6 +333,61 @@ export class BrowserService {
       this.browser = null;
       this.contexts.clear();
       this.pages.clear();
+    }
+  }
+
+  /**
+   * Takes a screenshot with elements marked with numbered bounding boxes
+   * @param sessionId The session identifier
+   * @param options Optional configuration for marking elements and screenshot
+   * @returns Promise with screenshot image and marked elements data
+   */
+  async takeMarkedScreenshot(
+    sessionId: string,
+    options?: {
+      boxColor?: string; // Color of the bounding box (default: red)
+      textColor?: string; // Color of the number label (default: white)
+      backgroundColor?: string; // Background color of the number label (default: blue)
+      maxElements?: number; // Maximum number of elements to mark (default: 100)
+      minTextLength?: number; // Minimum text length to consider (default: 0)
+      removeExisting?: boolean; // Remove existing markers before adding new ones (default: true)
+      randomColors?: boolean; // Use random colors for each element (default: true)
+      minWaitMs?: number; // Minimum wait time before screenshot (default: 1000ms)
+      removeAfter?: boolean; // Whether to remove markers after taking screenshot (default: false)
+    }
+  ): Promise<{
+    image: string | null; // Base64-encoded screenshot
+    elements: { labelNumber: string; coordinates: { x: number; y: number } }[]; // Marked elements data
+  }> {
+    try {
+      // Mark all elements first
+      const markResult = await markVisibleElements(sessionId, {
+        boxColor: options?.boxColor,
+        textColor: options?.textColor,
+        backgroundColor: options?.backgroundColor,
+        maxElements: options?.maxElements,
+        minTextLength: options?.minTextLength,
+        removeExisting: options?.removeExisting,
+        randomColors: options?.randomColors,
+      });
+
+      // Take the screenshot
+      const minWaitMs = options?.minWaitMs || 1000;
+      const screenshot = await this.takeScreenshot(sessionId, minWaitMs);
+
+      // Remove markers if requested
+      if (options?.removeAfter) {
+        await removeElementMarkers(sessionId);
+      }
+
+      // Return both the screenshot and elements data
+      return {
+        image: screenshot,
+        elements: markResult.elements || [],
+      };
+    } catch (error) {
+      console.error("Error in takeMarkedScreenshot:", error);
+      return { image: null, elements: [] };
     }
   }
 }

@@ -1,4 +1,4 @@
-import { BrowserService, getCurrentUrl, getVisibleElements } from "@factifai/playwright-core";
+import { BrowserService, getCurrentUrl } from "@factifai/playwright-core";
 import {
   HumanMessage,
   MessageContentComplex,
@@ -15,16 +15,51 @@ import { removeImageUrlsFromMessage } from "../../../common/utils/llm-utils";
 const captureCurrentState = async (sessionId: string) => {
   const browserService = BrowserService.getInstance();
   try {
-    const screenshot = await browserService.takeScreenshot(sessionId);
+    const markedScreenshotResponse = await browserService.takeMarkedScreenshot(
+      sessionId,
+      {
+        randomColors: true,
+        maxElements: 100,
+        removeAfter: true, // Clean up markers after taking the screenshot
+      }
+    );
+    const screenshot = markedScreenshotResponse.image;
+    
+    // Save screenshot to logs for debugging
+    if (screenshot) {
+      const fs = require('fs');
+      const path = require('path');
+      const logsDir = path.join(__dirname, '../../../../logs');
+      
+      // Ensure logs directory exists
+      if (!fs.existsSync(logsDir)) {
+        fs.mkdirSync(logsDir, { recursive: true });
+      }
+      
+      // Write the screenshot to the logs directory
+      const imagePath = path.join(logsDir, 'currentImage.png');
+      fs.writeFileSync(imagePath, Buffer.from(screenshot, 'base64'));
+      logger.info(chalk.cyan(`📷 Screenshot saved to ${imagePath} for debugging`));
+    }
+    
     logger.info(chalk.cyan("📷 Screenshot captured successfully"));
 
     const currentUrl = (await getCurrentUrl(sessionId)).url ?? null;
     console.log(`Current URL: ${currentUrl}`);
-    
-    // Get visible elements on the page
-    const visibleElementsResult = await getVisibleElements(sessionId, 35);
-    const visibleElements = visibleElementsResult.success ? visibleElementsResult.elements : null;
-    logger.info(chalk.cyan(`🔍 Found ${visibleElements?.length || 0} visible elements on the page`));
+
+    // Marked elements on the page
+    const markedElementsResult = markedScreenshotResponse?.elements;
+    const visibleElements =
+      markedElementsResult?.length > 0 ? markedElementsResult : null;
+
+    logger.info(
+      chalk.cyan(
+        `🔍 Found ${
+          visibleElements?.length || 0
+        } visible marked elements on the page`
+      )
+    );
+    logger.info(chalk.cyan(`🔍 Found ${JSON.stringify(visibleElements)}`));
 
     return { screenshot, url: currentUrl, visibleElements, error: null };
   } catch (error) {
@@ -47,11 +82,9 @@ const buildSystemPrompt = (
 ) => {
   let systemPromptContent = `You are a browser automation QA assistant that helps execute test instructions on web pages SEQUENTIALLY.
   You have access to tools for navigation, clicking elements, typing text and multiple scrolling tools for dealing with long pages.
-  Use the screenshot and visible elements data to identify elements on the page and determine their coordinates. 
+  Use the marked screenshot and visible elements' coordinate data with label numbers to identify location of elements on the page and determine their coordinates. The screenshot shows interactive elements with colored bounding boxes and numbered labels that correspond directly to the "labelNumber" in the elements data.
   
-  CURRENT PAGE URL: ${
-    currentUrl || "Unknown"
-  }
+  CURRENT PAGE URL: ${currentUrl || "Unknown"}
 
   CURRENT BROWSER RESOLUTION: 1280x720
 
@@ -67,19 +100,25 @@ const buildSystemPrompt = (
   5. Work step by step to complete the task
   6. ALWAYS include the sessionId parameter in EVERY tool call: "${sessionId}"
   
-  VISIBLE ELEMENTS:
-  ${visibleElements && visibleElements.length > 0 
-    ? `The page contains ${visibleElements.length} visible elements with their exact coordinates and attributes.
-       Use this information to precisely locate elements by:
-       - HTML tag name (e.g., button, a, input)
-       - ID and class attributes (if present)
-       - Text content
-       - Exact coordinates (x, y) for clicking
+  MARKED VISIBLE ELEMENTS:
+  ${
+    visibleElements && visibleElements.length > 0
+      ? `The page contains ${visibleElements.length} visible interactive elements that have been marked with numbered bounding boxes in the screenshot.
        
-       When clicking elements, use the exact coordinates provided in the visible elements data for maximum precision.
-       Here are up to 20 key elements on the page:
+       IMPORTANT - Understanding the numbered markers in the screenshot:
+       1. Each interactive element has a colored bounding box around it with a corresponding numbered label (1, 2, 3, etc.)
+       2. The "labelNumber" in the data below directly corresponds to these numbered labels in the screenshot
+       3. The "coordinates" provide the exact (x, y) position of each element's center for precise clicking
+       
+       When deciding where to click:
+       - First identify the element you need by its numbered label in the screenshot
+       - Then use the exact coordinates from the matching labelNumber in the data below
+       - For example, if you want to click on element with label "5" in the screenshot, use the coordinates from the element with "labelNumber": "5"
+       
+       Here are the interactive elements on the page with their coordinates:
        ${JSON.stringify(visibleElements.slice(0, 20), null, 2)}`
-    : 'No visible elements data available for this page.'}`;
+      : "No visible elements data available for this page."
+  }`;
 
   // Add retry information if we're currently retrying an action
   if (retryCount > 0 && retryAction === lastAction) {
@@ -154,9 +193,7 @@ const createHumanMessage = (
     {
       type: "text",
       text: `Execute this test case: "${instruction}"
-             Current URL: ${
-               currentUrl || "Unknown"
-             }
+             Current URL: ${currentUrl || "Unknown"}
              ${
                lastAction && expectedOutcome
                  ? "First verify if the previous action succeeded, then "
@@ -176,7 +213,7 @@ const createHumanMessage = (
       { type: "text", text: "Previous screenshot:" },
       {
         type: "image_url",
-        image_url: { url: `data:image/jpeg;base64,${lastScreenshot}` },
+        image_url: { url: `data:image/png;base64,${lastScreenshot}` },
       }
     );
   }
@@ -193,7 +230,7 @@ const createHumanMessage = (
     },
     {
       type: "image_url",
-      image_url: { url: `data:image/jpeg;base64,${currentScreenshot}` },
+      image_url: { url: `data:image/png;base64,${currentScreenshot}` },
     }
   );
 
@@ -257,10 +294,10 @@ const extractActionInfo = (responseContent: any) => {
 let isShuttingDown = false;
 
 // Register for shutdown events
-process.on('SIGINT', () => {
+process.on("SIGINT", () => {
   isShuttingDown = true;
 });
-process.on('SIGTERM', () => {
+process.on("SIGTERM", () => {
   isShuttingDown = true;
 });
 
@@ -277,10 +314,10 @@ export const executeAndVerifyNode = async ({
 }: GraphStateType) => {
   // Check if we're in the process of shutting down
   if (isShuttingDown) {
-    console.log('Execution aborted due to shutdown in progress');
+    console.log("Execution aborted due to shutdown in progress");
     return {
       isComplete: true,
-      lastError: 'Operation was canceled due to application shutdown',
+      lastError: "Operation was canceled due to application shutdown",
     };
   }
   // Capture current browser state

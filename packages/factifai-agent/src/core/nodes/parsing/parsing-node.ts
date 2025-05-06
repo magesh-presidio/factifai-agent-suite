@@ -6,7 +6,7 @@ import figures from "figures";
 import { table } from "table";
 import { logger } from "../../../common/utils/logger";
 import { GraphStateType } from "../../graph/graph";
-import { OpenAIModel as BedrockModel } from "../../models/models";
+import { BedrockModel } from "../../models/models";
 
 export const parseTestStepsNode = async ({ instruction }: GraphStateType) => {
   if (!instruction) {

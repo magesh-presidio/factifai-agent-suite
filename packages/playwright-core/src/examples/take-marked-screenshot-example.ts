@@ -48,7 +48,7 @@ async function takeMarkedScreenshotExample() {
       }
       
       // Write the screenshot to the logs directory
-      const imagePath = path.join(logsDir, 'currentImage.png');
+      const imagePath = path.join(logsDir, 'currentImage.jpeg');
       fs.writeFileSync(imagePath, Buffer.from(screenshot, 'base64'));
       console.log(`Screenshot saved to ${imagePath} for debugging`);
       

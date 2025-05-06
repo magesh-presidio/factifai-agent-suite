@@ -10,6 +10,7 @@ import { logger } from "../../../common/utils/logger";
 import { BedrockModel } from "../../models/models";
 import { ALL_TOOLS } from "../../../tools";
 import { removeImageUrlsFromMessage } from "../../../common/utils/llm-utils";
+import { convertElementsToXml } from "../../../common/utils/xml-formatter";
 
 // Helper function to capture current browser state
 const captureCurrentState = async (sessionId: string) => {
@@ -18,9 +19,9 @@ const captureCurrentState = async (sessionId: string) => {
     const markedScreenshotResponse = await browserService.takeMarkedScreenshot(
       sessionId,
       {
-        randomColors: true,
+        randomColors: false,
         maxElements: 100,
-        removeAfter: true, // Clean up markers after taking the screenshot
+        removeAfter: false, // Clean up markers after taking the screenshot
       }
     );
     const screenshot = markedScreenshotResponse.image;
@@ -37,7 +38,7 @@ const captureCurrentState = async (sessionId: string) => {
       }
       
       // Write the screenshot to the logs directory
-      const imagePath = path.join(logsDir, 'currentImage.png');
+      const imagePath = path.join(logsDir, 'currentImage.jpeg');
       fs.writeFileSync(imagePath, Buffer.from(screenshot, 'base64'));
       logger.info(chalk.cyan(`📷 Screenshot saved to ${imagePath} for debugging`));
     }
@@ -101,24 +102,13 @@ const buildSystemPrompt = (
   6. ALWAYS include the sessionId parameter in EVERY tool call: "${sessionId}"
   
   MARKED VISIBLE ELEMENTS:
-  ${
-    visibleElements && visibleElements.length > 0
-      ? `The page contains ${visibleElements.length} visible interactive elements that have been marked with numbered bounding boxes in the screenshot.
-       
-       IMPORTANT - Understanding the numbered markers in the screenshot:
-       1. Each interactive element has a colored bounding box around it with a corresponding numbered label (1, 2, 3, etc.)
-       2. The "labelNumber" in the data below directly corresponds to these numbered labels in the screenshot
-       3. The "coordinates" provide the exact (x, y) position of each element's center for precise clicking
-       
-       When deciding where to click:
-       - First identify the element you need by its numbered label in the screenshot
-       - Then use the exact coordinates from the matching labelNumber in the data below
-       - For example, if you want to click on element with label "5" in the screenshot, use the coordinates from the element with "labelNumber": "5"
-       
-       Here are the interactive elements on the page with their coordinates:
-       ${JSON.stringify(visibleElements.slice(0, 20), null, 2)}`
-      : "No visible elements data available for this page."
-  }`;
+  The screenshot shows interactive elements with colored bounding boxes and numbered labels.
+  Each element has a colored box around it with a corresponding numbered label (1, 2, 3, etc.).
+  
+  When deciding where to click:
+  - First identify the element you need by its numbered label in the screenshot
+  - Then use the exact coordinates from the matching label in the XML data provided with the screenshot
+  - For example, if you want to click on element with label="5" in the screenshot, use the coordinates from the element with label="5"`;
 
   // Add retry information if we're currently retrying an action
   if (retryCount > 0 && retryAction === lastAction) {
@@ -187,7 +177,8 @@ const createHumanMessage = (
   currentScreenshot: string,
   currentUrl: string | null,
   retryCount: number,
-  maxRetries: number
+  maxRetries: number,
+  visibleElements: any[] | null
 ) => {
   const humanMessageContent: any = [
     {
@@ -213,12 +204,12 @@ const createHumanMessage = (
       { type: "text", text: "Previous screenshot:" },
       {
         type: "image_url",
-        image_url: { url: `data:image/png;base64,${lastScreenshot}` },
+        image_url: { url: `data:image/jpeg;base64,${lastScreenshot}` },
       }
     );
   }
 
-  // Add the current screenshot
+  // Add the current screenshot with element coordinates
   humanMessageContent.push(
     {
       type: "text",
@@ -230,9 +221,18 @@ const createHumanMessage = (
     },
     {
       type: "image_url",
-      image_url: { url: `data:image/png;base64,${currentScreenshot}` },
+      image_url: { url: `data:image/jpeg;base64,${currentScreenshot}` },
     }
   );
+  
+  // Add the element coordinates after the screenshot
+  if (visibleElements && visibleElements.length > 0) {
+    humanMessageContent.push({
+      type: "text",
+      text: `Interactive elements in this screenshot (${visibleElements.length} elements found):
+${convertElementsToXml(visibleElements)}`
+    });
+  }
 
   return new HumanMessage({ content: humanMessageContent });
 };
@@ -355,7 +355,8 @@ export const executeAndVerifyNode = async ({
     currentScreenshot,
     currentUrl,
     retryCount,
-    maxRetries
+    maxRetries,
+    visibleElements
   );
 
   // Log retry attempts

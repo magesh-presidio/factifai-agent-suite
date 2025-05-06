@@ -12,7 +12,7 @@ export const OpenAIModel = (streaming?: boolean, maxTokens = 12000) =>
 
 export const BedrockModel = (streaming?: boolean, maxTokens = 12000) =>
   new BedrockChat({
-    model: process.env.BEDROCK_MODEL, // Updated to newer model
+    model: process.env.BEDROCK_MODEL || "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
     region: process.env.AWS_DEFAULT_REGION,
     credentials: {
       accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",

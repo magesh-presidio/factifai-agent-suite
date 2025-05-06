@@ -71,7 +71,7 @@ export class BrowserService {
       }
 
       const buffer = await page.screenshot({
-        type: "png",
+        type: "jpeg",
         quality: 90,
         fullPage: false,
         timeout: 5000,

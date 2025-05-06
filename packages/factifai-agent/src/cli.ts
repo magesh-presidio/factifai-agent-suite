@@ -7,6 +7,62 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
+// Create a flag to track if the app is in the process of shutting down
+let shuttingDown = false;
+
+// Define cleanup function for graceful shutdown
+async function cleanup() {
+  // Prevent cleanup from running multiple times
+  if (shuttingDown) {
+    return;
+  }
+  
+  shuttingDown = true;
+  console.log('\nReceived termination signal. Cleaning up...');
+  
+  try {
+    // Get instance of BrowserService to close browsers
+    const { BrowserService } = await import('@factifai/playwright-core');
+    const browserService = BrowserService.getInstance();
+    
+    // Close all active browser sessions
+    console.log('Closing browser sessions...');
+    await browserService.closeAll();
+    console.log('All browser sessions closed.');
+    
+    // Add a small delay to allow other async operations to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
+  } catch (error) {
+    console.error('Error during cleanup:', error);
+  }
+  
+  // Force exit after cleanup
+  console.log('Exiting application...');
+  process.exit(0);
+}
+
+// Handle unhandled rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Only exit if not already shutting down
+  if (!shuttingDown) {
+    cleanup();
+  }
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Only exit if not already shutting down
+  if (!shuttingDown) {
+    cleanup();
+  }
+});
+
+// Register signal handlers
+process.on('SIGINT', cleanup);
+process.on('SIGTERM', cleanup);
+
 // Define CLI
 const cli = yargs(hideBin(process.argv))
   .scriptName('factifai-agent')

@@ -1,4 +1,4 @@
-import { BrowserService, getCurrentUrl } from "@factifai/playwright-core";
+import { BrowserService, getCurrentUrl, getVisibleElements } from "@factifai/playwright-core";
 import {
   HumanMessage,
   MessageContentComplex,
@@ -20,11 +20,16 @@ const captureCurrentState = async (sessionId: string) => {
 
     const currentUrl = (await getCurrentUrl(sessionId)).url ?? null;
     console.log(`Current URL: ${currentUrl}`);
+    
+    // Get visible elements on the page
+    const visibleElementsResult = await getVisibleElements(sessionId, 35);
+    const visibleElements = visibleElementsResult.success ? visibleElementsResult.elements : null;
+    logger.info(chalk.cyan(`🔍 Found ${visibleElements?.length || 0} visible elements on the page`));
 
-    return { screenshot, url: currentUrl, error: null };
+    return { screenshot, url: currentUrl, visibleElements, error: null };
   } catch (error) {
-    console.error("Failed to capture screenshot:", error);
-    return { screenshot: null, url: null, error };
+    console.error("Failed to capture browser state:", error);
+    return { screenshot: null, url: null, visibleElements: null, error };
   }
 };
 
@@ -37,23 +42,44 @@ const buildSystemPrompt = (
   currentUrl: string | null,
   retryCount: number,
   retryAction: string | null,
-  maxRetries: number
+  maxRetries: number,
+  visibleElements: any[] | null
 ) => {
-  let systemPromptContent = `You are a browser automation QA assistant that helps execute test instructions on web pages.
+  let systemPromptContent = `You are a browser automation QA assistant that helps execute test instructions on web pages SEQUENTIALLY.
   You have access to tools for navigation, clicking elements, typing text and multiple scrolling tools for dealing with long pages.
-  Use the screenshot to identify elements on the page and determine their coordinates. 
+  Use the screenshot and visible elements data to identify elements on the page and determine their coordinates. 
   
   CURRENT PAGE URL: ${
     currentUrl || "Unknown"
   }
+
+  CURRENT BROWSER RESOLUTION: 1280x720
+
+  MUST FOLLOW THESE RULES:
+  1. ALWAYS use only one tool at a time, never call simultaneous tools.
+  2. AFTER using a tool like click you must wait for the tool response before doing another tool call.
   
   IMPORTANT GUIDELINES:
   1. ALWAYS use screenshots to identify where to click and be aware that whenever you do a click action a red rounded cursor will appear in the last clicked location/element.
   2. ALWAYS use clickByCoordinates instead of clickBySelector
-  3. For typing and clearing on inputs, first click on the input field, then use the type tool
+  3. For typing and clearing on inputs, first click on the input field, then use the type tool.
   4. For chunk-based scrolling use scrollToNextChunk and scrollToPrevChunk
   5. Work step by step to complete the task
-  6. ALWAYS include the sessionId parameter in EVERY tool call: "${sessionId}"`;
+  6. ALWAYS include the sessionId parameter in EVERY tool call: "${sessionId}"
+  
+  VISIBLE ELEMENTS:
+  ${visibleElements && visibleElements.length > 0 
+    ? `The page contains ${visibleElements.length} visible elements with their exact coordinates and attributes.
+       Use this information to precisely locate elements by:
+       - HTML tag name (e.g., button, a, input)
+       - ID and class attributes (if present)
+       - Text content
+       - Exact coordinates (x, y) for clicking
+       
+       When clicking elements, use the exact coordinates provided in the visible elements data for maximum precision.
+       Here are up to 20 key elements on the page:
+       ${JSON.stringify(visibleElements.slice(0, 20), null, 2)}`
+    : 'No visible elements data available for this page.'}`;
 
   // Add retry information if we're currently retrying an action
   if (retryCount > 0 && retryAction === lastAction) {
@@ -227,6 +253,17 @@ const extractActionInfo = (responseContent: any) => {
   return { nextAction, nextExpectedOutcome };
 };
 
+// Flag to check if shutting down to prevent operations during cleanup
+let isShuttingDown = false;
+
+// Register for shutdown events
+process.on('SIGINT', () => {
+  isShuttingDown = true;
+});
+process.on('SIGTERM', () => {
+  isShuttingDown = true;
+});
+
 export const executeAndVerifyNode = async ({
   instruction,
   sessionId,
@@ -238,12 +275,20 @@ export const executeAndVerifyNode = async ({
   retryAction = "",
   maxRetries = 3,
 }: GraphStateType) => {
+  // Check if we're in the process of shutting down
+  if (isShuttingDown) {
+    console.log('Execution aborted due to shutdown in progress');
+    return {
+      isComplete: true,
+      lastError: 'Operation was canceled due to application shutdown',
+    };
+  }
   // Capture current browser state
-  const {
-    screenshot: currentScreenshot,
-    error: captureError,
-    url: currentUrl,
-  } = await captureCurrentState(sessionId);
+  const captureResult = await captureCurrentState(sessionId);
+  const currentScreenshot = captureResult.screenshot;
+  const captureError = captureResult.error;
+  const currentUrl = captureResult.url;
+  const visibleElements = captureResult.visibleElements || null;
 
   if (captureError || !currentScreenshot) {
     return {
@@ -260,7 +305,8 @@ export const executeAndVerifyNode = async ({
     currentUrl,
     retryCount,
     retryAction,
-    maxRetries
+    maxRetries,
+    visibleElements
   );
 
   // Create human message with screenshots

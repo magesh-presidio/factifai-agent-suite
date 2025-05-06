@@ -26,10 +26,7 @@ async function runLogin() {
       "Navigation"
     );
 
-    await getVisibleElements(sessionId, {
-      maxTextLength: 30,
-      screenshot: false,
-    }).then((result: any) => {
+    await getVisibleElements(sessionId, 35).then((result: any) => {
       console.log("Visible elements:", result);
     });
 
@@ -39,10 +36,7 @@ async function runLogin() {
     // Wait for redirect after successful login
     console.log("Waiting for page transition after login...");
 
-    await getVisibleElements(sessionId, {
-      maxTextLength: 30,
-      screenshot: true,
-    }).then((result: any) => {
+    await getVisibleElements(sessionId, 35).then((result: any) => {
       console.log("Visible elements:", result);
     });
 

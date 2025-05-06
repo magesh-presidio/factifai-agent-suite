@@ -27,31 +27,21 @@ export async function navigate(
 /**
  * Gets all visible elements on the current page with their coordinates
  * @param sessionId The session identifier
- * @param options Optional configuration
+ * @param maxTextLength max text length of inner text
  * @returns Promise with an array of visible elements and their properties
  */
 export async function getVisibleElements(
   sessionId: string,
-  options?: {
-    screenshot?: boolean;
-    maxTextLength?: number;
-  }
+  maxTextLength?: number
 ): Promise<{
   success: boolean;
   elements?: VisibleElement[];
-  screenshot?: string;
   error?: string;
 }> {
   const browserService = BrowserService.getInstance();
 
   try {
     const page = await browserService.getPage(sessionId);
-
-    // Take a screenshot for reference if not disabled
-    const includeScreenshot = options?.screenshot !== false;
-    const screenshot = includeScreenshot
-      ? await browserService.takeScreenshot(sessionId)
-      : null;
 
     // Get all visible elements with their properties
     const elements = await page.evaluate((maxTextLength) => {
@@ -113,6 +103,9 @@ export async function getVisibleElements(
         "command",
         "datalist",
         "optgroup",
+
+        // containers
+        "div",
       ]);
 
       // Check which elements are visible
@@ -179,7 +172,6 @@ export async function getVisibleElements(
         const elementObject: any = {
           tagName: el.tagName.toLowerCase(),
           coordinates: { x, y },
-          isFullyVisible,
         };
 
         // Only add properties that exist
@@ -189,15 +181,11 @@ export async function getVisibleElements(
         // Process text content with length limitation if configured
         let textContent = el.textContent?.trim();
         if (textContent) {
-          let textWasTrimmed = false;
-
           if (maxTextLength && textContent.length > maxTextLength) {
             textContent = textContent.substring(0, maxTextLength) + "...";
-            textWasTrimmed = true;
-            elementObject.textTrimmed = true;
           }
 
-          elementObject.text = textContent;
+          elementObject.trimmedText = textContent;
         }
 
         // Add to results
@@ -205,12 +193,11 @@ export async function getVisibleElements(
       }
 
       return results;
-    }, options?.maxTextLength || 0);
+    }, maxTextLength || 0);
 
     return {
       success: true,
       elements,
-      screenshot: includeScreenshot ? screenshot || undefined : undefined,
     };
   } catch (error) {
     return {

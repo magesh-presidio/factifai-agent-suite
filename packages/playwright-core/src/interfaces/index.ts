@@ -29,7 +29,6 @@ export interface VisibleElement {
   tagName: string;
   id?: string;
   className?: string;
-  text?: string;
-  coordinates: Coordinates;
-  isFullyVisible: boolean;
+  trimmedText?: string;
+  coords: { x: number; y: number };
 }

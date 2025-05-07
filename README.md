@@ -68,7 +68,6 @@ factifai-agent models
 ## Commands
 
 - `run` - Run a browser automation task
-- `session` - Manage browser sessions and session history
 - `config` - Configure settings and API keys
 - `models` - List and manage available models
 

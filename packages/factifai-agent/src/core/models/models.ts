@@ -13,17 +13,46 @@ export const getModelProvider = (): ModelProvider | undefined => {
     : undefined;
 };
 
-export const OpenAIModel = (streaming?: boolean, maxTokens = 12000) =>
-  new ChatOpenAI({
+export const OpenAIModel = (streaming?: boolean, maxTokens = 12000) => {
+  // Check if OpenAI API key is provided when using OpenAI model
+  if (process.env.MODEL_PROVIDER === "openai" && !process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY is required when using the OpenAI model. Please set this environment variable.");
+  }
+
+  return new ChatOpenAI({
     modelName: process.env.OPENAI_MODEL || "gpt-4.1",
     apiKey: process.env.OPENAI_API_KEY,
     streaming: streaming,
     maxRetries: 0,
     maxTokens,
   });
+};
 
-export const BedrockModel = (streaming?: boolean, maxTokens = 12000) =>
-  new BedrockChat({
+export const BedrockModel = (streaming?: boolean, maxTokens = 12000) => {
+  // Check if AWS credentials are provided when using Bedrock model
+  if (process.env.MODEL_PROVIDER === "bedrock") {
+    const missingCredentials = [];
+    
+    if (!process.env.AWS_ACCESS_KEY_ID) {
+      missingCredentials.push("AWS_ACCESS_KEY_ID");
+    }
+    
+    if (!process.env.AWS_SECRET_ACCESS_KEY) {
+      missingCredentials.push("AWS_SECRET_ACCESS_KEY");
+    }
+    
+    if (!process.env.AWS_DEFAULT_REGION) {
+      missingCredentials.push("AWS_DEFAULT_REGION");
+    }
+    
+    if (missingCredentials.length > 0) {
+      throw new Error(
+        `The following AWS credentials are required when using the Bedrock model: ${missingCredentials.join(", ")}. Please set these environment variables.`
+      );
+    }
+  }
+
+  return new BedrockChat({
     model:
       process.env.BEDROCK_MODEL ||
       "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
@@ -38,6 +67,7 @@ export const BedrockModel = (streaming?: boolean, maxTokens = 12000) =>
     streaming,
     maxTokens,
   });
+};
 
 // Model factory that returns the appropriate model based on the provider
 export const getModel = (

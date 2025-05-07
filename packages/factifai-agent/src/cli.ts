@@ -7,6 +7,49 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
+/**
+ * Validates that the required environment variables are set based on the selected model provider
+ * @returns Object with validation result and error message if validation fails
+ */
+function validateEnvironmentVariables(): { valid: boolean; message?: string } {
+  const modelProvider = process.env.MODEL_PROVIDER?.toLowerCase();
+  
+  if (modelProvider === 'openai') {
+    // Check OpenAI API key
+    if (!process.env.OPENAI_API_KEY) {
+      return {
+        valid: false,
+        message: 'OPENAI_API_KEY is required when using the OpenAI model. Please set this environment variable.'
+      };
+    }
+  } else if (modelProvider === 'bedrock') {
+    // Check AWS credentials
+    const missingCredentials = [];
+    
+    if (!process.env.AWS_ACCESS_KEY_ID) {
+      missingCredentials.push('AWS_ACCESS_KEY_ID');
+    }
+    
+    if (!process.env.AWS_SECRET_ACCESS_KEY) {
+      missingCredentials.push('AWS_SECRET_ACCESS_KEY');
+    }
+    
+    if (!process.env.AWS_DEFAULT_REGION) {
+      missingCredentials.push('AWS_DEFAULT_REGION');
+    }
+    
+    if (missingCredentials.length > 0) {
+      return {
+        valid: false,
+        message: `The following AWS credentials are required when using the Bedrock model: ${missingCredentials.join(', ')}. Please set these environment variables.`
+      };
+    }
+  }
+  
+  // All required environment variables are set
+  return { valid: true };
+}
+
 // Create a flag to track if the app is in the process of shutting down
 let shuttingDown = false;
 
@@ -140,6 +183,26 @@ const cli = yargs(hideBin(process.argv))
       process.exit(1);
     }
     
+    // Validate required environment variables based on the selected model provider
+    const validationResult = validateEnvironmentVariables();
+    if (!validationResult.valid) {
+      console.error('\n❌ Configuration Error:');
+      console.error(validationResult.message);
+      console.error('\nPlease check your environment variables or use the appropriate CLI options.');
+      console.error('You can create a .env file based on .env.example with the required credentials.');
+      process.exit(1);
+    }
+    
+    // Print current provider and model information
+    console.log('\n📋 Execution Configuration:');
+    console.log(`- Provider: ${process.env.MODEL_PROVIDER}`);
+    if (process.env.MODEL_PROVIDER === 'openai') {
+      console.log(`- Model: ${process.env.OPENAI_MODEL || 'gpt-4.1'}`);
+    } else if (process.env.MODEL_PROVIDER === 'bedrock') {
+      console.log(`- Model: ${process.env.BEDROCK_MODEL || 'us.anthropic.claude-3-7-sonnet-20250219-v1:0'}`);
+    }
+    console.log(''); // Empty line for better readability
+    
     try {
       const result = await executeBrowserTask(instruction, argv.session as string);
       
@@ -155,33 +218,21 @@ const cli = yargs(hideBin(process.argv))
       
       process.exit(result.success ? 0 : 1);
     } catch (error) {
-      console.error('Error executing task:', error);
+      // Check for specific environment variable errors
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      if (errorMessage.includes('OPENAI_API_KEY is required') || 
+          errorMessage.includes('AWS credentials are required') ||
+          errorMessage.includes('No model provider specified')) {
+        console.error('\n❌ Configuration Error:');
+        console.error(errorMessage);
+        console.error('\nPlease check your environment variables or use the appropriate CLI options.');
+        console.error('You can create a .env file based on .env.example with the required credentials.');
+      } else {
+        console.error('Error executing task:', error);
+      }
+      
       process.exit(1);
-    }
-  })
-  .command('session [id]', 'Manage browser sessions and session history', (yargs) => {
-    return yargs
-      .positional('id', {
-        describe: 'Session ID to use',
-        type: 'string'
-      })
-      .option('list', {
-        alias: 'l',
-        type: 'boolean',
-        describe: 'List all active sessions',
-        default: false
-      });
-  }, (argv) => {
-    // Display logo
-    displayFactifaiLogo();
-    
-    if (argv.list) {
-      console.log('Listing active sessions:');
-      // Here you would implement logic to list active sessions
-      console.log('(Session management functionality to be implemented)');
-    } else {
-      console.log(`Using session ID: ${argv.id || `browser-session-${Date.now()}`}`);
-      // Additional session management logic
     }
   })
   .command('config', 'Configure settings and API keys', (yargs) => {
@@ -201,14 +252,37 @@ const cli = yargs(hideBin(process.argv))
         choices: ['openai', 'bedrock']
       });
   }, (argv) => {
-    // Display logo
-    displayFactifaiLogo();
     
     if (argv.show) {
       console.log('Current configuration:');
       console.log(`- MODEL_PROVIDER: ${process.env.MODEL_PROVIDER || 'Not set - you must specify a model provider'}`);
+      
+      // Show OpenAI configuration
+      console.log('\nOpenAI Configuration:');
       console.log(`- OPENAI_MODEL: ${process.env.OPENAI_MODEL || 'gpt-4.1'}`);
+      const openaiKeyStatus = process.env.OPENAI_API_KEY 
+        ? '******** (Set)' 
+        : 'Not set' + (process.env.MODEL_PROVIDER === 'openai' ? ' - Required!' : '');
+      console.log(`- OPENAI_API_KEY: ${openaiKeyStatus}`);
+      
+      // Show Bedrock configuration
+      console.log('\nAWS Bedrock Configuration:');
       console.log(`- BEDROCK_MODEL: ${process.env.BEDROCK_MODEL || 'us.anthropic.claude-3-7-sonnet-20250219-v1:0'}`);
+      
+      const regionStatus = process.env.AWS_DEFAULT_REGION 
+        ? process.env.AWS_DEFAULT_REGION 
+        : 'Not set' + (process.env.MODEL_PROVIDER === 'bedrock' ? ' - Required!' : '');
+      console.log(`- AWS_DEFAULT_REGION: ${regionStatus}`);
+      
+      const accessKeyStatus = process.env.AWS_ACCESS_KEY_ID 
+        ? '******** (Set)' 
+        : 'Not set' + (process.env.MODEL_PROVIDER === 'bedrock' ? ' - Required!' : '');
+      console.log(`- AWS_ACCESS_KEY_ID: ${accessKeyStatus}`);
+      
+      const secretKeyStatus = process.env.AWS_SECRET_ACCESS_KEY 
+        ? '******** (Set)' 
+        : 'Not set' + (process.env.MODEL_PROVIDER === 'bedrock' ? ' - Required!' : '');
+      console.log(`- AWS_SECRET_ACCESS_KEY: ${secretKeyStatus}`);
     } else if (argv.set) {
       const [key, value] = (argv.set as string).split('=');
       console.log(`Setting ${key} to ${value}`);
@@ -223,6 +297,17 @@ const cli = yargs(hideBin(process.argv))
       // Set the model provider
       process.env.MODEL_PROVIDER = argv.model as string;
       console.log(`Default model provider set to: ${argv.model}`);
+      
+      // Validate required environment variables for the selected model provider
+      const validationResult = validateEnvironmentVariables();
+      if (!validationResult.valid) {
+        console.warn('\n⚠️ Warning:');
+        console.warn(validationResult.message);
+        console.warn('You may need to set additional environment variables for this model provider.');
+      } else {
+        console.log('All required environment variables for this model provider are set.');
+      }
+      
       console.log('Note: This setting will not persist after the application exits.');
     } else {
       console.log('Configuration options:');
@@ -239,18 +324,40 @@ const cli = yargs(hideBin(process.argv))
         default: true
       });
   }, (argv) => {
-    // Display logo
-    displayFactifaiLogo();
     
     console.log('Available model providers:');
-    console.log('1. openai - OpenAI models');
+    
+    // Check if OpenAI credentials are set
+    const openaiReady = !!process.env.OPENAI_API_KEY;
+    
+    // OpenAI model information
+    console.log('\n1. openai - OpenAI models');
     console.log(`   - Current model: ${process.env.OPENAI_MODEL || 'gpt-4.1'}`);
-    console.log('2. bedrock - AWS Bedrock models');
+    console.log(`   - API Key: ${process.env.OPENAI_API_KEY ? '******** (Set)' : 'Not set'}`);
+    console.log('   - Required env variables: OPENAI_API_KEY');
+    console.log(`   - Status: ${openaiReady ? '✅ Ready to use' : '❌ Missing required credentials'}`);
+    
+    // Check if Bedrock credentials are set
+    const bedrockReady = !!(process.env.AWS_ACCESS_KEY_ID && 
+                           process.env.AWS_SECRET_ACCESS_KEY && 
+                           process.env.AWS_DEFAULT_REGION);
+    
+    // Bedrock model information
+    console.log('\n2. bedrock - AWS Bedrock models');
     console.log(`   - Current model: ${process.env.BEDROCK_MODEL || 'us.anthropic.claude-3-7-sonnet-20250219-v1:0'}`);
+    console.log(`   - AWS Region: ${process.env.AWS_DEFAULT_REGION || 'Not set'}`);
+    console.log(`   - AWS Credentials: ${(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) ? 'Set' : 'Not set'}`);
+    console.log('   - Required env variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION');
+    console.log(`   - Status: ${bedrockReady ? '✅ Ready to use' : '❌ Missing required credentials'}`);
+    
     console.log('\nCurrent provider:', process.env.MODEL_PROVIDER || 'Not set - you must specify a model provider');
     console.log('\nTo change the model provider:');
     console.log('  factifai-agent --model openai run "your instruction"');
     console.log('  factifai-agent config --model bedrock');
+    console.log('\nTo set up environment variables:');
+    console.log('  1. Create a .env file in the packages/factifai-agent directory');
+    console.log('  2. Copy the contents from .env.example');
+    console.log('  3. Fill in the required credentials for your chosen model provider');
   })
   .demandCommand(1, 'You must provide a valid command')
   .help()

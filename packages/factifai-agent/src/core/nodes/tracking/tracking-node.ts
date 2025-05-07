@@ -3,7 +3,7 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { z } from "zod";
 import { GraphStateType } from "../../graph/graph";
 import { logger } from "../../../common/utils/logger";
-import { BedrockModel } from "../../models/models";
+import { getModel } from "../../models/models";
 import { enhancedLogger } from "../../../common/services/console-display-service";
 
 /**
@@ -177,7 +177,7 @@ export const trackAndUpdateStepsNode = async ({
     });
 
     // Use a model with fast inference for real-time updates
-    const model = BedrockModel(false, 32000).withStructuredOutput(outputSchema);
+    const model = getModel(false, 32000).withStructuredOutput(outputSchema);
 
     // Generate the step updates
     const analysisResult = await model.invoke([systemPrompt, userMessage]);

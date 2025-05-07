@@ -7,7 +7,7 @@ import {
 import chalk from "chalk";
 import { GraphStateType } from "../../graph/graph";
 import { logger } from "../../../common/utils/logger";
-import { BedrockModel } from "../../models/models";
+import { getModel } from "../../models/models";
 import { ALL_TOOLS } from "../../../tools";
 import { removeImageUrlsFromMessage } from "../../../common/utils/llm-utils";
 import { convertElementsToXml } from "../../../common/utils/xml-formatter";
@@ -25,24 +25,26 @@ const captureCurrentState = async (sessionId: string) => {
       }
     );
     const screenshot = markedScreenshotResponse.image;
-    
+
     // Save screenshot to logs for debugging
     if (screenshot) {
-      const fs = require('fs');
-      const path = require('path');
-      const logsDir = path.join(__dirname, '../../../../logs');
-      
+      const fs = require("fs");
+      const path = require("path");
+      const logsDir = path.join(__dirname, "../../../../logs");
+
       // Ensure logs directory exists
       if (!fs.existsSync(logsDir)) {
         fs.mkdirSync(logsDir, { recursive: true });
       }
-      
+
       // Write the screenshot to the logs directory
-      const imagePath = path.join(logsDir, 'currentImage.jpeg');
-      fs.writeFileSync(imagePath, Buffer.from(screenshot, 'base64'));
-      logger.info(chalk.cyan(`📷 Screenshot saved to ${imagePath} for debugging`));
+      const imagePath = path.join(logsDir, "currentImage.jpeg");
+      fs.writeFileSync(imagePath, Buffer.from(screenshot, "base64"));
+      logger.info(
+        chalk.cyan(`📷 Screenshot saved to ${imagePath} for debugging`)
+      );
     }
-    
+
     logger.info(chalk.cyan("📷 Screenshot captured successfully"));
 
     const currentUrl = (await getCurrentUrl(sessionId)).url ?? null;
@@ -224,13 +226,15 @@ const createHumanMessage = (
       image_url: { url: `data:image/jpeg;base64,${currentScreenshot}` },
     }
   );
-  
+
   // Add the element coordinates after the screenshot
   if (visibleElements && visibleElements.length > 0) {
     humanMessageContent.push({
       type: "text",
-      text: `Interactive elements in this screenshot (${visibleElements.length} elements found):
-${convertElementsToXml(visibleElements)}`
+      text: `Interactive elements in this screenshot (${
+        visibleElements.length
+      } elements found):
+${convertElementsToXml(visibleElements)}`,
     });
   }
 
@@ -370,10 +374,16 @@ export const executeAndVerifyNode = async ({
 
   try {
     // Get model with tools
-    const model = BedrockModel().bindTools(ALL_TOOLS);
+    const model = getModel(false);
+    if (!model) {
+      throw new Error("Failed to initialize model");
+    }
+    
+    // Cast the model to any to bypass TypeScript errors
+    const modelWithTools = (model as any).bindTools(ALL_TOOLS);
 
     // Execute with model - single invocation for both verification and action
-    const response = await model.invoke([
+    const response = await modelWithTools.invoke([
       systemPrompt,
       ...messages,
       humanMessage,

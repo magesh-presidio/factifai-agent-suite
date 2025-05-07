@@ -6,7 +6,7 @@ import figures from "figures";
 import { table } from "table";
 import { logger } from "../../../common/utils/logger";
 import { GraphStateType } from "../../graph/graph";
-import { BedrockModel } from "../../models/models";
+import { getModel } from "../../models/models";
 
 export const parseTestStepsNode = async ({ instruction }: GraphStateType) => {
   if (!instruction) {
@@ -113,7 +113,7 @@ export const parseTestStepsNode = async ({ instruction }: GraphStateType) => {
     );
 
     // Get the model with structured output
-    const model = BedrockModel().withStructuredOutput(outputSchema);
+    const model = getModel().withStructuredOutput(outputSchema);
 
     // RETRY MECHANISM - Try up to 3 times with different approaches
     let result;
@@ -186,7 +186,7 @@ export const parseTestStepsNode = async ({ instruction }: GraphStateType) => {
             "You are a test step parser. List each step on a new line with format: 'Step X: [instruction] -> [expected result]'"
           );
 
-          const regularModel = BedrockModel();
+          const regularModel = getModel();
           const textResponse = await regularModel.invoke([
             fallbackSystemPrompt,
             userMessage,
@@ -462,7 +462,7 @@ async function rateTestCase(testCase: string) {
     });
 
     // Get the model with structured output
-    const model = BedrockModel().withStructuredOutput(ratingSchema);
+    const model = getModel().withStructuredOutput(ratingSchema);
 
     // Execute the analysis
     const rating = await model.invoke([systemPrompt, userMessage]);

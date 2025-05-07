@@ -67,8 +67,15 @@ process.on('SIGTERM', cleanup);
 const cli = yargs(hideBin(process.argv))
   .scriptName('factifai-agent')
   .usage('$0 <cmd> [args]')
-  .example('$0 run "Navigate to example.com"', 'Run with direct instruction')
+  .option('model', {
+    alias: 'm',
+    type: 'string',
+    describe: 'Model provider to use (openai or bedrock)',
+    choices: ['openai', 'bedrock']
+  })
+  .example('$0 run "Navigate to duckduckgo.com"', 'Run with direct instruction')
   .example('$0 run --file ./tests/my-test.txt', 'Run from a file')
+  .example('$0 run --model openai "Navigate to duckduckgo.com"', 'Run with OpenAI model')
   .command('run [instruction]', 'Run a browser automation task (use direct instruction or --file)', (yargs) => {
     return yargs
       .positional('instruction', {
@@ -119,7 +126,19 @@ const cli = yargs(hideBin(process.argv))
       console.log(`Running task with instruction provided on command line`);
     }
     
+    // Set the model provider from CLI option
+    if (argv.model) {
+      process.env.MODEL_PROVIDER = argv.model as string;
+      console.log(`Using model provider: ${argv.model}`);
+    }
+    
     console.log(`Session ID: ${argv.session}`);
+    
+    // Check if model provider is specified
+    if (!process.env.MODEL_PROVIDER && !argv.model) {
+      console.error('Error: No model provider specified. Please use --model option or set MODEL_PROVIDER environment variable.');
+      process.exit(1);
+    }
     
     try {
       const result = await executeBrowserTask(instruction, argv.session as string);
@@ -175,6 +194,11 @@ const cli = yargs(hideBin(process.argv))
       .option('set', {
         type: 'string',
         describe: 'Set a configuration value (key=value)'
+      })
+      .option('model', {
+        type: 'string',
+        describe: 'Set the default model provider',
+        choices: ['openai', 'bedrock']
       });
   }, (argv) => {
     // Display logo
@@ -182,18 +206,51 @@ const cli = yargs(hideBin(process.argv))
     
     if (argv.show) {
       console.log('Current configuration:');
-      // Logic to display current configuration
-      console.log('(Configuration display functionality to be implemented)');
+      console.log(`- MODEL_PROVIDER: ${process.env.MODEL_PROVIDER || 'Not set - you must specify a model provider'}`);
+      console.log(`- OPENAI_MODEL: ${process.env.OPENAI_MODEL || 'gpt-4.1'}`);
+      console.log(`- BEDROCK_MODEL: ${process.env.BEDROCK_MODEL || 'us.anthropic.claude-3-7-sonnet-20250219-v1:0'}`);
     } else if (argv.set) {
       const [key, value] = (argv.set as string).split('=');
       console.log(`Setting ${key} to ${value}`);
-      // Logic to set configuration
-      console.log('(Configuration setting functionality to be implemented)');
+      
+      // Set environment variable
+      process.env[key] = value;
+      
+      // For persistent configuration, you would save to a config file or .env file here
+      console.log(`Environment variable ${key} set to ${value} for this session`);
+      console.log('Note: This setting will not persist after the application exits.');
+    } else if (argv.model) {
+      // Set the model provider
+      process.env.MODEL_PROVIDER = argv.model as string;
+      console.log(`Default model provider set to: ${argv.model}`);
+      console.log('Note: This setting will not persist after the application exits.');
     } else {
       console.log('Configuration options:');
       console.log('- Use --show to display current configuration');
       console.log('- Use --set key=value to set a configuration value');
     }
+  })
+  .command('models', 'List and manage available models', (yargs) => {
+    return yargs
+      .option('list', {
+        alias: 'l',
+        type: 'boolean',
+        describe: 'List all available models',
+        default: true
+      });
+  }, (argv) => {
+    // Display logo
+    displayFactifaiLogo();
+    
+    console.log('Available model providers:');
+    console.log('1. openai - OpenAI models');
+    console.log(`   - Current model: ${process.env.OPENAI_MODEL || 'gpt-4.1'}`);
+    console.log('2. bedrock - AWS Bedrock models');
+    console.log(`   - Current model: ${process.env.BEDROCK_MODEL || 'us.anthropic.claude-3-7-sonnet-20250219-v1:0'}`);
+    console.log('\nCurrent provider:', process.env.MODEL_PROVIDER || 'Not set - you must specify a model provider');
+    console.log('\nTo change the model provider:');
+    console.log('  factifai-agent --model openai run "your instruction"');
+    console.log('  factifai-agent config --model bedrock');
   })
   .demandCommand(1, 'You must provide a valid command')
   .help()

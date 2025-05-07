@@ -7,7 +7,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { enhancedLogger } from "../../../common/services/console-display-service";
 import { GraphStateType } from "../../graph/graph";
-import { BedrockModel } from "../../models/models";
+import { getModel } from "../../models/models";
 import { TEST_STATUS } from "./schemas";
 import { displayComponents } from "./display-components";
 import { logger } from "../../../common/utils/logger";
@@ -17,7 +17,7 @@ export const reportOutputSchema = z.object({
   passRate: z.number().describe("Percentage of test steps that passed (0-100)"),
   executionTime: z
     .string()
-    .nullable()                                     
+    .nullable()
     .describe("Estimated test execution time; null if unavailable"),
   recommendations: z
     .array(z.string())
@@ -25,11 +25,11 @@ export const reportOutputSchema = z.object({
     .describe("Recommendations for improving the test; null if unavailable"),
   criticalIssues: z
     .array(z.string())
-    .nullable()                                      
+    .nullable()
     .describe("Critical issues found during testing; null if none"),
   errorAnalysis: z
     .string()
-    .nullable()                                     
+    .nullable()
     .describe("Analysis of the last error, or null"),
 });
 
@@ -110,7 +110,7 @@ async function generateTestReport(
   userMessage: HumanMessage
 ) {
   // Get the model with structured output
-  const model = BedrockModel(false, 32000).withStructuredOutput(reportOutputSchema);
+  const model = getModel(false, 32000).withStructuredOutput(reportOutputSchema);
 
   // Generate the report
   return await model.invoke([systemPrompt, userMessage]);
@@ -129,12 +129,15 @@ function generateJUnitXmlReport(
 ): string {
   // Count test statistics
   const totalTests = testSteps.length;
-  const failures = testSteps.filter(step => step.status === TEST_STATUS.FAILED).length;
-  const skipped = testSteps.filter(step => 
-    step.status === TEST_STATUS.NOT_STARTED || 
-    step.status === TEST_STATUS.IN_PROGRESS
+  const failures = testSteps.filter(
+    (step) => step.status === TEST_STATUS.FAILED
   ).length;
-  
+  const skipped = testSteps.filter(
+    (step) =>
+      step.status === TEST_STATUS.NOT_STARTED ||
+      step.status === TEST_STATUS.IN_PROGRESS
+  ).length;
+
   // Parse execution time if available, default to 0
   let timeValue = "0";
   if (executionTime) {
@@ -144,74 +147,88 @@ function generateJUnitXmlReport(
       timeValue = timeMatch[1];
     }
   }
-  
+
   // Start building XML
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-  xml += '<testsuites>\n';
+  xml += "<testsuites>\n";
   xml += `  <testsuite name="FactifAI Test Suite" tests="${totalTests}" failures="${failures}" errors="0" skipped="${skipped}" time="${timeValue}">\n`;
-  
+
   // Calculate pass rate percentage
-  const passRate = totalTests > 0 ? Math.round(((totalTests - failures - skipped) / totalTests) * 100) : 0;
-  
+  const passRate =
+    totalTests > 0
+      ? Math.round(((totalTests - failures - skipped) / totalTests) * 100)
+      : 0;
+
   // Add test summary and recommendations as properties
-  xml += '    <properties>\n';
+  xml += "    <properties>\n";
   xml += `      <property name="summary" value="${escapeXml(testSummary)}"/>\n`;
   xml += `      <property name="passRate" value="${passRate}%"/>\n`;
-  
+
   // Add recommendations as properties
   if (recommendations && recommendations.length > 0) {
     recommendations.forEach((recommendation, index) => {
-      xml += `      <property name="recommendation.${index + 1}" value="${escapeXml(recommendation)}"/>\n`;
+      xml += `      <property name="recommendation.${
+        index + 1
+      }" value="${escapeXml(recommendation)}"/>\n`;
     });
   }
-  
+
   // Add critical issues as properties
   if (criticalIssues && criticalIssues.length > 0) {
     criticalIssues.forEach((issue, index) => {
-      xml += `      <property name="criticalIssue.${index + 1}" value="${escapeXml(issue)}"/>\n`;
+      xml += `      <property name="criticalIssue.${
+        index + 1
+      }" value="${escapeXml(issue)}"/>\n`;
     });
   }
-  
-  xml += '    </properties>\n';
-  
+
+  xml += "    </properties>\n";
+
   // Add each test step as a test case
-  testSteps.forEach(step => {
+  testSteps.forEach((step) => {
     const testName = `Step ${step.id}: ${step.instruction}`;
-    
-    xml += `    <testcase classname="factifai.tests" name="${escapeXml(testName)}" time="0">\n`;
-    
+
+    xml += `    <testcase classname="factifai.tests" name="${escapeXml(
+      testName
+    )}" time="0">\n`;
+
     // Add failure information if the test failed
     if (step.status === TEST_STATUS.FAILED) {
       const message = step.notes || "Test step failed";
-      xml += `      <failure message="${escapeXml(message)}" type="AssertionError">${escapeXml(message)}</failure>\n`;
+      xml += `      <failure message="${escapeXml(
+        message
+      )}" type="AssertionError">${escapeXml(message)}</failure>\n`;
     }
-    
+
     // Add skipped tag if the test was not started or is in progress
-    if (step.status === TEST_STATUS.NOT_STARTED || step.status === TEST_STATUS.IN_PROGRESS) {
-      xml += '      <skipped/>\n';
+    if (
+      step.status === TEST_STATUS.NOT_STARTED ||
+      step.status === TEST_STATUS.IN_PROGRESS
+    ) {
+      xml += "      <skipped/>\n";
     }
-    
+
     // Add notes for all test steps that have them (regardless of status)
     if (step.notes) {
-      xml += '      <system-out>\n';
+      xml += "      <system-out>\n";
       xml += `        ${escapeXml(step.notes)}\n`;
-      xml += '      </system-out>\n';
+      xml += "      </system-out>\n";
     }
-    
-    xml += '    </testcase>\n';
+
+    xml += "    </testcase>\n";
   });
-  
+
   // Add system-out with any error information
   if (lastError) {
-    xml += '    <system-out>\n';
+    xml += "    <system-out>\n";
     xml += `      ${escapeXml(lastError)}\n`;
-    xml += '    </system-out>\n';
+    xml += "    </system-out>\n";
   }
-  
+
   // Close the testsuite and testsuites tags
-  xml += '  </testsuite>\n';
-  xml += '</testsuites>';
-  
+  xml += "  </testsuite>\n";
+  xml += "</testsuites>";
+
   return xml;
 }
 
@@ -220,11 +237,11 @@ function generateJUnitXmlReport(
  */
 function escapeXml(unsafe: string): string {
   return unsafe
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 /**
@@ -233,22 +250,29 @@ function escapeXml(unsafe: string): string {
 function writeJUnitXmlReport(xml: string): string {
   try {
     // Create logs directory if it doesn't exist
-    const logsDir = path.join(process.cwd(), 'logs');
+    const logsDir = path.join(process.cwd(), "logs");
     if (!fs.existsSync(logsDir)) {
       fs.mkdirSync(logsDir, { recursive: true });
     }
-    
+
     // Generate filename with timestamp
-    const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '');
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/:/g, "-")
+      .replace(/\..+/, "");
     const filename = `test-report-${timestamp}.xml`;
     const filePath = path.join(logsDir, filename);
-    
+
     // Write the XML to file
     fs.writeFileSync(filePath, xml);
-    
+
     return filePath;
   } catch (error) {
-    logger.error(`Failed to write JUnit XML report: ${error instanceof Error ? error.message : String(error)}`);
+    logger.error(
+      `Failed to write JUnit XML report: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
     throw error;
   }
 }
@@ -346,13 +370,13 @@ export const generateReportNode = async ({
     if (report.criticalIssues && report.criticalIssues.length > 0) {
       displayComponents.displayCriticalIssues(report.criticalIssues);
     }
-    
+
     // Generate JUnit XML report
     try {
       enhancedLogger.info(
         `${chalk.blue(figures.pointer)} Generating JUnit XML report...`
       );
-      
+
       const junitXml = generateJUnitXmlReport(
         testSteps,
         report.summary,
@@ -361,13 +385,13 @@ export const generateReportNode = async ({
         report.recommendations,
         report.criticalIssues
       );
-      
+
       const xmlFilePath = writeJUnitXmlReport(junitXml);
-      
+
       enhancedLogger.success(
         `${chalk.green(figures.tick)} JUnit XML report saved to: ${xmlFilePath}`
       );
-      
+
       // Display the XML report path in a box
       console.log(
         boxen(

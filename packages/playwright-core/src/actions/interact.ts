@@ -355,3 +355,35 @@ export async function scrollToPrevChunk(
     };
   }
 }
+
+/**
+ * Closes the currently active tab and switches focus to the previous tab
+ * @param sessionId The session identifier
+ * @returns Promise with success status and error message if applicable
+ */
+export async function closeCurrentTab(
+  sessionId: string
+): Promise<{ success: boolean; error?: string }> {
+  const browserService = BrowserService.getInstance();
+
+  try {
+    const result = await browserService.closeCurrentTab(sessionId);
+    
+    if (result) {
+      return { success: true };
+    } else {
+      return { 
+        success: false, 
+        error: "Could not close tab. There may only be one tab open or no tabs available." 
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unknown error during tab close operation",
+    };
+  }
+}

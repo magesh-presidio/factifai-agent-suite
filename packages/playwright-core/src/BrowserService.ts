@@ -7,7 +7,8 @@ export class BrowserService {
   private static instance: BrowserService;
   private browser: Browser | null = null;
   private readonly contexts: Map<string, BrowserContext> = new Map();
-  private readonly pages: Map<string, Page> = new Map();
+  // Replace single page map with an array of pages per session
+  private readonly pageStacks: Map<string, Page[]> = new Map();
 
   private constructor() {}
 
@@ -25,9 +26,50 @@ export class BrowserService {
     });
   }
 
+  /**
+   * Set up listeners for new tab creation
+   */
+  private setupTabTracking(sessionId: string, context: BrowserContext): void {
+    // When a new page is created in the context
+    context.on('page', async (page) => {
+      console.log(`New page opened in session ${sessionId}`);
+      
+      // Add the new page to the stack
+      const pageStack = this.pageStacks.get(sessionId) || [];
+      pageStack.push(page);
+      this.pageStacks.set(sessionId, pageStack);
+      
+      // Set up listener for when this page closes
+      page.once('close', () => {
+        console.log(`Page closed in session ${sessionId}`);
+        const currentStack = this.pageStacks.get(sessionId) || [];
+        // Remove the closed page from the stack
+        const index = currentStack.indexOf(page);
+        if (index > -1) {
+          currentStack.splice(index, 1);
+          this.pageStacks.set(sessionId, currentStack);
+        }
+      });
+      
+      // Wait for page to load
+      try {
+        await page.waitForLoadState('domcontentloaded', { timeout: 5000 });
+      } catch (e) {
+        // Continue even if timeout
+        console.log(`Timeout waiting for page to load in session ${sessionId}`);
+      }
+    });
+  }
+
+  /**
+   * Gets the currently active page for the session (the last one in the stack)
+   */
   async getPage(sessionId: string): Promise<Page> {
-    if (this.pages.has(sessionId)) {
-      return this.pages.get(sessionId)!;
+    const pageStack = this.pageStacks.get(sessionId) || [];
+    
+    // If we already have pages, return the active one (last in the stack)
+    if (pageStack.length > 0) {
+      return pageStack[pageStack.length - 1];
     }
 
     await this.initBrowser();
@@ -35,12 +77,60 @@ export class BrowserService {
     if (!this.contexts.has(sessionId)) {
       const context = await this.browser!.newContext();
       this.contexts.set(sessionId, context);
+      this.setupTabTracking(sessionId, context);
     }
 
     const page = await this.contexts.get(sessionId)!.newPage();
-    this.pages.set(sessionId, page);
-
+    
+    // Add the new page to the stack
+    this.pageStacks.set(sessionId, [page]);
+    
     return page;
+  }
+
+  /**
+   * Gets all pages for a session
+   */
+  async getAllPages(sessionId: string): Promise<Page[]> {
+    return this.pageStacks.get(sessionId) || [];
+  }
+
+  /**
+   * Gets the number of open tabs for a session
+   */
+  async getTabCount(sessionId: string): Promise<number> {
+    const pageStack = this.pageStacks.get(sessionId) || [];
+    return pageStack.length;
+  }
+
+  /**
+   * Closes the currently active tab and switches focus to the previous tab
+   * @param sessionId The session identifier
+   * @returns Promise with success status
+   */
+  async closeCurrentTab(sessionId: string): Promise<boolean> {
+    const pageStack = this.pageStacks.get(sessionId) || [];
+    
+    // If there's only one tab or no tabs, don't close it
+    if (pageStack.length <= 1) {
+      return false;
+    }
+    
+    // Get the current active tab (last in the stack)
+    const currentTab = pageStack[pageStack.length - 1];
+    
+    try {
+      // Close the tab
+      await currentTab.close();
+      
+      // The page.close() event will trigger the 'close' event handler
+      // which will update the pageStack automatically
+      
+      return true;
+    } catch (error) {
+      console.error("Error closing current tab:", error);
+      return false;
+    }
   }
 
   async takeScreenshot(
@@ -316,13 +406,19 @@ export class BrowserService {
   }
 
   async closePage(sessionId: string): Promise<void> {
-    if (this.pages.has(sessionId)) {
-      await this.pages.get(sessionId)!.close();
-      this.pages.delete(sessionId);
+    const pageStack = this.pageStacks.get(sessionId) || [];
+    
+    // Close all pages in the stack
+    for (const page of pageStack) {
+      await page.close().catch(e => console.error(`Error closing page: ${e}`));
     }
+    
+    // Clear the page stack
+    this.pageStacks.delete(sessionId);
 
+    // Close the context
     if (this.contexts.has(sessionId)) {
-      await this.contexts.get(sessionId)!.close();
+      await this.contexts.get(sessionId)!.close().catch(e => console.error(`Error closing context: ${e}`));
       this.contexts.delete(sessionId);
     }
   }
@@ -332,7 +428,7 @@ export class BrowserService {
       await this.browser.close();
       this.browser = null;
       this.contexts.clear();
-      this.pages.clear();
+      this.pageStacks.clear();
     }
   }
 

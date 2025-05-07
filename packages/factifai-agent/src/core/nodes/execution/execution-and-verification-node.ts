@@ -21,7 +21,7 @@ const captureCurrentState = async (sessionId: string) => {
       {
         randomColors: false,
         maxElements: 100,
-        removeAfter: false, // Clean up markers after taking the screenshot
+        removeAfter: true, // Clean up markers after taking the screenshot
       }
     );
     const screenshot = markedScreenshotResponse.image;

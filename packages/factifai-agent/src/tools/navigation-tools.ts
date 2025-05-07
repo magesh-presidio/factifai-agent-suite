@@ -5,7 +5,7 @@ import {
   reload,
   goBack,
   goForward,
-} from "@factifai/playwright-core";
+} from "@presidio-dev/playwright-core";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { logger } from "../common/utils/logger";

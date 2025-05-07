@@ -1,15 +1,15 @@
-# @factifai/playwright-core
+# @presidio-dev/playwright-core
 
 A powerful wrapper around Playwright providing browser automation services with enhanced capabilities for UI testing, element detection, and screenshot capture.
 
 ## Installation
 
 ```bash
-npm install @factifai/playwright-core
+npm install @presidio-dev/playwright-core
 # or
-yarn add @factifai/playwright-core
+yarn add @presidio-dev/playwright-core
 # or
-pnpm add @factifai/playwright-core
+pnpm add @presidio-dev/playwright-core
 ```
 
 ## Features
@@ -25,7 +25,7 @@ pnpm add @factifai/playwright-core
 ## Basic Usage
 
 ```typescript
-import { BrowserService, navigate, click, type } from '@factifai/playwright-core';
+import { BrowserService, navigate, click, type } from '@presidio-dev/playwright-core';
 
 // Example usage
 async function runBrowserAutomation() {
@@ -105,6 +105,3 @@ The main service for managing browser sessions and interactions.
 
 ISC
 
-## Related Projects
-
-This library is part of the factifai automation suite.

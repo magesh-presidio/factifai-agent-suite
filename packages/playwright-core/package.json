@@ -1,6 +1,6 @@
 {
-  "name": "@factifai/playwright-core",
-  "version": "1.0.0",
+  "name": "@presidio-dev/playwright-core",
+  "version": "1.0.1",
   "description": "A powerful wrapper around Playwright providing browser automation services with enhanced capabilities",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

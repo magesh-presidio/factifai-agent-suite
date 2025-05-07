@@ -1,4 +1,4 @@
-import { BrowserService, getCurrentUrl } from "@factifai/playwright-core";
+import { BrowserService, getCurrentUrl } from "@presidio-dev/playwright-core";
 import {
   HumanMessage,
   MessageContentComplex,

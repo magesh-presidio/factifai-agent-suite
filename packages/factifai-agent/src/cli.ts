@@ -65,7 +65,7 @@ async function cleanup() {
   
   try {
     // Get instance of BrowserService to close browsers
-    const { BrowserService } = await import('@factifai/playwright-core');
+    const { BrowserService } = await import('@presidio-dev/playwright-core');
     const browserService = BrowserService.getInstance();
     
     // Close all active browser sessions

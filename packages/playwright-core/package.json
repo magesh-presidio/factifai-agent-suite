@@ -1,12 +1,15 @@
 {
   "name": "@factifai/playwright-core",
   "version": "1.0.0",
-  "description": "",
+  "description": "A powerful wrapper around Playwright providing browser automation services with enhanced capabilities",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc",
@@ -24,8 +27,19 @@
     "@typescript-eslint/parser": "^8.31.1",
     "typescript": "^5.8.3"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "playwright",
+    "browser",
+    "automation",
+    "testing",
+    "screenshot",
+    "ui-testing"
+  ],
+  "author": "Factifai",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/presidio-oss/factifai-agent-suite.git"
+  },
   "packageManager": "pnpm@10.10.0"
 }

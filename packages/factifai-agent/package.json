@@ -1,5 +1,9 @@
 {
-  "name": "@factifai/agent",
+  "description": "An AI powered browser automation testing agent powered by LLMs.",
+  "author": "PRESIDIO®",
+  "name": "factifai-agent",
+  "license": "MIT",
+  "homepage": "https://factifai.com",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -44,5 +48,29 @@
     "eslint": "^9.26.0",
     "jest": "^29.7.0",
     "typescript": "^5.8.3"
+  },
+  "keywords": [
+    "browser",
+    "automation",
+    "testing",
+    "playwright",
+    "langgraph",
+    "AI",
+    "testing-framework",
+    "test-automation",
+    "javascript",
+    "cli",
+    "agent",
+    "pipelines"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/presidio-oss/factifai-agent-suite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/presidio-oss/factifai-agent-suite/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

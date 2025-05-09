@@ -364,7 +364,7 @@ const cli = yargs(hideBin(process.argv))
   .alias('h', 'help')
   .version()
   .alias('v', 'version')
-  .epilogue('For more information, visit https://factifai.com\nFile format: Use .txt or .md format for test instructions in files.');
+  .epilogue('For more information, visit https://factifai.io\nFile format: Use .txt or .md format for test instructions in files.');
 
 // Parse arguments
 cli.parse();

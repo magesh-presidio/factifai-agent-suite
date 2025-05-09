@@ -3,8 +3,8 @@
   "author": "PRESIDIO®",
   "name": "@presidio-dev/factifai-agent",
   "license": "MIT",
-  "homepage": "https://factifai.com",
-  "version": "1.0.1",
+  "homepage": "https://factifai.io",
+  "version": "1.0.2",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {

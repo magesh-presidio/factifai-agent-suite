@@ -1,6 +1,6 @@
 {
   "name": "@presidio-dev/playwright-core",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A powerful wrapper around Playwright providing browser automation services with enhanced capabilities",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,7 +15,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "jest",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "postinstall": "npx playwright install --with-deps"
   },
   "dependencies": {
     "playwright": "^1.52.0"

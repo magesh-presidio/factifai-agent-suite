@@ -1,63 +1,45 @@
-# @presidio-dev/playwright-core
+# playwright-core
 
-A powerful wrapper around Playwright providing browser automation services with enhanced capabilities for UI testing, element detection, and screenshot capture.
+A powerful Playwright wrapper providing enhanced browser automation for UI testing with advanced element detection and visual debugging.
 
-## Installation
+## Quick Start
 
 ```bash
+# Install the package
 npm install @presidio-dev/playwright-core
-# or
-yarn add @presidio-dev/playwright-core
-# or
-pnpm add @presidio-dev/playwright-core
-```
 
-## Features
-
-- **Browser Session Management**: Handle browser sessions with unique session IDs
-- **Tab Management**: Track and control multiple browser tabs
-- **Element Detection**: Find clickable and input elements on the page
-- **Visual Element Marking**: Highlight and number elements on the page for visualization
-- **Screenshot Capture**: Take screenshots with optional element highlighting
-- **Navigation Utilities**: Simplified functions for common browser operations
-- **Interaction Utilities**: Streamlined methods for user interactions
-
-## Basic Usage
-
-```typescript
+# Create a basic automation script
 import { BrowserService, navigate, click, type } from '@presidio-dev/playwright-core';
 
-// Example usage
-async function runBrowserAutomation() {
-  const browser = BrowserService.getInstance();
-  const sessionId = `session-${Date.now()}`;
+const run = async () => {
+  const sessionId = `test-${Date.now()}`;
   
-  try {
-    // Navigate to a website
-    await navigate(sessionId, 'https://example.com');
-    
-    // Take a screenshot
-    const screenshot = await browser.takeScreenshot(sessionId);
-    console.log('Screenshot taken:', !!screenshot);
-    
-    // Find and click an element
-    await click(sessionId, { x: 150, y: 200 });
-    
-    // Type into an input field
-    await type(sessionId, 'Hello, World!');
-    
-    // Take a screenshot with element highlighting
-    const markedScreenshot = await browser.takeMarkedScreenshot(sessionId, {
-      boxColor: 'green',
-      removeAfter: true
-    });
-    
-  } finally {
-    // Clean up the browser session
-    await browser.closePage(sessionId);
-  }
-}
+  // Open a page and navigate
+  await navigate(sessionId, 'https://example.com');
+  
+  // Interact with the page
+  await click(sessionId, { x: 150, y: 200 });
+  await type(sessionId, 'Hello, World!');
+  
+  // Capture with highlighted elements
+  const screenshot = await BrowserService.getInstance().takeMarkedScreenshot(sessionId);
+  
+  // Clean up
+  await BrowserService.getInstance().closePage(sessionId);
+};
+
+run();
 ```
+
+## Core Features
+
+| Feature | Description |
+|---------|-------------|
+| **Session Management** | Control browser sessions with unique IDs |
+| **Visual Debugging** | Highlight and number elements for visual inspection |
+| **Element Detection** | Find interactive elements automatically |
+| **Screenshot Tools** | Capture screenshots with optional element highlighting |
+| **Simplified API** | Streamlined wrappers for common browser operations |
 
 ## API Reference
 
@@ -96,12 +78,51 @@ The main service for managing browser sessions and interactions.
 - `markVisibleElements(sessionId, options?)`: Mark elements with numbered boxes
 - `removeElementMarkers(sessionId)`: Remove element markers
 
+## Advanced Usage
+
+### Custom Element Marking
+
+```typescript
+// Mark interactive elements with custom colors
+await browser.markVisibleElements(sessionId, {
+  boxColor: 'blue',
+  textColor: 'white',
+  borderWidth: 2,
+  elements: [
+    { x: 100, y: 150, width: 200, height: 50, label: 'Search Box' }
+  ]
+});
+```
+
+### Page Element Data
+
+```typescript
+// Get detailed info about page elements
+const elements = await browser.getAllPageElements(sessionId);
+console.log(`Found ${elements.length} interactive elements:`);
+elements.forEach(el => {
+  console.log(`- ${el.tagName} at (${el.x}, ${el.y}), size: ${el.width}x${el.height}`);
+});
+```
+
 ## Requirements
 
-- Node.js 16 or higher
-- Playwright is a peer dependency
+- Node.js 16+
+- Playwright (peer dependency)
+
+## Installation Options
+
+```bash
+# npm
+npm install @presidio-dev/playwright-core
+
+# yarn
+yarn add @presidio-dev/playwright-core
+
+# pnpm
+pnpm add @presidio-dev/playwright-core
+```
 
 ## License
 
 ISC
-

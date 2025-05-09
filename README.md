@@ -1,98 +1,97 @@
 # Factifai Suite
 
-An AI powered agentic browser automation testing suite powered by LLMs.
+<div align="center">
+  <br>
+  <strong>AI-Powered Browser Automation Testing Suite</strong>
+</div>
 
-## Installation
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![pnpm](https://img.shields.io/badge/maintained%20with-pnpm-cc00ff.svg)](https://pnpm.io/)
+
+## What is Factifai Suite?
+
+Factifai Suite is a monorepo of packages that together form an AI-powered browser testing ecosystem. It leverages Large Language Models (LLMs) to interpret natural language test instructions and execute them through browser automation.
+
+## Packages
+
+This monorepo contains the following packages:
+
+- **[factifai-agent](./packages/factifai-agent/)**: CLI tool that processes natural language test instructions and executes them via Playwright.
+- **[playwright-core](./packages/playwright-core/)**: A wrapper around Playwright providing enhanced browser automation capabilities.
+
+## How it Works
+
+The packages work together in a layered architecture:
+
+1. **playwright-core** handles the low-level browser automation
+2. **factifai-agent** utilizes LLMs to process natural language instructions and orchestrates test execution via playwright-core
+
+The test flow follows these steps:
+- User provides natural language test instructions
+- factifai-agent processes these instructions through a LangGraph pipeline
+- Browser actions are executed via playwright-core
+- Test results and reports are generated
+
+## Quick Setup
 
 ```bash
+# Clone the repository
+git clone https://github.com/presidio-oss/factifai-agent-suite.git
+cd factifai-suite
+
+# Install dependencies
 pnpm install
+
+# Build all packages
+pnpm -r build
 ```
+
+## Development Commands
+
+```bash
+# Build all packages
+pnpm -r build
+
+# Build a specific package
+pnpm --filter @presidio-dev/factifai-agent build
+
+# Run tests
+pnpm -r test
+
+# Run a specific package's script
+pnpm --filter @presidio-dev/factifai-agent start
+```
+
+## Prerequisites
+
+- Node.js 16+
+- pnpm
 
 ## Usage
 
-```bash
-# Run with specified model provider
-factifai-agent --model bedrock run "Navigate to duckduckgo.com"
+For detailed usage instructions, refer to the individual package READMEs:
+- [factifai-agent usage](./packages/factifai-agent/README.md)
+- [playwright-core usage](./packages/playwright-core/README.md)
 
-# Run with OpenAI model
-factifai-agent --model openai run "Navigate to duckduckgo.com"
+## Roadmap
 
-# Run from a file (must specify model provider)
-factifai-agent --model bedrock run --file ./tests/my-test.txt
-```
+### Current Components
 
-## Model Configuration
+✅ **factifai-agent**: CLI tool for natural language test execution
+✅ **playwright-core**: Enhanced browser automation wrapper
 
-Factifai supports multiple LLM providers that can be configured via the CLI:
+### Upcoming Components
 
-### Available Model Providers
+🚧 **crawler-agent**: Autonomous web discovery and mapping tool
+- Site exploration and structure analysis
+- API endpoint documentation
+- Test path suggestion
 
-1. **bedrock** - AWS Bedrock models
-   - Current model: `us.anthropic.claude-3-7-sonnet-20250219-v1:0`
-   - Configure with environment variable: `BEDROCK_MODEL`
+🚧 **test-curator**: Visual test creation and management
+- Test workbench with browser preview
+- Visual test editing
+- Framework export
 
-2. **openai** - OpenAI models
-   - Current model: `gpt-4.1`
-   - Configure with environment variable: `OPENAI_MODEL`
+## License
 
-**Important**: You must explicitly specify a model provider. There is no default provider.
-
-### Setting the Model Provider
-
-You can set the model provider in several ways:
-
-1. **Command-line option (per command):**
-   ```bash
-   factifai-agent --model openai run "Navigate to duckduckgo.com"
-   ```
-
-2. **Configuration command:**
-   ```bash
-   factifai-agent config --model openai
-   ```
-
-3. **Environment variable:**
-   ```bash
-   export MODEL_PROVIDER=openai
-   factifai-agent run "Navigate to duckduckgo.com"
-   ```
-
-### Listing Available Models
-
-To see all available models and the current configuration:
-
-```bash
-factifai-agent models
-```
-
-## Commands
-
-- `run` - Run a browser automation task
-- `config` - Configure settings and API keys
-- `models` - List and manage available models
-
-## Examples
-
-```bash
-# Run with OpenAI model
-factifai-agent --model openai run "Navigate to duckduckgo.com and check if the logo is visible"
-
-# Run from a file with custom session ID (must specify model provider)
-factifai-agent --model bedrock run --file ./tests/checkout.txt --session my-session
-
-# Show current configuration
-factifai-agent config --show
-
-# Set model provider for the current session
-factifai-agent config --model bedrock
-```
-
-## Environment Variables
-
-- `MODEL_PROVIDER` - The model provider to use (openai or bedrock)
-- `OPENAI_MODEL` - The OpenAI model to use
-- `OPENAI_API_KEY` - Your OpenAI API key
-- `BEDROCK_MODEL` - The AWS Bedrock model to use
-- `AWS_ACCESS_KEY_ID` - Your AWS access key ID
-- `AWS_SECRET_ACCESS_KEY` - Your AWS secret access key
-- `AWS_DEFAULT_REGION` - Your AWS region
+MIT © PRESIDIO®

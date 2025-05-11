@@ -2,7 +2,13 @@ import dotenv from "dotenv";
 import { browserAutomationGraph } from "./core/graph/graph";
 import boxen from "boxen";
 import chalk from "chalk";
+import { ConfigManager } from "./common/utils/config-manager";
 
+// Initialize configuration manager
+ConfigManager.initialize();
+ConfigManager.applyToEnvironment();
+
+// Load environment variables from .env file (lower priority than config)
 dotenv.config();
 
 /**

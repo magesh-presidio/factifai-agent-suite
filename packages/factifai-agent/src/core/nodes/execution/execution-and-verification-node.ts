@@ -76,7 +76,6 @@ const buildSystemPrompt = (
   sessionId: string,
   lastAction: string | null,
   expectedOutcome: string | null,
-  lastScreenshot: string | null,
   currentUrl: string | null,
   retryCount: number,
   retryAction: string | null,
@@ -123,7 +122,7 @@ const buildSystemPrompt = (
   }
 
   // Add verification instructions if there was a previous action
-  if (lastAction && expectedOutcome && lastScreenshot) {
+  if (lastAction && expectedOutcome) {
     systemPromptContent += `
     
     ${retryCount > 0 ? "FIRST - " : ""}VERIFICATION STEP:
@@ -133,7 +132,7 @@ const buildSystemPrompt = (
     Expected outcome: "${expectedOutcome}"
     ${retryCount > 0 ? `Retry attempt: ${retryCount} of ${maxRetries}` : ""}
     
-    1. First, examine both screenshots and determine if the expected outcome was achieved.
+    1. First, examine the current state and determine if the expected outcome was achieved.
     2. Start your response with "VERIFICATION:" followed by either "SUCCESS" or "FAILURE" and a brief explanation.
     3. If you respond with "FAILURE", DO NOT USE ANY TOOLS and explain why the action failed.
     4. If you respond with "SUCCESS", continue with planning the next action as described below.
@@ -175,7 +174,6 @@ const createHumanMessage = (
   instruction: string,
   lastAction: string | null,
   expectedOutcome: string | null,
-  lastScreenshot: string | null,
   currentScreenshot: string,
   currentUrl: string | null,
   retryCount: number,
@@ -200,26 +198,11 @@ const createHumanMessage = (
     },
   ];
 
-  // Add the previous screenshot for comparison if it exists
-  if (lastScreenshot) {
-    humanMessageContent.push(
-      { type: "text", text: "Previous screenshot:" },
-      {
-        type: "image_url",
-        image_url: { url: `data:image/jpeg;base64,${lastScreenshot}` },
-      }
-    );
-  }
-
   // Add the current screenshot with element coordinates
   humanMessageContent.push(
     {
       type: "text",
-      text: `${
-        lastScreenshot
-          ? "Current screenshot:"
-          : "Screenshot of the current page:"
-      }`,
+      text: "Screenshot of the current page:",
     },
     {
       type: "image_url",
@@ -311,7 +294,6 @@ export const executeAndVerifyNode = async ({
   messages,
   lastAction,
   expectedOutcome,
-  lastScreenshot,
   retryCount = 0,
   retryAction = "",
   maxRetries = 3,
@@ -342,7 +324,6 @@ export const executeAndVerifyNode = async ({
     sessionId,
     lastAction,
     expectedOutcome,
-    lastScreenshot,
     currentUrl,
     retryCount,
     retryAction,
@@ -355,7 +336,6 @@ export const executeAndVerifyNode = async ({
     instruction,
     lastAction,
     expectedOutcome,
-    lastScreenshot,
     currentScreenshot,
     currentUrl,
     retryCount,
@@ -449,7 +429,6 @@ export const executeAndVerifyNode = async ({
               removeImageUrlsFromMessage(humanMessage),
               response,
             ],
-            lastScreenshot: currentScreenshot,
             retryCount: retryCount + 1,
             retryAction: lastAction,
           };
@@ -493,7 +472,6 @@ export const executeAndVerifyNode = async ({
       isComplete: shouldComplete,
       lastAction: nextAction,
       expectedOutcome: nextExpectedOutcome,
-      lastScreenshot: currentScreenshot,
       retryCount: 0, // Reset retry count for new action
       retryAction: "", // Clear retry action
     };

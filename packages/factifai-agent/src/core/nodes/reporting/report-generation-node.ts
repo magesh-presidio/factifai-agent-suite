@@ -110,7 +110,7 @@ async function generateTestReport(
   userMessage: HumanMessage
 ) {
   // Get the model with structured output
-  const model = getModel(false, 32000).withStructuredOutput(reportOutputSchema);
+  const model = getModel(false, 16000).withStructuredOutput(reportOutputSchema);
 
   // Generate the report
   return await model.invoke([systemPrompt, userMessage]);

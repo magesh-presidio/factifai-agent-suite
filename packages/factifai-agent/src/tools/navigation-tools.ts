@@ -23,7 +23,6 @@ export class NavigationTools {
         logger.info(`Navigating to ${input.url}`);
         try {
           const result = await navigate(input.sessionId, input.url);
-          console.log("Navigation result:", result.success);
           return JSON.stringify(result);
         } catch (error) {
           logger.error(`Error navigating to ${input.url}:`, error);
@@ -45,10 +44,10 @@ export class NavigationTools {
         sessionId: z.string().describe("The browser session ID"),
       }),
       func: async (input) => {
-        logger.info(`Fetching current URL for session ${input.sessionId}`);
+        logger.appendToFile(`Fetching current URL for session ${input.sessionId}`);
         try {
           const result = await getCurrentUrl(input.sessionId);
-          logger.info("Current URL result:", result.url);
+          logger.info("Current URL:", result.url);
           return JSON.stringify(result);
         } catch (error) {
           logger.error(
@@ -81,7 +80,6 @@ export class NavigationTools {
         );
         try {
           const result = await wait(input.sessionId, input.seconds);
-          console.log(`Wait result: ${result.success}`);
           return JSON.stringify(result);
         } catch (error) {
           logger.error(`Error waiting in session ${input.sessionId}:`, error);
@@ -106,7 +104,7 @@ export class NavigationTools {
         logger.info(`Reloading page for session ${input.sessionId}`);
         try {
           const result = await reload(input.sessionId);
-          logger.info(`Reload result: ${result.success}, URL: ${result.url}`);
+          logger.appendToFile(`Reload result: ${result.success}, URL: ${result.url}`);
           return JSON.stringify(result);
         } catch (error) {
           logger.error(`Error reloading page for session ${input.sessionId}:`, error);
@@ -128,7 +126,7 @@ export class NavigationTools {
         logger.info(`Navigating back in history for session ${input.sessionId}`);
         try {
           const result = await goBack(input.sessionId);
-          logger.info(`Go back result: ${result.success}, URL: ${result.url}`);
+          logger.appendToFile(`Go back result: ${result.success}, URL: ${result.url}`);
           return JSON.stringify(result);
         } catch (error) {
           logger.error(`Error navigating back for session ${input.sessionId}:`, error);
@@ -150,7 +148,7 @@ export class NavigationTools {
         logger.info(`Navigating forward in history for session ${input.sessionId}`);
         try {
           const result = await goForward(input.sessionId);
-          logger.info(`Go forward result: ${result.success}, URL: ${result.url}`);
+          logger.appendToFile(`Go forward result: ${result.success}, URL: ${result.url}`);
           return JSON.stringify(result);
         } catch (error) {
           logger.error(`Error navigating forward for session ${input.sessionId}:`, error);

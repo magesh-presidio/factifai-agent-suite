@@ -52,15 +52,14 @@ const captureCurrentState = async (sessionId: string) => {
       // Write the screenshot to the screenshots directory
       const imagePath = path.join(screenshotsDir, filename);
       fs.writeFileSync(imagePath, Buffer.from(screenshot, "base64"));
-      logger.info(
+      logger.appendToFile(
         chalk.cyan(`📷 Screenshot saved to ${imagePath} for debugging`)
       );
     }
 
-    logger.info(chalk.cyan("📷 Screenshot captured successfully"));
+    logger.info(chalk.cyan("📷 Screenshot captured"));
 
     const currentUrl = (await getCurrentUrl(sessionId)).url ?? null;
-    console.log(`Current URL: ${currentUrl}`);
 
     // Marked elements on the page
     const markedElementsResult = markedScreenshotResponse?.elements;
@@ -74,11 +73,11 @@ const captureCurrentState = async (sessionId: string) => {
         } visible marked elements on the page`
       )
     );
-    logger.info(chalk.cyan(`🔍 Found ${JSON.stringify(visibleElements)}`));
+    logger.appendToFile(chalk.cyan(`🔍 Found ${JSON.stringify(visibleElements)}`));
 
     return { screenshot, url: currentUrl, visibleElements, error: null };
   } catch (error) {
-    console.error("Failed to capture browser state:", error);
+    logger.error("Failed to capture browser state:", error);
     return { screenshot: null, url: null, visibleElements: null, error };
   }
 };
@@ -327,6 +326,7 @@ export const executeAndVerifyNode = async ({
     logger.info(
       chalk.cyan(`🕒 Test execution started at ${startTimeFormatted}`)
     );
+    logger.appendToFile(`TEST_EXECUTION_START: ${testStartTime} (${startTimeFormatted}), sessionId=${sessionId}, instruction=${processedInstruction.substring(0, 100)}...`);
   }
   // Capture current browser state
   const captureResult = await captureCurrentState(sessionId);
@@ -367,7 +367,7 @@ export const executeAndVerifyNode = async ({
 
   // Log retry attempts
   if (retryCount > 0) {
-    logger.info(
+    logger.appendToFile(
       chalk.yellow(
         `Retry attempt ${retryCount}/${maxRetries} for action: "${lastAction}"`
       )
@@ -409,7 +409,7 @@ export const executeAndVerifyNode = async ({
       const verification = parseVerificationResult(responseText);
 
       if (verification) {
-        logger.info(
+        logger.appendToFile(
           chalk.gray(
             `Verification result: ${verification.result} - ${verification.explanation}`
           )
@@ -494,6 +494,9 @@ export const executeAndVerifyNode = async ({
     if (shouldComplete && testStartTime) {
       testEndTime = Date.now();
       testDuration = testEndTime - testStartTime;
+      const endTimeFormatted = new Date(testEndTime).toISOString();
+      logger.appendToFile(`TEST_EXECUTION_COMPLETE: ${testEndTime} (${endTimeFormatted}), duration=${testDuration}ms, sessionId=${sessionId}`);
+      logger.appendToFile(`TEST_EXECUTION_SUMMARY: lastAction="${lastAction}", nextAction="${nextAction}", isComplete=${shouldComplete}`);
     }
 
     return {
@@ -511,6 +514,9 @@ export const executeAndVerifyNode = async ({
     };
   } catch (error) {
     console.error("Error executing instruction:", error);
+    logger.appendToFile(`TEST_EXECUTION_ERROR: ${error instanceof Error ? error.message : String(error)}`);
+    logger.appendToFile(`TEST_EXECUTION_ERROR_STACK: ${error instanceof Error && error.stack ? error.stack : 'No stack trace'}`);
+    logger.appendToFile(`TEST_EXECUTION_ERROR_CONTEXT: sessionId=${sessionId}, lastAction="${lastAction}", retryCount=${retryCount}`);
     return {
       lastError: `Error executing instruction: ${error}`,
     };

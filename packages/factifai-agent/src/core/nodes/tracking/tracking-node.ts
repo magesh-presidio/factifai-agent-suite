@@ -26,8 +26,6 @@ export const trackAndUpdateStepsNode = async ({
   // Create a timestamp for logging
   const timestamp = new Date().toISOString();
 
-  enhancedLogger.info(chalk.bgBlue(`[${timestamp}] Tracking test steps...`));
-
   if (!testSteps || testSteps.length === 0) {
     logger.warn("No test steps to track and update");
     return {};
@@ -77,13 +75,6 @@ export const trackAndUpdateStepsNode = async ({
     const verificationExplanation = verificationMatch
       ? verificationMatch[2].trim()
       : null;
-
-    enhancedLogger.info(
-      chalk.bgBlue(
-        `[${timestamp}] Verificaation result`,
-        verificationExplanation
-      )
-    );
 
     // Define system prompt for test progress analysis
     const systemPrompt = new SystemMessage(

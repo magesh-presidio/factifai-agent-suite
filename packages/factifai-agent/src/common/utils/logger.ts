@@ -197,7 +197,65 @@ export const logger = {
     const prefix = this.config.logPrefix ? `[${this.config.logPrefix}] ` : "";
     const timestampStr = timestamp ? `[${timestamp}] ` : "";
 
+    // Return plain text version for file logging
     return `${timestampStr}[${level}] ${prefix}${message}${formattedArgs}`;
+  },
+  
+  /**
+   * Format a log entry with timestamp and metadata with colors
+   */
+  formatColorizedLogEntry(level: string, message: string, args: any[]): { metaInfo: string, mainContent: string } {
+    let timestamp = "";
+
+    if (this.config.showTimestamp) {
+      const now = new Date();
+      switch (this.config.timestampFormat) {
+        case "iso":
+          timestamp = now.toISOString();
+          break;
+        case "locale":
+          timestamp = now.toLocaleString();
+          break;
+        case "relative":
+          // Show time since process started
+          timestamp = prettyMs(process.uptime() * 1000);
+        case "time12":
+          timestamp = now.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: true,
+          });
+          break;
+      }
+    }
+
+    let formattedArgs = "";
+
+    if (args.length > 0) {
+      try {
+        // Format objects and arrays nicely
+        formattedArgs = args
+          .map((arg) => {
+            if (typeof arg === "object" && arg !== null) {
+              return "\n" + JSON.stringify(arg, null, 2);
+            }
+            return String(arg);
+          })
+          .join(" ");
+      } catch (e) {
+        formattedArgs = " [Non-serializable args]";
+      }
+    }
+
+    const prefix = this.config.logPrefix ? `[${this.config.logPrefix}] ` : "";
+    const timestampStr = timestamp ? `[${timestamp}] ` : "";
+    
+    // Return the meta information (timestamp and level) as one part and main content as another
+    return {
+      metaInfo: chalk.gray(`${timestampStr}[${level}] ${prefix}`),
+      mainContent: `${message}${formattedArgs}`
+    };
   },
 
   /**
@@ -245,11 +303,14 @@ export const logger = {
   info(message: string, ...args: any[]): void {
     if (this.shouldLog("info")) {
       const formattedEntry = this.formatLogEntry("INFO", message, args);
-      const output = this.config.useColors
-        ? chalk.blue(`${figures.info} `) + formattedEntry
-        : formattedEntry;
-
-      console.log(output);
+      
+      if (this.config.useColors) {
+        const { metaInfo, mainContent } = this.formatColorizedLogEntry("INFO", message, args);
+        console.log(chalk.blue(`${figures.info} `) + metaInfo + mainContent);
+      } else {
+        console.log(formattedEntry);
+      }
+      
       this.appendToFile(formattedEntry);
     }
   },
@@ -260,11 +321,14 @@ export const logger = {
   success(message: string, ...args: any[]): void {
     if (this.shouldLog("info")) {
       const formattedEntry = this.formatLogEntry("SUCCESS", message, args);
-      const output = this.config.useColors
-        ? chalk.green(`${figures.tick} `) + formattedEntry
-        : formattedEntry;
+      
+      if (this.config.useColors) {
+        const { metaInfo, mainContent } = this.formatColorizedLogEntry("SUCCESS", message, args);
+        console.log(chalk.green(`${figures.tick} `) + metaInfo + mainContent);
+      } else {
+        console.log(formattedEntry);
+      }
 
-      console.log(output);
       this.appendToFile(formattedEntry);
     }
   },
@@ -274,11 +338,14 @@ export const logger = {
    */
   error(message: string, ...args: any[]): void {
     const formattedEntry = this.formatLogEntry("ERROR", message, args);
-    const output = this.config.useColors
-      ? chalk.red(`${figures.cross} `) + formattedEntry
-      : formattedEntry;
+    
+    if (this.config.useColors) {
+      const { metaInfo, mainContent } = this.formatColorizedLogEntry("ERROR", message, args);
+      console.error(chalk.red(`${figures.cross} `) + metaInfo + mainContent);
+    } else {
+      console.error(formattedEntry);
+    }
 
-    console.error(output);
     this.appendToFile(formattedEntry);
   },
 
@@ -288,11 +355,14 @@ export const logger = {
   warn(message: string, ...args: any[]): void {
     if (this.shouldLog("warn")) {
       const formattedEntry = this.formatLogEntry("WARN", message, args);
-      const output = this.config.useColors
-        ? chalk.yellow(`${figures.warning} `) + formattedEntry
-        : formattedEntry;
+      
+      if (this.config.useColors) {
+        const { metaInfo, mainContent } = this.formatColorizedLogEntry("WARN", message, args);
+        console.warn(chalk.yellow(`${figures.warning} `) + metaInfo + mainContent);
+      } else {
+        console.warn(formattedEntry);
+      }
 
-      console.warn(output);
       this.appendToFile(formattedEntry);
     }
   },
@@ -303,11 +373,14 @@ export const logger = {
   debug(message: string, ...args: any[]): void {
     if (this.shouldLog("debug")) {
       const formattedEntry = this.formatLogEntry("DEBUG", message, args);
-      const output = this.config.useColors
-        ? chalk.cyan(`${figures.bullet} `) + formattedEntry
-        : formattedEntry;
+      
+      if (this.config.useColors) {
+        const { metaInfo, mainContent } = this.formatColorizedLogEntry("DEBUG", message, args);
+        console.debug(chalk.cyan(`${figures.bullet} `) + metaInfo + mainContent);
+      } else {
+        console.debug(formattedEntry);
+      }
 
-      console.debug(output);
       this.appendToFile(formattedEntry);
     }
   },

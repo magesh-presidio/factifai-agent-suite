@@ -147,17 +147,17 @@ pnpm link --global
 
 ## 🔧 Use Cases
 
-### End-to-End Testing
-Validate complete user journeys using natural language instructions - simply describe what you want to test in plain English. The AI autonomously navigates through complex flows like checkout processes or user registration, handling UI interactions and validations without needing to write selectors or code.
+### CI/CD Integration
+Automate testing in CI/CD pipelines with natural language test suites that non-technical team members can create and maintain. Run multiple tests in parallel during deployment, with the AI handling browser navigation and verification steps, providing comprehensive test coverage without complex scripting.
 
 ### Cross-Browser Compatibility Testing
 Verify that your application works consistently across different browsers with identical natural language test cases. Run the same test instructions on Chrome, Firefox, and Safari simultaneously, leveraging parallel execution to dramatically reduce testing time while catching browser-specific inconsistencies.
 
+### End-to-End Testing
+Validate complete user journeys using natural language instructions - simply describe what you want to test in plain English. The AI autonomously navigates through complex flows like checkout processes or user registration, handling UI interactions and validations without needing to write selectors or code.
+
 ### Regression Testing
 Maintain a library of human-readable test files that anyone on the team can understand and update. When code changes, the AI intelligently adapts to UI changes and new elements, reducing maintenance overhead while still reliably catching regressions in functionality.
-
-### CI/CD Integration
-Automate testing in CI/CD pipelines with natural language test suites that non-technical team members can create and maintain. Run multiple tests in parallel during deployment, with the AI handling browser navigation and verification steps, providing comprehensive test coverage without complex scripting.
 
 ## 🏗️ Architecture
 

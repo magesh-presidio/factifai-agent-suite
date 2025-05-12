@@ -1,8 +1,27 @@
-# Factifai Agent Suite
+<div align="center">
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License" />
+  <img src="https://img.shields.io/badge/pnpm-10.10.0-orange?logo=pnpm" alt="pnpm" />
+  <img src="https://img.shields.io/github/issues/presidio-oss/factifai-agent-suite" alt="Issues" />
+  <img src="https://img.shields.io/github/stars/presidio-oss/factifai-agent-suite" alt="Stars" />
+  <img src="https://img.shields.io/github/forks/presidio-oss/factifai-agent-suite" alt="Forks" />
+</div>
+<br />
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/images/logo/hai-build-dark-logo.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/images/logo/hai-build-light-logo.png">
+    <img alt="HAI Logo" src="assets/images/logo/hai-build-white-bg.png" height="auto">
+  </picture>
+</div>
+<br />
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![pnpm](https://img.shields.io/badge/pnpm-10.10.0-orange?logo=pnpm)
-![Node.js](https://img.shields.io/badge/Node.js-16+-green?logo=node.js)
+<div align="center">
+  <em>Automate testing through AI-powered computer control.<br>
+  From manual steps to automated tests in minutes.</em>
+</div>
+<br>
+
+# Factifai Agent Suite
 
 **AI-powered testing tools for modern development workflows**
 
@@ -179,8 +198,16 @@ The architecture decouples natural language understanding from browser automatio
 
 ## 🤝 Contributing
 
-We welcome contributions to the Factifai Agent Suite! See our [Contributing Guidelines](CODE_OF_CONDUCT.md) for more information on how to get involved.
+We welcome contributions to the Factifai Agent Suite! See our [Contributing Guidelines](./CONTRIBUTING.md) for more information on how to get involved.
 
-## 📜 License
+## 📄 License
 
-MIT © PRESIDIO®
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📜 Code of Conduct
+
+Please read our [Code of Conduct](CODE_OF_CONDUCT.md) to keep our community approachable and respectable.
+
+## 📧 Contact
+
+For questions or feedback, please contact us at [hai-feedback@presidio.com](mailto:hai-feedback@presidio.com).

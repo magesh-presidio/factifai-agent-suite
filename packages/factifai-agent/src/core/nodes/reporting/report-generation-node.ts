@@ -247,12 +247,18 @@ function escapeXml(unsafe: string): string {
 /**
  * Write JUnit XML report to file
  */
-function writeJUnitXmlReport(xml: string): string {
+function writeJUnitXmlReport(xml: string, sessionId: string): string {
   try {
-    // Create logs directory if it doesn't exist
-    const logsDir = path.join(process.cwd(), "logs");
-    if (!fs.existsSync(logsDir)) {
-      fs.mkdirSync(logsDir, { recursive: true });
+    // Create sessionId directory if it doesn't exist
+    const sessionDir = path.join(process.cwd(), sessionId);
+    if (!fs.existsSync(sessionDir)) {
+      fs.mkdirSync(sessionDir, { recursive: true });
+    }
+    
+    // Create test report directory within sessionId directory
+    const reportDir = path.join(sessionDir, "test report");
+    if (!fs.existsSync(reportDir)) {
+      fs.mkdirSync(reportDir, { recursive: true });
     }
 
     // Generate filename with timestamp
@@ -261,7 +267,7 @@ function writeJUnitXmlReport(xml: string): string {
       .replace(/:/g, "-")
       .replace(/\..+/, "");
     const filename = `test-report-${timestamp}.xml`;
-    const filePath = path.join(logsDir, filename);
+    const filePath = path.join(reportDir, filename);
 
     // Write the XML to file
     fs.writeFileSync(filePath, xml);
@@ -282,7 +288,10 @@ export const generateReportNode = async ({
   testSteps,
   messages,
   lastError,
+  sessionId,
 }: GraphStateType) => {
+  // Generate a sessionId if not provided
+  const testSessionId = sessionId || `session-${new Date().getTime()}`;
   if (!testSteps || testSteps.length === 0) {
     enhancedLogger.warn("No test steps to analyze for report");
     return {};
@@ -386,7 +395,7 @@ export const generateReportNode = async ({
         report.criticalIssues
       );
 
-      const xmlFilePath = writeJUnitXmlReport(junitXml);
+      const xmlFilePath = writeJUnitXmlReport(junitXml, testSessionId);
 
       enhancedLogger.success(
         `${chalk.green(figures.tick)} XML report saved to: ${xmlFilePath}`

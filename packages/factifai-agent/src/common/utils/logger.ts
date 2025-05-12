@@ -28,6 +28,7 @@ export interface LoggerConfig {
   showTimestamp: boolean;
   timestampFormat: "iso" | "locale" | "relative" | "time12";
   logPrefix?: string;
+  sessionId?: string;
 }
 
 // Get the absolute path to the project root directory
@@ -41,6 +42,7 @@ const defaultConfig: LoggerConfig = {
   useColors: true,
   showTimestamp: true,
   timestampFormat: "time12",
+  sessionId: "",
 };
 
 // Define spinners and their states
@@ -63,6 +65,28 @@ export const logger = {
     this.config = { ...this.config, ...config };
     // Create log directory if it doesn't exist
     this.ensureLogDirectory();
+  },
+  
+  /**
+   * Set the session ID and update log file path
+   * This method should be called when a new test session starts
+   */
+  setSessionId(sessionId: string): void {
+    if (!sessionId) {
+      console.warn(chalk.yellow(`${figures.warning} Empty sessionId provided, using default log path`));
+      return;
+    }
+    
+    // Update the sessionId in the configuration
+    this.config.sessionId = sessionId;
+    
+    // Update the log file path to use the session directory structure
+    this.config.logFilePath = path.join(process.cwd(), sessionId, "factifai.log");
+    
+    // Create the new log directory structure
+    this.ensureLogDirectory();
+    
+    this.info(`Log file path updated to session: ${sessionId}`);
   },
 
   /**

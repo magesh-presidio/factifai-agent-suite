@@ -26,19 +26,31 @@ const captureCurrentState = async (sessionId: string) => {
     );
     const screenshot = markedScreenshotResponse.image;
 
-    // Save screenshot to logs for debugging
+    // Save screenshot to session/screenshots directory with timestamp
     if (screenshot) {
       const fs = require("fs");
       const path = require("path");
-      const logsDir = path.join(__dirname, "../../../../logs");
+      
+      // Create directory path with sessionId/screenshots structure
+      const sessionDir = path.join(process.cwd(), sessionId);
+      const screenshotsDir = path.join(sessionDir, "screenshots");
 
-      // Ensure logs directory exists
-      if (!fs.existsSync(logsDir)) {
-        fs.mkdirSync(logsDir, { recursive: true });
+      // Ensure screenshots directory exists
+      if (!fs.existsSync(screenshotsDir)) {
+        fs.mkdirSync(screenshotsDir, { recursive: true });
       }
 
-      // Write the screenshot to the logs directory
-      const imagePath = path.join(logsDir, "currentImage.jpeg");
+      // Generate a timestamp for the filename
+      const timestamp = new Date()
+        .toISOString()
+        .replace(/:/g, "-")
+        .replace(/\./g, "-");
+      
+      // Create filename with timestamp
+      const filename = `screenshot-${timestamp}.jpeg`;
+      
+      // Write the screenshot to the screenshots directory
+      const imagePath = path.join(screenshotsDir, filename);
       fs.writeFileSync(imagePath, Buffer.from(screenshot, "base64"));
       logger.info(
         chalk.cyan(`📷 Screenshot saved to ${imagePath} for debugging`)

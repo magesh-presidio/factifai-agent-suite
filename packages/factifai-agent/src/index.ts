@@ -3,6 +3,7 @@ import { browserAutomationGraph } from "./core/graph/graph";
 import boxen from "boxen";
 import chalk from "chalk";
 import { ConfigManager } from "./common/utils/config-manager";
+import { logger } from "./common/utils/logger";
 
 // Initialize configuration manager
 ConfigManager.initialize();
@@ -36,6 +37,9 @@ export const executeBrowserTask = async (
   sessionId: string
 ) => {
   sessionId = sessionId || `browser-session-${Date.now()}`;
+  
+  // Configure logger to use the session directory for logs
+  logger.setSessionId(sessionId);
 
   const runConfig = {
     recursionLimit: 100,

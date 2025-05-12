@@ -79,6 +79,19 @@ export const State = Annotation.Root({
     default: () => null,
     reducer: (_, v) => v,
   }),
+  // Test execution time tracking fields
+  testStartTime: Annotation<number | null>({
+    default: () => null,
+    reducer: (_, v) => v,
+  }),
+  testEndTime: Annotation<number | null>({
+    default: () => null, 
+    reducer: (_, v) => v,
+  }),
+  testDuration: Annotation<number | null>({
+    default: () => null,
+    reducer: (_, v) => v,
+  }),
 });
 
 export type GraphStateType = (typeof State)["State"];

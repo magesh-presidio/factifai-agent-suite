@@ -5,6 +5,7 @@ import { GraphStateType } from "../../graph/graph";
 import { logger } from "../../../common/utils/logger";
 import { getModel } from "../../models/models";
 import { enhancedLogger } from "../../../common/services/console-display-service";
+import { formatDuration } from "../../../common/utils/time-utils";
 
 /**
  * This node uses LLM to analyze current execution state and update test steps status
@@ -20,6 +21,7 @@ export const trackAndUpdateStepsNode = async ({
   maxRetries = 3,
   testSteps = [],
   messages = [],
+  testStartTime,
 }: GraphStateType) => {
   // Create a timestamp for logging
   const timestamp = new Date().toISOString();
@@ -287,6 +289,14 @@ export const trackAndUpdateStepsNode = async ({
     const totalSteps = updatedTestSteps.length;
     const completionPercent = Math.round((counts.passed / totalSteps) * 100);
 
+    // Calculate elapsed time if test start time is available
+    let elapsedTimeDisplay = "";
+    if (testStartTime) {
+      const currentTime = Date.now();
+      const elapsedMs = currentTime - testStartTime;
+      elapsedTimeDisplay = chalk.cyan(`🕒 Elapsed: ${formatDuration(elapsedMs)}`);
+    }
+
     // Create enhanced progress stats line
     displayContent.push(
       chalk.bold(`Test Progress: ${completionPercent}% complete`) +
@@ -298,7 +308,8 @@ export const trackAndUpdateStepsNode = async ({
         chalk.blue(`${counts.inProgress} ◉`) +
         chalk.gray(` | `) +
         chalk.gray(`${counts.notStarted} ○`) +
-        chalk.gray(`]`)
+        chalk.gray(`]`) +
+        (elapsedTimeDisplay ? ` ${elapsedTimeDisplay}` : "")
     );
 
     // Progress bar

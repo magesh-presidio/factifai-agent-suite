@@ -11,6 +11,7 @@ import { getModel } from "../../models/models";
 import { TEST_STATUS } from "./schemas";
 import { displayComponents } from "./display-components";
 import { logger } from "../../../common/utils/logger";
+import { formatDuration } from "../../../common/utils/time-utils";
 
 export const reportOutputSchema = z.object({
   summary: z.string().describe("Overall test execution summary"),
@@ -831,13 +832,24 @@ function writeHtmlReport(html: string, sessionId: string): string {
   }
 }
 
+
 // Main node function
 export const generateReportNode = async ({
   testSteps,
   messages,
   lastError,
   sessionId,
+  testStartTime,
+  testEndTime,
+  testDuration
 }: GraphStateType) => {
+  // Log test timing information if available
+  if (testStartTime && testEndTime && testDuration) {
+    logger.info(chalk.cyan(`🕒 Total test execution time: ${formatDuration(testDuration)}`));
+  } else {
+    logger.warn("Complete test timing information not available");
+  }
+
   // Generate a sessionId if not provided
   const testSessionId = sessionId || `session-${new Date().getTime()}`;
   if (!testSteps || testSteps.length === 0) {
@@ -1014,6 +1026,9 @@ export const generateReportNode = async ({
       recommendations: report.recommendations,
       criticalIssues: report.criticalIssues,
       errorAnalysis: report.errorAnalysis,
+      // Add execution time tracking
+      testEndTime,
+      testDuration,
     };
   } catch (error) {
     enhancedLogger.error(

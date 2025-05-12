@@ -30,7 +30,7 @@ const captureCurrentState = async (sessionId: string) => {
     if (screenshot) {
       const fs = require("fs");
       const path = require("path");
-      
+
       // Create directory path with sessionId/screenshots structure
       const sessionDir = path.join(process.cwd(), sessionId);
       const screenshotsDir = path.join(sessionDir, "screenshots");
@@ -45,10 +45,10 @@ const captureCurrentState = async (sessionId: string) => {
         .toISOString()
         .replace(/:/g, "-")
         .replace(/\./g, "-");
-      
+
       // Create filename with timestamp
       const filename = `screenshot-${timestamp}.jpeg`;
-      
+
       // Write the screenshot to the screenshots directory
       const imagePath = path.join(screenshotsDir, filename);
       fs.writeFileSync(imagePath, Buffer.from(screenshot, "base64"));
@@ -309,6 +309,7 @@ export const executeAndVerifyNode = async ({
   retryCount = 0,
   retryAction = "",
   maxRetries = 3,
+  testStartTime,
 }: GraphStateType) => {
   // Check if we're in the process of shutting down
   if (isShuttingDown) {
@@ -317,6 +318,15 @@ export const executeAndVerifyNode = async ({
       isComplete: true,
       lastError: "Operation was canceled due to application shutdown",
     };
+  }
+
+  // Record the test start time on first execution (when not retrying and no previous action)
+  if (!testStartTime && retryCount === 0 && !lastAction) {
+    testStartTime = Date.now();
+    const startTimeFormatted = new Date(testStartTime).toISOString();
+    logger.info(
+      chalk.cyan(`🕒 Test execution started at ${startTimeFormatted}`)
+    );
   }
   // Capture current browser state
   const captureResult = await captureCurrentState(sessionId);
@@ -477,15 +487,27 @@ export const executeAndVerifyNode = async ({
       shouldComplete = true;
     }
 
+    // Record the test end time and calculate duration when execution is complete
+    let testEndTime = null;
+    let testDuration = null;
+
+    if (shouldComplete && testStartTime) {
+      testEndTime = Date.now();
+      testDuration = testEndTime - testStartTime;
+    }
+
     return {
-      //   messages: [...messages, ...cleaned],
-      // TODO: IMPLEMENT SUMMARISATION
+      // messages: [...messages, ...cleaned],
+      // TODO: IMPLEMENT SUMMARISATION?
       messages: cleaned,
       isComplete: shouldComplete,
       lastAction: nextAction,
       expectedOutcome: nextExpectedOutcome,
       retryCount: 0, // Reset retry count for new action
       retryAction: "", // Clear retry action
+      testStartTime,
+      testEndTime,
+      testDuration,
     };
   } catch (error) {
     console.error("Error executing instruction:", error);

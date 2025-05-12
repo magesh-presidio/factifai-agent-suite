@@ -294,7 +294,8 @@ function generateHtmlReport(
   executionTime: string | null,
   lastError: string | null,
   recommendations: string[] | null = null,
-  criticalIssues: string[] | null = null
+  criticalIssues: string[] | null = null,
+  testDuration: number | null = null
 ): string {
   // Format the current date
   const date = new Date().toLocaleDateString('en-US', {
@@ -302,6 +303,9 @@ function generateHtmlReport(
     day: 'numeric',
     year: 'numeric'
   });
+  
+  // Format execution time for display
+  const formattedExecutionTime = testDuration ? formatDuration(testDuration) : (executionTime || "Unknown");
   
   // Count test statistics
   const totalTests = testSteps.length;
@@ -650,9 +654,9 @@ function generateHtmlReport(
 <body>
     <div class="container">
         <header>
-            <h1 class="report-title">FactifAI Test Report</h1>
+            <h1 class="report-title">Factifai Test Report</h1>
             <div class="report-meta">
-                <span>Test Suite: FactifAI Test Suite</span>
+                <span>Execution Time: ${formattedExecutionTime}</span>
                 <span>Generated on: ${date}</span>
             </div>
         </header>
@@ -988,7 +992,8 @@ export const generateReportNode = async ({
         report.executionTime,
         lastError,
         report.recommendations,
-        report.criticalIssues
+        report.criticalIssues,
+        testDuration
       );
 
       const htmlFilePath = writeHtmlReport(htmlReport, testSessionId);

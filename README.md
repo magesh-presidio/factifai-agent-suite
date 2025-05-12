@@ -21,7 +21,9 @@ Our tools are designed for developers, QA engineers, and teams who want to:
 
 ## 🎬 Demo
 
-![Demo Video](./assets/Demo.mp4)
+https://github.com/user-attachments/assets/59f8428e-79ab-4cdd-85fb-8a5d00407efc
+
+
 
 ## 🧰 Tools
 

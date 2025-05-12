@@ -1,6 +1,19 @@
-# playwright-core
+# Playwright Core
 
-A powerful Playwright wrapper providing enhanced browser automation for UI testing with advanced element detection and visual debugging.
+[![npm version](https://img.shields.io/npm/v/@presidio-dev/playwright-core.svg)](https://www.npmjs.com/package/@presidio-dev/playwright-core)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A powerful wrapper around the Playwright browser automation library, specifically designed for Large Language Models (LLMs) to control web browsers. This package enhances the capabilities of the factifai-agent by providing a interaction system that's optimized for AI models. It offers simplified browser control, intelligent element detection, and rich visual debugging tools that make browser automation more reliable and easier to troubleshoot.
+
+## Purpose
+
+This library serves as the browser automation engine for factifai-agent, providing:
+
+- **Enhanced Browser Control**: Session-based browser management with improved stability
+- **Smart Element Detection**: Automatic identification of interactive page elements
+- **Visual Debugging Tools**: Visualization of detected elements with numbered overlays
+- **Simplified API**: High-level functions that abstract away Playwright complexity
+- **LLM-friendly Interface**: Streamlined coordinate-based approach optimized for AI models to control browsers without needing complex DOM selectors
 
 ## Quick Start
 
@@ -109,11 +122,12 @@ elements.forEach(el => {
 
 - Node.js 16+
 - Playwright (peer dependency)
+- Browser binaries (Chromium, Firefox, and/or WebKit)
 
-## Installation Options
+## Installation
 
 ```bash
-# npm
+# Install the package
 npm install @presidio-dev/playwright-core
 
 # yarn
@@ -121,8 +135,16 @@ yarn add @presidio-dev/playwright-core
 
 # pnpm
 pnpm add @presidio-dev/playwright-core
+
+# IMPORTANT: Install browser dependencies (required)
+npx playwright install --with-deps
 ```
+
+The `npx playwright install --with-deps` command is crucial as it installs:
+- Browser binaries (Chromium, Firefox, WebKit)
+- Required system dependencies for proper browser operation
+- Font packages and media codecs needed for complete rendering
 
 ## License
 
-ISC
+MIT © PRESIDIO®

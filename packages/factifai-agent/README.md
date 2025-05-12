@@ -5,16 +5,17 @@
 
 ## Overview
 
-Factifai Agent is a sophisticated browser automation testing framework that leverages Large Language Models (LLMs) to interpret natural language test instructions and execute them through a structured, reliable process. Built on LangGraph and Playwright, it enables testers and developers to write test cases in plain English while maintaining precision and reproducibility.
+Factifai Agent is a powerful CLI tool for AI-driven browser automation testing that integrates seamlessly into development and testing workflows, CI/CD pipelines. Leveraging Large Language Models (LLMs), it interprets natural language test instructions and executes them through a structured, reliable process. 
 
-The agent processes natural language instructions through a directed graph pipeline:
-
-![Factifai Agent Graph](./factifai-agent-graph.png)
+Built on LangGraph and Playwright, it enables testers and developers to write test cases in plain English while maintaining precision and reproducibility. The tool provides rich CLI visualization of test progress with real-time feedback, making it ideal for both interactive use and automated testing environments.
 
 ## Key Features
 
 - **Natural Language Test Instructions**: Write test cases in plain English
 - **LLM-Powered Test Interpretation**: Automatically converts natural language to executable test steps
+- **CLI-First Design**: Purpose-built as a command-line tool for both interactive use and automation
+- **CI/CD Pipeline Integration**: Easily integrate into GitHub Actions, Jenkins, GitLab CI, and more
+- **Rich Progress Visualization**: Beautiful terminal interfaces showing real-time test execution progress
 - **Playwright Integration**: Leverages Playwright's robust browser automation capabilities
 - **LangGraph Architecture**: Uses a directed state graph for reliable test execution flow
 - **Cross-Browser Support**: Works across Chromium, Firefox, and WebKit
@@ -28,6 +29,9 @@ The agent processes natural language instructions through a directed graph pipel
 ```bash
 # Install globally
 npm install -g @presidio-dev/factifai-agent
+
+# Install Playwright and dependencies
+npx playwright install --with-deps
 ```
 
 ## Quick Start
@@ -35,16 +39,22 @@ npm install -g @presidio-dev/factifai-agent
 ### With OpenAI
 
 ```bash
-export OPENAI_API_KEY=your-api-key-here
+# Set your API key (only needed once, persists across sessions)
+factifai-agent config --set OPENAI_API_KEY=your-api-key-here
+
+# Run your test
 factifai-agent --model openai run "Navigate to duckduckgo.com and search 'eagles'"
 ```
 
 ### With AWS Bedrock
 
 ```bash
-export AWS_ACCESS_KEY_ID=your-access-key-id
-export AWS_SECRET_ACCESS_KEY=your-secret-access-key
-export AWS_DEFAULT_REGION=us-west-2
+# Set your AWS credentials (only needed once, persists across sessions)
+factifai-agent config --set AWS_ACCESS_KEY_ID=your-access-key-id
+factifai-agent config --set AWS_SECRET_ACCESS_KEY=your-secret-access-key
+factifai-agent config --set AWS_DEFAULT_REGION=us-west-2
+
+# Run your test
 factifai-agent --model bedrock run "Navigate to duckduckgo.com and search 'eagles'"
 ```
 
@@ -74,17 +84,18 @@ factifai-agent --model openai run --file ./examples/test-case.txt
 factifai-agent --model openai run --session my-test-123 "Your test instruction"
 ```
 
-### Configuration
+### Configuration Management
 
 ```bash
 # Show current configuration
 factifai-agent config --show
 
-# Set model provider
+# Set default model provider (persists across sessions)
 factifai-agent config --model openai
 
-# Set a configuration value
-factifai-agent config --set KEY=value
+# Set individual configuration values (persists across sessions)
+factifai-agent config --set OPENAI_API_KEY=your-api-key
+factifai-agent config --set OPENAI_MODEL=gpt-4.1
 ```
 
 ### Model Management
@@ -96,10 +107,10 @@ factifai-agent models
 
 ## Supported Models
 
-| Provider | Configuration | Default Model |
-|----------|--------------|---------------|
-| **OpenAI** | `OPENAI_API_KEY` | `gpt-4.1` |
-| **AWS Bedrock** | `AWS_ACCESS_KEY_ID`<br>`AWS_SECRET_ACCESS_KEY`<br>`AWS_DEFAULT_REGION` | `us.anthropic.claude-3-7-sonnet-20250219-v1:0` |
+| Provider | Configuration | Available Models |
+|----------|--------------|-----------------|
+| **OpenAI** | `OPENAI_API_KEY` | `gpt-4.1` (default)<br>`gpt-4o` |
+| **AWS Bedrock** | `AWS_ACCESS_KEY_ID`<br>`AWS_SECRET_ACCESS_KEY`<br>`AWS_DEFAULT_REGION` | `us.anthropic.claude-3-7-sonnet-20250219-v1:0` (default)<br>`anthropic.claude-3-5-sonnet-20240620-v1:0` |
 
 ## Test File Format
 
@@ -118,31 +129,73 @@ Create structured test files for complex scenarios:
    * **Expected:** Search results for "eagles" appear
 ```
 
-## Environment Variables
+## Configuration
+
+Factifai Agent uses a persistent configuration system that stores settings in `~/.factifai/config.json`. This ensures your settings are remembered across terminal sessions.
+
+### Setting Configuration Values
 
 ```bash
 # Model selection
-export MODEL_PROVIDER=openai  # "openai" | "bedrock"
-export OPENAI_MODEL=gpt-4.1
-export BEDROCK_MODEL=us.anthropic.claude-3-7-sonnet-20250219-v1:0
+factifai-agent config --set MODEL_PROVIDER=openai  # "openai" | "bedrock"
+factifai-agent config --set OPENAI_MODEL=gpt-4.1
+factifai-agent config --set BEDROCK_MODEL=us.anthropic.claude-3-7-sonnet-20250219-v1:0
 
 # API credentials
-export OPENAI_API_KEY=your-api-key-here
-export AWS_DEFAULT_REGION=us-west-2
-export AWS_ACCESS_KEY_ID=your-access-key-id
-export AWS_SECRET_ACCESS_KEY=your-secret-access-key
+factifai-agent config --set OPENAI_API_KEY=your-api-key-here
+factifai-agent config --set AWS_DEFAULT_REGION=us-west-2
+factifai-agent config --set AWS_ACCESS_KEY_ID=your-access-key-id
+factifai-agent config --set AWS_SECRET_ACCESS_KEY=your-secret-access-key
+```
+
+### Viewing Current Configuration
+
+```bash
+# Show all configuration values
+factifai-agent config --show
+```
+
+### Clearing Configuration Values
+
+To clear configuration values, you'll need to manually edit or remove the config file:
+
+```bash
+# Location of the configuration file
+~/.factifai/config.json
+```
+
+You can either:
+- Edit this file directly and remove specific keys
+- Delete the file to reset all configuration values
+
+### Configuration Priority
+
+The system uses the following priority order when determining configuration values:
+
+1. **Persistent Configuration** - Values set with `config --set` (stored in ~/.factifai/config.json)
+2. **Environment Variables** - Values set with traditional environment variables
+3. **Default Values** - Hardcoded defaults in the application
+
+Environment variables can still be used alongside the configuration system, which is useful for:
+- Temporary overrides for specific sessions
+- CI/CD pipelines
+- Development environments
+
+```bash
+# Example of using environment variables (temporary, session only)
+export OPENAI_MODEL=gpt-4.1-turbo
+factifai-agent run "Your test instructions"
 ```
 
 ## Requirements
 
 - Node.js 16+
-- Playwright browsers (installed automatically via postinstall script)
+- Playwright browsers (must be installed with `npx playwright install --with-deps`)
 
 ## Learn More
 
 - [Website](https://factifai.io)
 - [GitHub Repository](https://github.com/presidio-oss/factifai-agent-suite)
-- [Example Tests](https://github.com/presidio-oss/factifai-agent-suite/tree/main/examples)
 
 ## License
 

@@ -1,7 +1,7 @@
 {
   "name": "@presidio-dev/playwright-core",
   "version": "1.0.2",
-  "description": "A powerful wrapper around Playwright providing browser automation services with enhanced capabilities",
+  "description": "A powerful wrapper around Playwright providing browser automation services with enhanced capabilities for LLMs.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -34,10 +34,11 @@
     "automation",
     "testing",
     "screenshot",
-    "ui-testing"
+    "ui-testing",
+    "ai-powered-testing"
   ],
-  "author": "Factifai",
-  "license": "ISC",
+  "author": "PRESIDIO®",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/presidio-oss/factifai-agent-suite.git"

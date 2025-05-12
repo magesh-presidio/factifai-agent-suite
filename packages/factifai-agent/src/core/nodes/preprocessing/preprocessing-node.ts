@@ -1,102 +1,56 @@
-
-import chalk from "chalk";
-import boxen from "boxen";
-import figures from "figures";
 import { GraphStateType } from "../../graph/graph";
 import { logger } from "../../../common/utils/logger";
 
+/**
+ * Configuration for preprocessing limitations
+ */
+export const PREPROCESSING_CONFIG = {
+  MAX_INPUT_LENGTH: 5000,
+};
+
+/**
+ * Minimal preprocessing node that only handles serious formatting issues
+ */
 export const preprocessTestInputNode = async ({
   instruction,
 }: GraphStateType) => {
   if (!instruction) {
-    logger.warn(
-      `${chalk.yellow(
-        figures.warning
-      )} No instruction provided for preprocessing`
-    );
+    logger.warn("No instruction provided for preprocessing");
     return {
       processedInstruction: "",
     };
   }
 
+  if (instruction.length > PREPROCESSING_CONFIG.MAX_INPUT_LENGTH) {
+    logger.warn(
+      `Input file test case is too long (exceeds ${PREPROCESSING_CONFIG.MAX_INPUT_LENGTH} characters)`
+    );
+    return {
+      processedInstruction: "",
+      preprocessingError: `Input file test case is too long (exceeds ${PREPROCESSING_CONFIG.MAX_INPUT_LENGTH} characters)`,
+    };
+  }
+
   try {
-    // Start preprocessing with a spinner
-    const preprocessingId = "preprocessing";
-    logger.spinner("Preprocessing test input...", preprocessingId);
+    // Only do the minimum necessary preprocessing
+    let processedText = instruction;
 
-    // 1. Normalize line breaks (handle different OS formats)
-    let processedText = instruction.replace(/\r\n/g, "\n");
+    // Normalize line endings across platforms
+    processedText = processedText.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
-    // Update spinner to show progress
-    logger.updateSpinner(preprocessingId, "Cleaning formatting...");
+    // Remove zero-width spaces and other invisible characters that might cause issues
+    processedText = processedText.replace(/[\u200B-\u200D\uFEFF]/g, "");
 
-    // 2. Handle formatted lists with asterisks, removing excess formatting
-    processedText = processedText.replace(/\*\*\*Action:\*\*/gi, "Action:");
-    processedText = processedText.replace(
-      /\*\*\*Expected Result:\*\*/gi,
-      "Expected Result:"
-    );
+    // Handle character encoding issues (keep only ASCII and common Unicode)
+    processedText = processedText.replace(/[^\p{L}\p{N}\p{P}\p{Z}\p{S}]/gu, "");
 
-    // 3. Clean up step numbering for consistency
-    processedText = processedText.replace(
-      /\*\*Step\s+(\d+):\*\*/gi,
-      "Step $1:"
-    );
-
-    // Update spinner to show progress
-    logger.updateSpinner(preprocessingId, "Normalizixng text...");
-
-    // 4. Remove other markdown formatting while preserving content
-    processedText = processedText.replace(/\*\*/g, "");
-
-    // 5. Normalize indentation
-    const lines = processedText.split("\n");
-    processedText = lines.map((line: string) => line.trim()).join("\n");
-
-    // Update spinner for final step
-    logger.updateSpinner(preprocessingId, "Structuring test steps...");
-
-    // 6. Add clear step demarcation if needed
-    // If steps aren't clearly separated, add separation
-    if (!processedText.includes("Step 1:")) {
-      // Try to detect and format steps that might not be properly labeled
-      processedText = processedText.replace(/(\d+)\.\s+/g, "Step $1: ");
-    }
-
-    // Complete the spinner with success
-    logger.spinnerSuccess(
-      preprocessingId,
-      "Preprocessing completed successfully"
-    );
+    logger.info("Preprocessing completed");
 
     return {
       processedInstruction: processedText,
     };
   } catch (error) {
-    // If we have an active spinner, fail it
-    if (logger.spinners["preprocessing"]) {
-      logger.spinnerError("preprocessing", "Preprocessing failed");
-    }
-
-    // Show error in a red box
-    console.log(
-      boxen(
-        chalk.bold.red("PREPROCESSING ERROR") +
-          "\n\n" +
-          chalk.red(error instanceof Error ? error.message : "Unknown error"),
-        {
-          padding: 1,
-          borderStyle: "round",
-          borderColor: "red",
-        }
-      )
-    );
-
-    logger.error(
-      `${chalk.red(figures.cross)} Error preprocessing test input:`,
-      error
-    );
-
+    logger.error("Error in minimal preprocessing:", error);
     return {
       processedInstruction: instruction, // Fall back to original
       preprocessingError:

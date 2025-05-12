@@ -61,8 +61,6 @@ export const executeBrowserTask = async (
       };
     }
 
-    console.log("Execution completed successfully!");
-
     return {
       success: true,
       testSteps: result.testSteps,

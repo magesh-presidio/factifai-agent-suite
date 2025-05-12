@@ -1,11 +1,5 @@
 import { HumanMessage } from "@langchain/core/messages";
 
-export const formatImageForLLM = (base64: string): string => {
-  return base64.startsWith("data:image/")
-    ? base64
-    : `data:image/jpeg;base64,${base64}`;
-};
-
 export const removeImageUrlsFromMessage = (message: HumanMessage) => {
   if (typeof message.content === "string") {
     return message;

@@ -8,8 +8,46 @@ import { logger } from "../../../common/utils/logger";
 import { GraphStateType } from "../../graph/graph";
 import { getModel } from "../../models/models";
 
-export const parseTestStepsNode = async ({ instruction }: GraphStateType) => {
-  if (!instruction) {
+/**
+ * Clean and reformat instruction text for better LLM processing
+ * while preserving original meaning, objectives, and steps
+ */
+async function cleanInstructionForLLM(instruction: string) {
+  try {
+    const systemPrompt = new SystemMessage(
+      `You are an expert at reformatting test instructions to make them clearer and more effective for LLM processing.
+      Your task is to rewrite the given instructions in a cleaner format while:
+      1. Preserving the original objective and intent
+      2. Maintaining all the steps and their sequence
+      3. Keeping all meaningful information
+      4. Eliminating redundancies and repetition
+      5. Fixing grammatical errors and improving readability
+      6. Standardizing formatting for consistent processing
+      
+      Output ONLY the rewritten instruction text without any additional commentary.`
+    );
+
+    const userMessage = new HumanMessage(instruction);
+    const model = getModel();
+
+    // Execute the cleaning
+    const result = await model.invoke([systemPrompt, userMessage]);
+    const cleanedInstruction =
+      typeof result.content === "string"
+        ? result.content
+        : JSON.stringify(result.content);
+
+    return cleanedInstruction;
+  } catch (error) {
+    logger.error("Error cleaning instruction:", error);
+    return instruction; // Return original if cleaning fails
+  }
+}
+
+export const parseTestStepsNode = async ({
+  processedInstruction,
+}: GraphStateType) => {
+  if (!processedInstruction) {
     logger.warn(
       chalk.yellow(`${figures.warning} No test instruction provided`)
     );
@@ -20,12 +58,32 @@ export const parseTestStepsNode = async ({ instruction }: GraphStateType) => {
   }
 
   try {
+    // Start a spinner for instruction cleanup
+    const cleanupSpinnerId = "instruction-cleanup";
+    logger.spinner(
+      "Cleaning and reformatting instruction text...",
+      cleanupSpinnerId
+    );
+
+    // Clean up the instruction text
+    const cleanedInstruction = await cleanInstructionForLLM(
+      processedInstruction
+    );
+
+    // Complete spinner
+    logger.spinnerSuccess(
+      cleanupSpinnerId,
+      "Instruction text cleaned and reformatted for better processing"
+    );
+
+    // Update the processed instruction with the cleaned version
+    processedInstruction = cleanedInstruction;
     // Start a spinner for quality analysis
     const qualitySpinnerId = "quality-analysis";
     logger.spinner("Analyzing test case quality...", qualitySpinnerId);
 
     // First, rate the test case quality
-    const testCaseRating = await rateTestCase(instruction);
+    const testCaseRating = await rateTestCase(processedInstruction);
 
     // Display rating with appropriate color
     const ratingColor =
@@ -102,7 +160,7 @@ export const parseTestStepsNode = async ({ instruction }: GraphStateType) => {
     );
 
     const userMessage = new HumanMessage(
-      `Parse the following test description into sequential, atomic test steps:\n\n${instruction}\n\n` +
+      `Parse the following test description into sequential, atomic test steps:\n\n${processedInstruction}\n\n` +
         "Rules for good test steps:\n" +
         "1. Each step must begin with an action verb (Click, Enter, Navigate, etc.)\n" +
         "2. Each step should be atomic - only one action per step\n" +
@@ -285,6 +343,7 @@ export const parseTestStepsNode = async ({ instruction }: GraphStateType) => {
     );
 
     return {
+      processedInstruction, // Return the cleaned instruction
       testSteps,
       currentStepIndex: testSteps.length > 0 ? 0 : -1,
       testCaseQuality: testCaseRating, // Add the test case quality rating to the state
@@ -316,6 +375,7 @@ export const parseTestStepsNode = async ({ instruction }: GraphStateType) => {
     logger.error(`Error parsing test steps:`, error);
 
     return {
+      processedInstruction, // Include the original or partially cleaned instruction
       testSteps: [],
       currentStepIndex: -1,
       lastError: error instanceof Error ? error.message : "Unknown error",
@@ -374,7 +434,6 @@ function displayFormattedSteps(
 
   // Add steps to the table
   testSteps.forEach((step, index) => {
-    const status = getStatusDisplay(step.status);
     tableData.push([
       String(step.id),
       step.instruction,
@@ -384,25 +443,6 @@ function displayFormattedSteps(
 
   // Print the table
   console.log(table(tableData, tableConfig));
-}
-
-/**
- * Get a formatted status display
- */
-function getStatusDisplay(
-  status: "not_started" | "in_progress" | "passed" | "failed"
-): string {
-  switch (status) {
-    case "passed":
-      return chalk.green(`${figures.tick} PASSED`);
-    case "failed":
-      return chalk.red(`${figures.cross} FAILED`);
-    case "in_progress":
-      return chalk.blue(`${figures.play} ACTIVE`);
-    case "not_started":
-    default:
-      return chalk.gray(`${figures.circle} PENDING`);
-  }
 }
 
 /**

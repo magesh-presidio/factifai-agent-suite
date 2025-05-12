@@ -23,8 +23,8 @@ export const OpenAIModel = (streaming?: boolean, maxTokens = 12000) => {
     modelName: process.env.OPENAI_MODEL || "gpt-4.1",
     apiKey: process.env.OPENAI_API_KEY,
     streaming: streaming,
-    maxRetries: 0,
     maxTokens,
+    supportsStrictToolCalling: true,
   });
 };
 

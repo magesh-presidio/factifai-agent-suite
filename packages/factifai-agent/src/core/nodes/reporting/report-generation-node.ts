@@ -389,13 +389,13 @@ export const generateReportNode = async ({
       const xmlFilePath = writeJUnitXmlReport(junitXml);
 
       enhancedLogger.success(
-        `${chalk.green(figures.tick)} JUnit XML report saved to: ${xmlFilePath}`
+        `${chalk.green(figures.tick)} XML report saved to: ${xmlFilePath}`
       );
 
       // Display the XML report path in a box
       console.log(
         boxen(
-          chalk.bold.green("JUnit XML Report Generated") +
+          chalk.bold.green("XML Report Generated") +
             "\n\n" +
             chalk.white(`File: ${xmlFilePath}`),
           {
@@ -408,7 +408,7 @@ export const generateReportNode = async ({
       );
     } catch (xmlError) {
       enhancedLogger.error(
-        `${chalk.red(figures.cross)} Failed to generate JUnit XML report: ${
+        `${chalk.red(figures.cross)} Failed to generate XML report: ${
           xmlError instanceof Error ? xmlError.message : "Unknown error"
         }`
       );

@@ -10,9 +10,9 @@ export class ConsoleDisplayService {
   private trackActionActive: boolean = false;
   private lastTrackActionLines: number = 0;
   private isUpdating: boolean = false;
-  private originalConsoleLog: any;
-  private originalConsoleWarn: any;
-  private originalConsoleError: any;
+  private readonly originalConsoleLog: any;
+  private readonly originalConsoleWarn: any;
+  private readonly originalConsoleError: any;
   private terminalWidth: number = process.stdout.columns || 80;
   private isResizing: boolean = false;
   private resizeTimeout: NodeJS.Timeout | null = null;

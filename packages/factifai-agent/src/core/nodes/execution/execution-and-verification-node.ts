@@ -171,7 +171,7 @@ const buildSystemPrompt = (
 
 // Helper function to create a human message with screenshots
 const createHumanMessage = (
-  instruction: string,
+  processedInstruction: string,
   lastAction: string | null,
   expectedOutcome: string | null,
   currentScreenshot: string,
@@ -183,7 +183,7 @@ const createHumanMessage = (
   const humanMessageContent: any = [
     {
       type: "text",
-      text: `Execute this test case: "${instruction}"
+      text: `Execute this test case: "${processedInstruction}"
              Current URL: ${currentUrl || "Unknown"}
              ${
                lastAction && expectedOutcome
@@ -289,7 +289,7 @@ process.on("SIGTERM", () => {
 });
 
 export const executeAndVerifyNode = async ({
-  instruction,
+  processedInstruction,
   sessionId,
   messages,
   lastAction,
@@ -333,7 +333,7 @@ export const executeAndVerifyNode = async ({
 
   // Create human message with screenshots
   const humanMessage = createHumanMessage(
-    instruction,
+    processedInstruction,
     lastAction,
     expectedOutcome,
     currentScreenshot,
@@ -358,7 +358,7 @@ export const executeAndVerifyNode = async ({
     if (!model) {
       throw new Error("Failed to initialize model");
     }
-    
+
     // Cast the model to any to bypass TypeScript errors
     const modelWithTools = (model as any).bindTools(ALL_TOOLS);
 

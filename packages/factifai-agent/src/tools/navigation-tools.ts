@@ -73,8 +73,6 @@ export class NavigationTools {
         sessionId: z.string().describe("The browser session ID"),
         seconds: z
           .number()
-          .min(1)
-          .max(30)
           .describe("Number of seconds to wait (between 1 and 30)"),
       }),
       func: async (input) => {

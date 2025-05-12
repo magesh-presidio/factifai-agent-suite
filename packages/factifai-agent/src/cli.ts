@@ -249,10 +249,6 @@ const cli = yargs(hideBin(process.argv))
 
         if (result.success) {
           console.log("\n✅ Task completed successfully!");
-          if (result.testSummary) {
-            console.log("\nTest Summary:");
-            console.log(result.testSummary);
-          }
         } else {
           console.error("\n❌ Task failed:", result.error);
         }

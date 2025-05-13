@@ -29,13 +29,11 @@ jobs:
       - name: Install dependencies
         run: |
           cd docs
-          npm install -g pnpm
-          pnpm install
 
       - name: Build documentation
         run: |
           cd docs
-          pnpm run docs:build
+          npm run docs:build
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4

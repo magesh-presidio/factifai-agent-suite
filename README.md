@@ -40,8 +40,7 @@ Our tools are designed for developers, QA engineers, and teams who want to:
 
 ## 🎬 Demo
 
-https://github.com/user-attachments/assets/59f8428e-79ab-4cdd-85fb-8a5d00407efc
-
+![Demo](assets/Demo.gif)
 
 
 ## 🧰 Tools
@@ -116,31 +115,6 @@ factifai-agent config --set OPENAI_API_KEY=your-api-key-here
 
 # Run a test using natural language
 factifai-agent --model openai run "Navigate to duckduckgo.com and search for 'testing automation'"
-```
-
-#### Playwright Core Integration
-
-```javascript
-import { BrowserService, navigate, click, type } from '@presidio-dev/playwright-core';
-
-const run = async () => {
-  const sessionId = `test-${Date.now()}`;
-  
-  // Navigate to a website
-  await navigate(sessionId, 'https://example.com');
-  
-  // Interact with page elements using coordinates
-  await click(sessionId, { x: 150, y: 200 });
-  await type(sessionId, 'Hello, World!');
-  
-  // Take a screenshot with highlighted elements
-  await BrowserService.getInstance().takeMarkedScreenshot(sessionId);
-  
-  // Clean up
-  await BrowserService.getInstance().closePage(sessionId);
-};
-
-run();
 ```
 
 ### Development Setup

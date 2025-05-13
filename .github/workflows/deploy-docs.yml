@@ -33,13 +33,14 @@ jobs:
 
       - name: Install dependencies
         run: |
+          npm install -g vitepress
           cd docs
           npm install
 
       - name: Build documentation
         run: |
           cd docs
-          npm run docs:build
+          vitepress build
 
       - name: Deploy to GitHub Pages
         if: ${{ github.event_name == 'push' || github.event.inputs.deploy == 'true' }}

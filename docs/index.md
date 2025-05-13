@@ -7,7 +7,7 @@ hero:
   text: "Intelligent Test Automation Suite"
   tagline: Automate testing through AI-powered computer control. From manual steps to automated tests in minutes.
   image:
-    src: ./assets/hai-logo.svg
+    src: /hai-logo.svg
     alt: Factifai Logo
   actions:
     - theme: brand
@@ -38,7 +38,7 @@ features:
 
 <div class="demo-container">
   <video controls autoplay loop muted class="demo-video">
-    <source src="./assets/Demo.mp4" type="video/mp4">
+    <source src="/Demo.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </div>

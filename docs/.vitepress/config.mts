@@ -7,7 +7,7 @@ export default defineConfig({
   base: '/factifai-agent-suite/', // Base URL for GitHub Pages deployment
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
-    logo: '/assets/hai-logo.svg',
+    logo: '/hai-logo.svg',
     siteTitle: 'Factifai Docs',
     
     nav: [

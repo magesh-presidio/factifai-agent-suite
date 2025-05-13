@@ -319,7 +319,6 @@ Now that you understand how HTML and XML reports work, you might want to explore
 
 - [CLI Reports](/features/cli-reports) - Learn about the detailed reports generated in the terminal
 - [CI/CD Integration](/guides/ci-cd-integration) - Discover how to integrate Factifai Agent with CI/CD pipelines
-- [Cross-Browser Testing](/guides/cross-browser-testing) - Learn how to run tests across different browsers
 
 <style>
 .feature-video {

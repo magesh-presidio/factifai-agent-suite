@@ -135,7 +135,6 @@ Now that you understand how live test progress works, you might want to explore:
 
 - [CLI Reports](/features/cli-reports) - Learn about the detailed reports generated after test execution
 - [HTML & XML Reports](/features/html-xml-reports) - Discover how to generate structured reports for documentation and CI/CD integration
-- [Cross-Browser Testing](/guides/cross-browser-testing) - Learn how to run tests across different browsers
 
 <style>
 .feature-video {

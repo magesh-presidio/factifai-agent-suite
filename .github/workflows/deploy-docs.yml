@@ -31,16 +31,22 @@ jobs:
         with:
           node-version: 20
 
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.10.0
+          run_install: false
+
       - name: Install dependencies
         run: |
-          npm install -g vitepress
           cd docs
-          npm install
+          npm install -g pnpm
+          pnpm install
 
       - name: Build documentation
         run: |
           cd docs
-          vitepress build
+          pnpm run docs:build
 
       - name: Deploy to GitHub Pages
         if: ${{ github.event_name == 'push' || github.event.inputs.deploy == 'true' }}

@@ -14,7 +14,7 @@ Playwright Core offers simplified browser control, intelligent element detection
 - **Simplified API**: High-level functions that abstract away Playwright complexity
 - **LLM-friendly Interface**: Streamlined coordinate-based approach optimized for AI models
 
-## Core Capabilities 
+## Core Capabilities
 
 ### Session Management
 

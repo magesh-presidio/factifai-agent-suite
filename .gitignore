@@ -51,4 +51,5 @@ desktop.ini
 /packages/factifai-agent/logs
 logs/
 /packages/factifai-agent/src/logs/*.png
-.vitepress
+/docs/.vitepress/cache
+/docs/.vitepress/dist

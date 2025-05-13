@@ -7,7 +7,7 @@ hero:
   text: "Intelligent Test Automation Suite"
   tagline: Automate testing through AI-powered computer control. From manual steps to automated tests in minutes.
   image:
-    src: /assets/hai-logo.svg
+    src: ./assets/hai-logo.svg
     alt: Factifai Logo
   actions:
     - theme: brand
@@ -38,7 +38,7 @@ features:
 
 <div class="demo-container">
   <video controls autoplay loop muted class="demo-video">
-    <source src="/assets/Demo.mp4" type="video/mp4">
+    <source src="./assets/Demo.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </div>
@@ -50,7 +50,7 @@ The Factifai Agent Suite provides a collection of AI-powered tools designed to a
 Software testing has traditionally required specialized expertise and considerable time investment. The Factifai Agent Suite reimagines this process by allowing tests to be defined in plain English, automatically executed with precision, and seamlessly integrated into modern CI/CD pipelines.
 
 <div class="custom-container tip">
-  <p>Ready to get started? Check out our <a href="/getting-started/installation">installation guide</a> to set up Factifai Agent Suite in minutes!</p>
+  <p>Ready to get started? Check out our <a href="./getting-started/installation">installation guide</a> to set up Factifai Agent Suite in minutes!</p>
 </div>
 
 <style>

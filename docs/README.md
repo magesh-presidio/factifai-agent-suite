@@ -11,10 +11,10 @@ To run the documentation site locally:
 cd docs
 
 # Install dependencies
-pnpm install 
+npm install
 
 # Start the development server
-pnpm run docs:dev 
+npm run docs:dev
 ```
 
 The site will be available at port 5173
@@ -28,7 +28,7 @@ To build the documentation site:
 cd docs
 
 # Build the site
-pnpm run docs:build
+npm run docs:build
 ```
 
 The built site will be available in the `.vitepress/dist` directory.

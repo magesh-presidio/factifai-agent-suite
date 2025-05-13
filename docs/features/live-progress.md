@@ -3,7 +3,7 @@
 The Factifai Agent Suite provides real-time visualization of test execution in the CLI, allowing you to monitor your tests as they run. This feature makes debugging easier and provides immediate feedback on test progress.
 
 <video controls autoplay loop muted class="feature-video">
-  <source src="/assets/realtime-visualization-demo.mp4" type="video/mp4">
+  <source src="../assets/realtime-visualization-demo.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
@@ -133,8 +133,8 @@ Additional customization options for the live progress display will be available
 
 Now that you understand how live test progress works, you might want to explore:
 
-- [CLI Reports](/features/cli-reports) - Learn about the detailed reports generated after test execution
-- [HTML & XML Reports](/features/html-xml-reports) - Discover how to generate structured reports for documentation and CI/CD integration
+- [CLI Reports](./cli-reports) - Learn about the detailed reports generated after test execution
+- [HTML & XML Reports](./html-xml-reports) - Discover how to generate structured reports for documentation and CI/CD integration
 
 <style>
 .feature-video {

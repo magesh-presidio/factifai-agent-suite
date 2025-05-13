@@ -3,7 +3,7 @@
 One of the most powerful features of the Factifai Agent Suite is its ability to transform natural language test instructions into structured, executable test steps. This page explains how the test parsing feature works and how to write effective test instructions.
 
 <video controls autoplay loop muted class="feature-video">
-  <source src="/assets/test-parsing-demo.mp4" type="video/mp4">
+  <source src="../assets/test-parsing-demo.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
@@ -145,10 +145,10 @@ Navigate to the registration page and test the following scenarios:
 
 Now that you understand how test parsing works, you might want to explore:
 
-- [Writing Effective Test Cases](/guides/writing-test-cases) - Learn best practices for writing clear, reliable test instructions
-- [Live Test Progress](/features/live-progress) - See how your parsed tests are executed in real-time
-- [CLI Reports](/features/cli-reports) - Learn about the detailed reports generated after test execution
-- [Quick Start Guide](/getting-started/quick-start) - Try writing your own test instructions
+- [Writing Effective Test Cases](../guides/writing-test-cases) - Learn best practices for writing clear, reliable test instructions
+- [Live Test Progress](./live-progress) - See how your parsed tests are executed in real-time
+- [CLI Reports](./cli-reports) - Learn about the detailed reports generated after test execution
+- [Quick Start Guide](../getting-started/quick-start) - Try writing your own test instructions
 
 <style>
 .feature-video {

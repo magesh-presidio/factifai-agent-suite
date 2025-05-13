@@ -3,7 +3,7 @@
 The Factifai Agent Suite provides comprehensive, beautifully formatted test results directly in your terminal. These CLI reports give you immediate insights into your test execution without having to open external files or tools.
 
 <video controls autoplay loop muted class="feature-video">
-  <source src="/assets/test-execution-demo.mp4" type="video/mp4">
+  <source src="../assets/test-execution-demo.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
@@ -181,9 +181,9 @@ Additional customization options for CLI reports will be available in future rel
 
 Now that you understand how CLI reports work, you might want to explore:
 
-- [HTML & XML Reports](/features/html-xml-reports) - Learn about generating structured reports for documentation and CI/CD integration
-- [Test Parsing](/features/test-parsing) - Understand how natural language instructions are transformed into executable test steps
-- [Live Test Progress](/features/live-progress) - See how to monitor test execution in real-time
+- [HTML & XML Reports](./html-xml-reports) - Learn about generating structured reports for documentation and CI/CD integration
+- [Test Parsing](./test-parsing) - Understand how natural language instructions are transformed into executable test steps
+- [Live Test Progress](./live-progress) - See how to monitor test execution in real-time
 
 <style>
 .feature-video {

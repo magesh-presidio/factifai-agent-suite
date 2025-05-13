@@ -3,7 +3,7 @@
 The Factifai Agent Suite generates structured reports in HTML and XML formats, making it easy to share test results with team members and integrate with CI/CD pipelines.
 
 <video controls autoplay loop muted class="feature-video">
-  <source src="/assets/test-report-demo.mp4" type="video/mp4">
+  <source src="../assets/test-report-demo.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
@@ -317,8 +317,8 @@ Additional customization options for HTML and XML reports will be available in f
 
 Now that you understand how HTML and XML reports work, you might want to explore:
 
-- [CLI Reports](/features/cli-reports) - Learn about the detailed reports generated in the terminal
-- [CI/CD Integration](/guides/ci-cd-integration) - Discover how to integrate Factifai Agent with CI/CD pipelines
+- [CLI Reports](./cli-reports) - Learn about the detailed reports generated in the terminal
+- [CI/CD Integration](../guides/ci-cd-integration) - Discover how to integrate Factifai Agent with CI/CD pipelines
 
 <style>
 .feature-video {

@@ -31,22 +31,15 @@ jobs:
         with:
           node-version: 20
 
-      - name: Setup PNPM
-        uses: pnpm/action-setup@v2
-        with:
-          version: 10.10.0
-          run_install: false
-
       - name: Install dependencies
         run: |
           cd docs
-          npm install -g pnpm
-          pnpm install
+          npm install
 
       - name: Build documentation
         run: |
           cd docs
-          pnpm run docs:build
+          npm run docs:build
 
       - name: Deploy to GitHub Pages
         if: ${{ github.event_name == 'push' || github.event.inputs.deploy == 'true' }}

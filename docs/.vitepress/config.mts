@@ -8,7 +8,7 @@ export default defineConfig({
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     logo: '/hai-logo.svg',
-    siteTitle: 'Factifai Docs',
+    siteTitle: 'Factifai',
     
     nav: [
       { text: 'Home', link: '/' },

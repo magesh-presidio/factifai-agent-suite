@@ -27,6 +27,31 @@
 
 The Factifai Agent Suite provides a collection of AI-powered tools designed to accelerate and enhance testing processes across various development workflows. By leveraging Large Language Models (LLMs), the suite enables developers and QA teams to create, execute, and maintain tests using natural language, making testing more accessible, maintainable, and efficient.
 
+![Demo](assets/images/gifs/Demo.gif)
+
+## 📑 Table of Contents
+
+- [Overview](#-overview)
+- [Features in Action](#-features-in-action)
+  - [From Plain English to Executable Steps](#-from-plain-english-to-executable-steps)
+  - [Real-Time Test Execution Visualization](#-real-time-test-execution-visualization)
+  - [Instant, Detailed Test Results](#-instant-detailed-test-results)
+  - [Professional Reports for Teams & CI/CD](#-professional-reports-for-teams--cicd)
+- [Tools](#-tools)
+  - [Currently Available](#currently-available)
+  - [What's Next?](#whats-next)
+- [Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Quick Start Examples](#quick-start-examples)
+  - [Development Setup](#development-setup)
+- [Use Cases](#-use-cases)
+- [Architecture](#-architecture)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Code of Conduct](#-code-of-conduct)
+- [Contact](#-contact)
+
 ## 🔍 Overview
 
 Software testing has traditionally required specialized expertise and considerable time investment. The Factifai Agent Suite reimagines this process by allowing tests to be defined in plain English, automatically executed with precision, and seamlessly integrated into modern CI/CD pipelines.
@@ -38,11 +63,27 @@ Our tools are designed for developers, QA engineers, and teams who want to:
 - **Make testing accessible** to team members without specialized testing expertise
 - **Integrate AI-powered testing** into existing development processes and pipelines
 
-## 🎬 Demo
+## ✨ Features in Action
 
-https://github.com/user-attachments/assets/59f8428e-79ab-4cdd-85fb-8a5d00407efc
+### 🧠 From Plain English to Executable Steps
+Watch the magic happen as your natural language transforms into a structured test plan! The AI breaks down complex instructions into precise, organized steps that are ready for execution.
 
+![Test Parsing](assets/images/gifs/test-parsing.gif)
 
+### 🔄 Real-Time Test Execution Visualization
+Experience the satisfaction of seeing your tests run live! The intuitive CLI interface shows you exactly what's happening at each moment, making debugging and monitoring a breeze.
+
+![Live Test Progress](assets/images/gifs/live-test-progress.gif)
+
+### 📊 Instant, Detailed Test Results
+No more digging through logs! Get comprehensive, beautifully formatted test results right in your terminal the moment execution completes.
+
+![CLI Test Reports](assets/images/gifs/test-report-cli.gif)
+
+### 📑 Professional Reports for Teams & CI/CD
+Seamlessly integrate with your workflow! Generate polished HTML reports for team sharing and structured XML outputs for your CI/CD pipelines.
+
+![HTML & XML Reports](assets/images/gifs/test-report.gif)
 
 ## 🧰 Tools
 
@@ -71,13 +112,13 @@ A specialized wrapper around Playwright designed specifically for LLMs to contro
 
 - **factifai-test-curator**: A web-based interface that combines the capabilities of factifai-agent and factifai-quest to create a complete test management solution. It offers targeted website exploration, visual test case editing with before/after screenshots, and an interactive test creation environment where users can refine AI-suggested test suites or create tests from scratch with live browser previews.
 
-*Interested in contributing to these tools? Check out our [Contributing Guidelines](CODE_OF_CONDUCT.md) or open an issue to discuss your ideas!*
+*Interested in contributing to these tools? Check out our [Contributing Guidelines](CONTRIBUTING.md) or open an issue to discuss your ideas!*
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 16+
+- Node.js 18+
 - pnpm 10.10.0+
 - OpenAI API key or AWS Bedrock credentials
 
@@ -116,31 +157,6 @@ factifai-agent config --set OPENAI_API_KEY=your-api-key-here
 
 # Run a test using natural language
 factifai-agent --model openai run "Navigate to duckduckgo.com and search for 'testing automation'"
-```
-
-#### Playwright Core Integration
-
-```javascript
-import { BrowserService, navigate, click, type } from '@presidio-dev/playwright-core';
-
-const run = async () => {
-  const sessionId = `test-${Date.now()}`;
-  
-  // Navigate to a website
-  await navigate(sessionId, 'https://example.com');
-  
-  // Interact with page elements using coordinates
-  await click(sessionId, { x: 150, y: 200 });
-  await type(sessionId, 'Hello, World!');
-  
-  // Take a screenshot with highlighted elements
-  await BrowserService.getInstance().takeMarkedScreenshot(sessionId);
-  
-  // Clean up
-  await BrowserService.getInstance().closePage(sessionId);
-};
-
-run();
 ```
 
 ### Development Setup

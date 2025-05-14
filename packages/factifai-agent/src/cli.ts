@@ -144,7 +144,7 @@ const cli = yargs(hideBin(process.argv))
           alias: "s",
           type: "string",
           describe: "Session ID to use",
-          default: `browser-session-${Date.now()}`,
+          default: `factifai-session-${Date.now()}`,
         })
         .option("file", {
           alias: "f",

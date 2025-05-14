@@ -28,7 +28,7 @@ Factifai Agent is a powerful CLI tool for AI-driven browser automation testing t
 Built on LangGraph and Playwright, it enables testers and developers to write test cases in plain English while maintaining precision and reproducibility. The tool provides rich CLI visualization of test progress with real-time feedback, making it ideal for both interactive use and automated testing environments.
 
 ## Demo
-[![Demo Video](../../assets/Demo.mp4)](https://github.com/user-attachments/assets/59f8428e-79ab-4cdd-85fb-8a5d00407efc)
+![Demo](../../assets/images/gifs/Demo.gif)
 
 ## Key Features
 
@@ -47,7 +47,7 @@ Built on LangGraph and Playwright, it enables testers and developers to write te
 
 ## Requirements
 
-- Node.js 16+
+- Node.js 18+
 - Playwright with browsers (must be installed with `npx playwright install --with-deps`)
 
 ## Installation

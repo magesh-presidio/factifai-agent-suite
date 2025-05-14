@@ -1,6 +1,6 @@
 {
   "name": "@presidio-dev/playwright-core",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A powerful wrapper around Playwright providing browser automation services with enhanced capabilities for LLMs.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,7 +12,8 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "tsc",
+    "build": "node esbuild.config.js && tsc --emitDeclarationOnly",
+    "build:watch": "node esbuild.config.js --watch",
     "start": "node dist/index.js",
     "test": "jest",
     "lint": "eslint src --ext .ts",
@@ -23,9 +24,10 @@
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
-    "@types/node": "^22.15.3",
-    "@typescript-eslint/eslint-plugin": "^8.31.1",
-    "@typescript-eslint/parser": "^8.31.1",
+    "@types/node": "^22.15.18",
+    "@typescript-eslint/eslint-plugin": "^8.32.1",
+    "@typescript-eslint/parser": "^8.32.1",
+    "esbuild": "^0.25.4",
     "typescript": "^5.8.3"
   },
   "keywords": [
@@ -43,5 +45,5 @@
     "type": "git",
     "url": "git+https://github.com/presidio-oss/factifai-agent-suite.git"
   },
-  "packageManager": "pnpm@10.10.0"
+  "packageManager": "pnpm@10.11.0"
 }

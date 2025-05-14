@@ -1,0 +1,57 @@
+name: Deploy Docs to GitHub Pages
+
+on:
+  push:
+    branches:
+      - feature/docs
+    paths:
+      - 'docs/**'  # Only trigger when docs are updated
+  workflow_dispatch:  # Allow manual triggering
+    inputs:
+      deploy:
+        description: 'Deploy to GitHub Pages'
+        type: boolean
+        default: true
+        required: true
+      commit_message:
+        description: 'Custom commit message for deployment'
+        type: string
+        default: 'Deploy documentation site'
+        required: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.10.0
+          run_install: false
+
+      - name: Install dependencies
+        run: |
+          cd docs
+          npm install -g pnpm
+          pnpm install --filter docs
+
+      - name: Build documentation
+        run: |
+          cd docs
+          pnpm run docs:build
+
+      - name: Deploy to GitHub Pages
+        if: ${{ github.event_name == 'push' || github.event.inputs.deploy == 'true' }}
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: docs/.vitepress/dist   # The folder the action should deploy
+          branch: gh-pages               # The branch the action should deploy to
+          commit-message: ${{ github.event.inputs.commit_message || 'Deploy documentation site' }}

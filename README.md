@@ -29,6 +29,29 @@ The Factifai Agent Suite provides a collection of AI-powered tools designed to a
 
 ![Demo](assets/images/gifs/Demo.gif)
 
+## 📑 Table of Contents
+
+- [Overview](#-overview)
+- [Features in Action](#-features-in-action)
+  - [From Plain English to Executable Steps](#-from-plain-english-to-executable-steps)
+  - [Real-Time Test Execution Visualization](#-real-time-test-execution-visualization)
+  - [Instant, Detailed Test Results](#-instant-detailed-test-results)
+  - [Professional Reports for Teams & CI/CD](#-professional-reports-for-teams--cicd)
+- [Tools](#-tools)
+  - [Currently Available](#currently-available)
+  - [What's Next?](#whats-next)
+- [Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Quick Start Examples](#quick-start-examples)
+  - [Development Setup](#development-setup)
+- [Use Cases](#-use-cases)
+- [Architecture](#-architecture)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Code of Conduct](#-code-of-conduct)
+- [Contact](#-contact)
+
 ## 🔍 Overview
 
 Software testing has traditionally required specialized expertise and considerable time investment. The Factifai Agent Suite reimagines this process by allowing tests to be defined in plain English, automatically executed with precision, and seamlessly integrated into modern CI/CD pipelines.

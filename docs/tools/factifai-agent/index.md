@@ -23,7 +23,7 @@ Built on LangGraph and Playwright, Factifai Agent enables testers and developers
 
 ## Requirements
 
-- Node.js 16+
+- Node.js 18+
 - Playwright with browsers (must be installed with `npx playwright install --with-deps`)
 
 ## Installation

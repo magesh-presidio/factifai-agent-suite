@@ -146,7 +146,7 @@ This separation of concerns allows Factifai Agent to focus on natural language p
 
 ## Requirements
 
-- Node.js 16+
+- Node.js 18+
 - Playwright (peer dependency)
 - Browser binaries (Chromium, Firefox, and/or WebKit)
 

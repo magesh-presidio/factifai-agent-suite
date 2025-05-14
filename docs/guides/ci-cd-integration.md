@@ -54,7 +54,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '18'
           
       - name: Install dependencies
         run: |
@@ -150,7 +150,7 @@ Create a `Jenkinsfile` in your repository root:
 pipeline {
     agent {
         docker {
-            image 'node:16'
+            image 'node:18'
             args '--network=host'
         }
     }
@@ -199,7 +199,7 @@ GitLab CI/CD is GitLab's built-in CI/CD solution.
 Create a `.gitlab-ci.yml` file in your repository root:
 
 ```yaml
-image: node:16
+image: node:18
 
 stages:
   - test
@@ -248,7 +248,7 @@ pool:
 steps:
   - task: NodeTool@0
     inputs:
-      versionSpec: '16.x'
+      versionSpec: '18.x'
     displayName: 'Install Node.js'
 
   - script: |

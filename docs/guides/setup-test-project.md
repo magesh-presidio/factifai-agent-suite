@@ -6,7 +6,7 @@ This guide will walk you through the process of setting up a test project with t
 
 Before you begin, make sure you have:
 
-- **Node.js 16+** installed on your system
+- **Node.js 18+** installed on your system
 - **npm or pnpm** for package management
 - **An OpenAI API key** or **AWS Bedrock credentials** for the AI capabilities
 
@@ -201,7 +201,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '18'
       - name: Install dependencies
         run: |
           npm install -g @presidio-dev/factifai-agent

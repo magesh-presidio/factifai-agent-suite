@@ -6,7 +6,7 @@ This guide will walk you through the process of installing the Factifai Agent Su
 
 Before installing the Factifai Agent Suite, ensure you have the following prerequisites:
 
-- **Node.js 16+** - The runtime environment for JavaScript
+- **Node.js 18+** - The runtime environment for JavaScript
 - **pnpm 10.10.0+** - The package manager used by Factifai Agent Suite
 - **OpenAI API key** or **AWS Bedrock credentials** - Required for the AI capabilities
 

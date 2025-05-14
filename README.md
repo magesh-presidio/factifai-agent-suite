@@ -118,7 +118,7 @@ A specialized wrapper around Playwright designed specifically for LLMs to contro
 
 ### Prerequisites
 
-- Node.js 16+
+- Node.js 18+
 - pnpm 10.10.0+
 - OpenAI API key or AWS Bedrock credentials
 

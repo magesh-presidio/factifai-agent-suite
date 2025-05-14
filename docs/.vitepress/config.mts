@@ -34,7 +34,7 @@ export default defineConfig({
           text: 'Tools',
           items: [
             { text: 'Overview', link: '/tools/' },
-            { text: 'Factifai Agent', link: '/tools/factifai-agent-suite/' },
+            { text: 'Factifai Agent', link: '/tools/factifai-agent/' },
             { text: 'Playwright Core', link: '/tools/playwright-core/' }
           ]
         }

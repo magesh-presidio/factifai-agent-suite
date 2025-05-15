@@ -36,7 +36,7 @@ export const executeBrowserTask = async (
   instruction: string,
   sessionId: string
 ) => {
-  sessionId = sessionId || `browser-session-${Date.now()}`;
+  sessionId = sessionId || `factifai-session-${Date.now()}`;
   
   // Configure logger to use the session directory for logs
   logger.setSessionId(sessionId);

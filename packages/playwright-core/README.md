@@ -120,7 +120,7 @@ elements.forEach(el => {
 
 ## Requirements
 
-- Node.js 16+
+- Node.js 18+
 - Playwright (peer dependency)
 - Browser binaries (Chromium, Firefox, and/or WebKit)
 

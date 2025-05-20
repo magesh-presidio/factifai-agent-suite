@@ -4,7 +4,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "Factifai Agent Suite",
   description: "AI-powered testing tools for modern development workflows",
-  base: '/factifai-agent-suite/', // Base URL for GitHub Pages deployment
+  base: '/', // Base URL for GitHub Pages deployment
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     logo: '/hai-logo.svg',

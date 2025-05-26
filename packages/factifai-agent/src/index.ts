@@ -34,7 +34,8 @@ export const displayFactifaiLogo = (): void => {
 
 export const executeBrowserTask = async (
   instruction: string,
-  sessionId: string
+  sessionId: string,
+  options: { noReport?: boolean } = {}
 ) => {
   sessionId = sessionId || `factifai-session-${Date.now()}`;
   
@@ -51,6 +52,7 @@ export const executeBrowserTask = async (
       {
         instruction,
         sessionId,
+        noReport: options.noReport || false,
       },
       runConfig
     );

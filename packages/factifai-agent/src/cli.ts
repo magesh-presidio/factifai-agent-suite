@@ -155,6 +155,11 @@ const cli = yargs(hideBin(process.argv))
           type: "string",
           describe: "Path to a file containing test instructions",
         })
+        .option("skip-report", {
+          type: "boolean",
+          describe: "Skip all report generation",
+          default: false
+        })
         .example(
           '$0 run "Check if google.com loads"',
           "Run with inline instruction"
@@ -248,7 +253,8 @@ const cli = yargs(hideBin(process.argv))
       try {
         const result = await executeBrowserTask(
           instruction,
-          argv.session as string
+          argv.session as string,
+          { noReport: argv['skip-report'] as boolean }
         );
 
         if (result.success) {

@@ -551,7 +551,7 @@ const cli = yargs(hideBin(process.argv))
   )
   .command(
     "secret",
-    "set secrets for the agent",
+    "Manage sensitive credentials needed for testing within agent",
     (yargs) => {
       return yargs.option("set", {
         alias: "s",
@@ -561,15 +561,51 @@ const cli = yargs(hideBin(process.argv))
         alias: 'l',
         type: 'string',
         describe: "List all the secrets"
+      }).option("delete", {
+        alias: 'd',
+        type: 'string',
+        describe: "Delete a secret by key"
       });
     },
     (argv) => {
       if (argv.set) {
-        const [key, value] = argv.set.split('=')
-        SecretManager.set(key,  value)
-        console.log('Secret Saved')
+        const [key, value] = argv.set.split('=');
+        if (!key || !value) {
+          console.error("Invalid format. Use --set KEY=VALUE");
+          return;
+        }
+        const success = SecretManager.set(key, value);
+        if (success) {
+          console.log(`✅ Secret ${key} has been saved successfully`);
+        } else {
+          console.error(`❌ Failed to save secret ${key}`);
+        }
+      } else if (argv.delete) {
+        const key = argv.delete;
+        const success = SecretManager.delete(key);
+        if (success) {
+          console.log(`✅ Secret ${key} has been deleted successfully`);
+        } else {
+          console.error(`❌ Secret ${key} not found or could not be deleted`);
+        }
       } else if (argv.hasOwnProperty('list')) {
-        console.log(SecretManager.getAll())
+        const secrets = SecretManager.getAll();
+        const secretCount = Object.keys(secrets).length;
+        
+        if (secretCount === 0) {
+          console.log("No secrets found");
+        } else {
+          console.log(`Found ${secretCount} secret(s):`);
+          for (const key of Object.keys(secrets)) {
+            console.log(`- ${key}: ********`);
+          }
+          console.log(`\nSecrets location: ${SecretManager.secretsPath}`);
+        }
+      } else {
+        console.log("Secret management options:");
+        console.log("- Use --set key=value to set a secret");
+        console.log("- Use --list to display all secret keys");
+        console.log("- Use --delete key to remove a secret");
       }
     }
   )

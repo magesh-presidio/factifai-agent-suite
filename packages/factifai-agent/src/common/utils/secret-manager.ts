@@ -2,134 +2,160 @@ import path from "path";
 import os from "os";
 import fs from "fs";
 
-
 export class SecretManager {
   private static configDir: string;
-  private static _configPath: string;
-  private static config: Record<string, string> = {};
+  private static _secretsPath: string;
+  private static secrets: Record<string, string> = {};
   private static isInitialized = false;
 
   /**
-   * Get the path to the configuration file
+   * Get the path to the secrets file
    */
-  public static get secrets(): string {
-    if (!this.isInitialized) this.initialize();
-    return this._configPath;
+  public static get secretsPath(): string {
+    this.ensureInitialized();
+    return this._secretsPath;
   }
 
   /**
-   * Initialize the configuration manager
-   * This sets up the config directory and loads existing config
+   * Ensure the secret manager is initialized
+   * This is a helper method to reduce code duplication
+   */
+  private static ensureInitialized(): void {
+    if (!this.isInitialized) this.initialize();
+  }
+
+  /**
+   * Initialize the secret manager
+   * This sets up the secrets directory and loads existing secrets
    */
   public static initialize(): void {
     if (this.isInitialized) return;
 
-    // Set up config directory
+    // Set up secrets directory
     this.configDir = path.join(os.homedir(), '.factifai');
-    this._configPath = path.join(this.configDir, 'secret.json');
+    this._secretsPath = path.join(this.configDir, 'secret.json');
 
-    // Create config directory if it doesn't exist
+    // Create secrets directory if it doesn't exist
     if (!fs.existsSync(this.configDir)) {
       fs.mkdirSync(this.configDir, { recursive: true });
     }
 
-    // Load existing config or create new one
-    this.loadConfig();
+    // Load existing secrets or create new ones
+    this.loadSecrets();
     this.isInitialized = true;
   }
 
   /**
-   * Load configuration from disk
-   * If no config file exists, creates an empty one
+   * Load secrets from disk
+   * If no secrets file exists, creates an empty one
    */
-  private static loadConfig(): void {
+  private static loadSecrets(): void {
     try {
-      if (fs.existsSync(this._configPath)) {
-        const fileContent = fs.readFileSync(this._configPath, 'utf8');
-        this.config = JSON.parse(fileContent);
+      if (fs.existsSync(this._secretsPath)) {
+        const fileContent = fs.readFileSync(this._secretsPath, 'utf8');
+        this.secrets = JSON.parse(fileContent);
       } else {
-        // Create default config
-        this.config = {};
-        this.saveConfig();
+        // Create default empty secrets
+        this.secrets = {};
+        this.saveSecrets();
       }
     } catch (error) {
-      console.error('Error loading configuration:', error);
-      // Fall back to empty config if there's an error
-      this.config = {};
+      console.error('Error loading secrets:', error);
+      // Fall back to empty secrets if there's an error
+      this.secrets = {};
     }
   }
 
   /**
-   * Save configuration to disk
+   * Save secrets to disk
    */
-  private static saveConfig(): void {
+  private static saveSecrets(): void {
     try {
-      fs.writeFileSync(this._configPath, JSON.stringify(this.config, null, 2), 'utf8');
+      fs.writeFileSync(this._secretsPath, JSON.stringify(this.secrets, null, 2), 'utf8');
     } catch (error) {
-      console.error('Error saving configuration:', error);
+      console.error('Error saving secrets:', error);
     }
   }
 
   /**
-   * Set a configuration value
-   * @param key Configuration key
-   * @param value Configuration value
+   * Set a secret value
+   * @param key Secret key
+   * @param value Secret value
    * @returns true if successful, false otherwise
    */
   public static set(key: string, value: string): boolean {
-    if (!this.isInitialized) this.initialize();
+    this.ensureInitialized();
 
     try {
-      this.config[key] = value;
-      this.saveConfig();
+      this.secrets[key] = value;
+      this.saveSecrets();
       return true;
     } catch (error) {
-      console.error(`Error setting configuration value ${key}:`, error);
+      console.error(`Error setting secret value ${key}:`, error);
       return false;
     }
   }
 
   /**
-   * Get a configuration value
-   * @param key Configuration key
+   * Get a secret value
+   * @param key Secret key
    * @param defaultValue Default value to return if key doesn't exist
-   * @returns The configuration value or defaultValue if not found
+   * @returns The secret value or defaultValue if not found
    */
   public static get(key: string, defaultValue?: string): string | undefined {
-    if (!this.isInitialized) this.initialize();
-
-    return this.config[key] !== undefined ? this.config[key] : defaultValue;
+    this.ensureInitialized();
+    return this.secrets[key] !== undefined ? this.secrets[key] : defaultValue;
   }
 
   /**
-   * Get all configuration values
-   * @returns All configuration key-value pairs
+   * Get all secret values
+   * @returns All secret key-value pairs
    */
   public static getAll(): Record<string, string> {
-    if (!this.isInitialized) this.initialize();
-
-    return { ...this.config };
+    this.ensureInitialized();
+    return { ...this.secrets };
   }
 
   /**
-   * Check if a configuration key exists
-   * @param key Configuration key
+   * Check if a secret key exists
+   * @param key Secret key
    * @returns true if the key exists, false otherwise
    */
   public static has(key: string): boolean {
-    if (!this.isInitialized) this.initialize();
-
-    return this.config[key] !== undefined;
+    this.ensureInitialized();
+    return this.secrets[key] !== undefined;
   }
 
   /**
-   * Apply configuration to environment variables
-   * This allows config values to be used in the application via process.env
+   * Delete a secret
+   * @param key Secret key to delete
+   * @returns true if the secret was deleted, false if it didn't exist or deletion failed
+   */
+  public static delete(key: string): boolean {
+    this.ensureInitialized();
+    
+    if (this.secrets[key] === undefined) {
+      return false;
+    }
+    
+    try {
+      delete this.secrets[key];
+      this.saveSecrets();
+      return true;
+    } catch (error) {
+      console.error(`Error deleting secret ${key}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Apply secrets to environment variables
+   * This allows secret values to be used in the application via process.env
    */
   public static applyToEnvironment(): void {
-    if (!this.isInitialized) this.initialize();
+    this.ensureInitialized();
 
-    Object.entries(this.config).forEach(([key, value]) => {
+    Object.entries(this.secrets).forEach(([key, value]) => {
       process.env[key] = value;
     });
   }

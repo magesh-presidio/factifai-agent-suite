@@ -46,6 +46,7 @@ async function cleanInstructionForLLM(instruction: string) {
 
 export const parseTestStepsNode = async ({
   processedInstruction,
+  skipAnalysis,
 }: GraphStateType) => {
   if (!processedInstruction) {
     logger.warn(
@@ -78,45 +79,69 @@ export const parseTestStepsNode = async ({
 
     // Update the processed instruction with the cleaned version
     processedInstruction = cleanedInstruction;
-    // Start a spinner for quality analysis
-    const qualitySpinnerId = "quality-analysis";
-    logger.spinner("Analyzing test case quality...", qualitySpinnerId);
+    
+    // Initialize default test case rating for when analysis is skipped
+    let testCaseRating = {
+      rating: 8, // Default good rating when skipped
+      strengths: ["Analysis skipped"],
+      weaknesses: [] as string[],
+      improvementSuggestions: "Test case analysis was skipped",
+      criteriaRatings: {
+        clarity: 8,
+        atomicity: 8,
+        verifiability: 8,
+        completeness: 8,
+        errorHandling: 8,
+        testData: 8,
+        independence: 8,
+      },
+    };
 
-    // First, rate the test case quality
-    const testCaseRating = await rateTestCase(processedInstruction);
+    // Initialize rating color for display
+    let ratingColor = chalk.green;
 
-    // Display rating with appropriate color
-    const ratingColor =
-      testCaseRating.rating >= 8
-        ? chalk.green
-        : testCaseRating.rating >= 5
-        ? chalk.blue
-        : chalk.yellow;
+    // Only perform quality analysis if not skipped
+    if (!skipAnalysis) {
+      // Start a spinner for quality analysis
+      const qualitySpinnerId = "quality-analysis";
+      logger.spinner("Analyzing test case quality...", qualitySpinnerId);
 
-    // Complete the spinner with success - keep it simple
-    logger.spinnerSuccess(
-      qualitySpinnerId,
-      `Test case quality rating: ${ratingColor(`${testCaseRating.rating}/10`)}`
-    );
+      // First, rate the test case quality
+      testCaseRating = await rateTestCase(processedInstruction);
 
-    // Only show warning and suggestions if quality is low
-    if (testCaseRating.rating < 5) {
-      const warningMessage = `WARNING: Low quality test case detected. Consider improving before execution.`;
+      // Display rating with appropriate color
+      const ratingColor =
+        testCaseRating.rating >= 8
+          ? chalk.green
+          : testCaseRating.rating >= 5
+          ? chalk.blue
+          : chalk.yellow;
 
-      // Format the box content with both warning and suggestions
-      const boxContent = `${chalk.yellow.bold(
-        warningMessage
-      )}\n\n${chalk.italic(testCaseRating.improvementSuggestions)}`;
+      // Complete the spinner with success - keep it simple
+      logger.spinnerSuccess(
+        qualitySpinnerId,
+        `Test case quality rating: ${ratingColor(`${testCaseRating.rating}/10`)}`
+      );
 
-      // Use the logger's box method to display everything in one container
-      logger.box(boxContent, {
-        title: chalk.yellow("Test Case Quality Warning"),
-        padding: 1,
-        margin: { top: 1, bottom: 1 },
-        borderStyle: "round",
-        borderColor: "yellow",
-        dimBorder: true,
-      });
+      // Only show warning and suggestions if quality is low
+      if (testCaseRating.rating < 5) {
+        const warningMessage = `WARNING: Low quality test case detected. Consider improving before execution.`;
+
+        // Format the box content with both warning and suggestions
+        const boxContent = `${chalk.yellow.bold(
+          warningMessage
+        )}\n\n${chalk.italic(testCaseRating.improvementSuggestions)}`;
+
+        // Use the logger's box method to display everything in one container
+        logger.box(boxContent, {
+          title: chalk.yellow("Test Case Quality Warning"),
+          padding: 1,
+          margin: { top: 1, bottom: 1 },
+          borderStyle: "round",
+          borderColor: "yellow",
+          dimBorder: true,
+        });
+      }
     }
 
     // Start a spinner for parsing test steps

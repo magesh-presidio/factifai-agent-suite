@@ -165,6 +165,11 @@ const cli = yargs(hideBin(process.argv))
           describe: "Report format to generate (html, xml, both)",
           choices: ["html", "xml", "both"],
         })
+        .option("skip-analysis", {
+          type: "boolean",
+          describe: "Skip test case quality analysis and suggestions",
+          default: false
+        })
         .example(
           '$0 run "Check if google.com loads"',
           "Run with inline instruction"
@@ -259,11 +264,19 @@ const cli = yargs(hideBin(process.argv))
                          ConfigManager.get('REPORT_FORMAT') || 
                          'both';
       const skipReport = argv['skip-report'] as boolean;
+      const skipAnalysis = argv['skip-analysis'] as boolean || 
+                          ConfigManager.get('SKIP_ANALYSIS') === 'true';
       
       if (skipReport) {
         console.log(`- Report Generation: Disabled (--skip-report)`);
       } else {
         console.log(`- Report Format: ${reportFormat}`);
+      }
+      
+      if (skipAnalysis) {
+        console.log(`- Test Analysis: Disabled (--skip-analysis)`);
+      } else {
+        console.log(`- Test Analysis: Enabled`);
       }
       
       console.log(""); // Empty line for better readability
@@ -279,7 +292,8 @@ const cli = yargs(hideBin(process.argv))
           argv.session as string,
           { 
             noReport: argv['skip-report'] as boolean,
-            reportFormat: reportFormat
+            reportFormat: reportFormat,
+            skipAnalysis: skipAnalysis
           }
         );
 
@@ -403,6 +417,13 @@ const cli = yargs(hideBin(process.argv))
             process.env.REPORT_FORMAT || 
             config.REPORT_FORMAT || 
             "both (default)"
+          }`
+        );
+        console.log(
+          `- SKIP_ANALYSIS: ${
+            process.env.SKIP_ANALYSIS || 
+            config.SKIP_ANALYSIS || 
+            "false (default)"
           }`
         );
 

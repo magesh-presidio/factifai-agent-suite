@@ -98,6 +98,19 @@ factifai-agent config --set OPENAI_MODEL=gpt-4.1
 factifai-agent models
 ```
 
+#### Secret Management
+
+```bash
+# Set a secret value
+factifai-agent secret --set API_KEY=your-secret-api-key
+
+# List all stored secrets (values are masked)
+factifai-agent secret --list
+
+# Delete a specific secret
+factifai-agent secret --delete API_KEY
+```
+
 ### Cross-Browser Compatibility Testing
 
 You can run the same test across different browsers to ensure consistent functionality:
@@ -155,6 +168,62 @@ factifai-agent config --set AWS_SECRET_ACCESS_KEY=your-secret-access-key
 # Show all configuration values
 factifai-agent config --show
 ```
+
+## Secret Management
+
+Factifai Agent provides a secure way to store and manage sensitive credentials needed for testing. Unlike configuration values which are primarily for tool settings, secrets are specifically designed for storing sensitive information like API keys, test account credentials, and other confidential data required during test execution.
+
+Secrets are stored separately from configuration in `~/.factifai/secret.json` and are automatically loaded into the environment when tests run.
+
+### Managing Secrets
+
+```bash
+# Set a new secret or update an existing one
+factifai-agent secret --set TEST_USER_PASSWORD=securepassword123
+
+# List all stored secrets (values are masked for security)
+factifai-agent secret --list
+
+# Delete a secret when it's no longer needed
+factifai-agent secret --delete TEST_USER_PASSWORD
+```
+
+### Common Use Cases
+
+Secrets are particularly useful for:
+
+1. **Test Account Credentials**: Store usernames and passwords for test accounts
+   ```bash
+   factifai-agent secret --set TEST_USER=testuser@example.com
+   factifai-agent secret --set TEST_PASSWORD=password123
+   ```
+
+2. **API Keys for Testing**: Store API keys needed for testing API integrations
+   ```bash
+   factifai-agent secret --set PAYMENT_API_KEY=sk_test_abcdefghijklmnopqrstuvwxyz
+   ```
+
+3. **Environment-Specific Secrets**: Store different credentials for different environments
+   ```bash
+   factifai-agent secret --set STAGING_DB_PASSWORD=staging_password
+   factifai-agent secret --set PRODUCTION_DB_PASSWORD=production_password
+   ```
+
+### Accessing Secrets in Tests
+
+Secrets are automatically loaded as environment variables during test execution. You can reference them in your test instructions:
+
+```
+Navigate to the admin panel and log in with the credentials stored in TEST_ADMIN_USER and TEST_ADMIN_PASSWORD
+```
+
+### Best Practices for Secret Management
+
+1. **Use Descriptive Names**: Choose clear, descriptive names for your secrets
+2. **Rotate Regularly**: Update sensitive credentials periodically
+3. **Limit Scope**: Store only what's necessary for testing
+4. **Clean Up**: Delete secrets that are no longer needed
+5. **Avoid Sharing**: Don't share the `~/.factifai/secret.json` file
 
 ## Supported Models
 

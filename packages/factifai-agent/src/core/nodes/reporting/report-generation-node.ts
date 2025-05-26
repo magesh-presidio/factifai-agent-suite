@@ -845,7 +845,8 @@ export const generateReportNode = async ({
   sessionId,
   testStartTime,
   testEndTime,
-  testDuration
+  testDuration,
+  reportFormat
 }: GraphStateType) => {
   // Log test timing information if available
   if (testStartTime && testEndTime && testDuration) {
@@ -944,82 +945,87 @@ export const generateReportNode = async ({
       displayComponents.displayCriticalIssues(report.criticalIssues);
     }
 
-    // Generate JUnit XML report
+    // Generate reports based on format setting
     try {
-      enhancedLogger.info(
-        `${chalk.blue(figures.pointer)} Generating JUnit XML report...`
-      );
+      // Generate JUnit XML report if format is "xml" or "both"
+      if (reportFormat === "xml" || reportFormat === "both") {
+        enhancedLogger.info(
+          `${chalk.blue(figures.pointer)} Generating JUnit XML report...`
+        );
 
-      const junitXml = generateJUnitXmlReport(
-        testSteps,
-        report.summary,
-        report.executionTime,
-        lastError,
-        report.recommendations,
-        report.criticalIssues
-      );
+        const junitXml = generateJUnitXmlReport(
+          testSteps,
+          report.summary,
+          report.executionTime,
+          lastError,
+          report.recommendations,
+          report.criticalIssues
+        );
 
-      const xmlFilePath = writeJUnitXmlReport(junitXml, testSessionId);
+        const xmlFilePath = writeJUnitXmlReport(junitXml, testSessionId);
 
-      enhancedLogger.success(
-        `${chalk.green(figures.tick)} XML report saved to: ${xmlFilePath}`
-      );
+        enhancedLogger.success(
+          `${chalk.green(figures.tick)} XML report saved to: ${xmlFilePath}`
+        );
 
-      // Display the XML report path in a box
-      console.log(
-        boxen(
-          chalk.bold.green("XML Report Generated") +
-            "\n\n" +
-            chalk.white(`File: ${xmlFilePath}`),
-          {
-            padding: 1,
-            margin: { top: 1, bottom: 1 },
-            borderStyle: "round",
-            borderColor: "green",
-          }
-        )
-      );
+        // Display the XML report path in a box
+        console.log(
+          boxen(
+            chalk.bold.green("XML Report Generated") +
+              "\n\n" +
+              chalk.white(`File: ${xmlFilePath}`),
+            {
+              padding: 1,
+              margin: { top: 1, bottom: 1 },
+              borderStyle: "round",
+              borderColor: "green",
+            }
+          )
+        );
+      }
 
-      // Generate HTML report
-      enhancedLogger.info(
-        `${chalk.blue(figures.pointer)} Generating HTML report...`
-      );
+      // Generate HTML report if format is "html" or "both"
+      if (reportFormat === "html" || reportFormat === "both") {
+        enhancedLogger.info(
+          `${chalk.blue(figures.pointer)} Generating HTML report...`
+        );
 
-      const htmlReport = generateHtmlReport(
-        testSteps,
-        report.summary,
-        passRate,
-        report.executionTime,
-        lastError,
-        report.recommendations,
-        report.criticalIssues,
-        testDuration
-      );
+        const htmlReport = generateHtmlReport(
+          testSteps,
+          report.summary,
+          passRate,
+          report.executionTime,
+          lastError,
+          report.recommendations,
+          report.criticalIssues,
+          testDuration
+        );
 
-      const htmlFilePath = writeHtmlReport(htmlReport, testSessionId);
+        const htmlFilePath = writeHtmlReport(htmlReport, testSessionId);
 
-      enhancedLogger.success(
-        `${chalk.green(figures.tick)} HTML report saved to: ${htmlFilePath}`
-      );
+        enhancedLogger.success(
+          `${chalk.green(figures.tick)} HTML report saved to: ${htmlFilePath}`
+        );
 
-      // Display the HTML report path in a box
-      console.log(
-        boxen(
-          chalk.bold.green("HTML Report Generated") +
-            "\n\n" +
-            chalk.white(`File: ${htmlFilePath}`),
-          {
-            padding: 1,
-            margin: { top: 1, bottom: 1 },
-            borderStyle: "round",
-            borderColor: "green",
-          }
-        )
-      );
-    } catch (xmlError) {
+        // Display the HTML report path in a box
+        console.log(
+          boxen(
+            chalk.bold.green("HTML Report Generated") +
+              "\n\n" +
+              chalk.white(`File: ${htmlFilePath}`),
+            {
+              padding: 1,
+              margin: { top: 1, bottom: 1 },
+              borderStyle: "round",
+              borderColor: "green",
+            }
+          )
+        );
+      }
+    } catch (reportError) {
       enhancedLogger.error(
         `${chalk.red(figures.cross)} Failed to generate reports: ${
-          xmlError instanceof Error ? xmlError.message : "Unknown error"
+          reportError instanceof Error ? reportError.message : "Unknown error"
         }`
       );
     }

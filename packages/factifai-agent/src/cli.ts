@@ -160,6 +160,11 @@ const cli = yargs(hideBin(process.argv))
           describe: "Skip all report generation",
           default: false
         })
+        .option("report-format", {
+          type: "string",
+          describe: "Report format to generate (html, xml, both)",
+          choices: ["html", "xml", "both"],
+        })
         .example(
           '$0 run "Check if google.com loads"',
           "Run with inline instruction"
@@ -248,13 +253,34 @@ const cli = yargs(hideBin(process.argv))
           }`
         );
       }
+      
+      // Show report configuration
+      const reportFormat = argv['report-format'] as string || 
+                         ConfigManager.get('REPORT_FORMAT') || 
+                         'both';
+      const skipReport = argv['skip-report'] as boolean;
+      
+      if (skipReport) {
+        console.log(`- Report Generation: Disabled (--skip-report)`);
+      } else {
+        console.log(`- Report Format: ${reportFormat}`);
+      }
+      
       console.log(""); // Empty line for better readability
 
       try {
+        // Get report format from CLI flag or config
+        const reportFormat = argv['report-format'] as string || 
+                           ConfigManager.get('REPORT_FORMAT') || 
+                           'both';
+        
         const result = await executeBrowserTask(
           instruction,
           argv.session as string,
-          { noReport: argv['skip-report'] as boolean }
+          { 
+            noReport: argv['skip-report'] as boolean,
+            reportFormat: reportFormat
+          }
         );
 
         if (result.success) {
@@ -369,6 +395,16 @@ const cli = yargs(hideBin(process.argv))
           : "Not set" +
             (process.env.MODEL_PROVIDER === "bedrock" ? " - Required!" : "");
         console.log(`- AWS_SECRET_ACCESS_KEY: ${secretKeyStatus}`);
+
+        // Show report configuration
+        console.log("\nReport Configuration:");
+        console.log(
+          `- REPORT_FORMAT: ${
+            process.env.REPORT_FORMAT || 
+            config.REPORT_FORMAT || 
+            "both (default)"
+          }`
+        );
 
         console.log(`\nConfiguration location: ${ConfigManager.configPath}`);
       } else if (argv.set) {

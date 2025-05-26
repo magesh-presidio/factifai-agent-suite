@@ -141,6 +141,47 @@ Navigate to the registration page and test the following scenarios:
 3. Valid email 'test2@example.com' with password '123' should show a password error
 ```
 
+## Performance Optimization
+
+For scenarios where you need faster test execution without quality analysis, you can skip the test case analysis step:
+
+```bash
+# Skip test case quality analysis for faster parsing
+factifai-agent run --skip-analysis "Navigate to example.com and verify the page loads"
+```
+
+When `--skip-analysis` is used:
+- Test case quality rating is skipped
+- No improvement suggestions are generated
+- No quality warnings are displayed
+- Parsing completes faster with fewer LLM calls
+
+The execution configuration will show:
+```
+📋 Execution Configuration:
+- Provider: bedrock
+- Model: us.anthropic.claude-3-7-sonnet-20250219-v1:0
+- Test Analysis: Disabled (--skip-analysis)
+```
+
+### Analysis Configuration
+
+You can set this as a default behavior:
+
+```bash
+# Skip analysis by default for all tests
+factifai-agent config --set SKIP_ANALYSIS=true
+
+# View current configuration
+factifai-agent config --show
+```
+
+This is particularly useful for:
+- **CI/CD pipelines** where speed is prioritized over analysis
+- **Batch testing** scenarios with many test cases
+- **Performance testing** where analysis overhead should be minimized
+- **Production environments** where test quality has already been validated
+
 ## Next Steps
 
 Now that you understand how test parsing works, you might want to explore:

@@ -87,6 +87,12 @@ factifai-agent --model openai run --report-format xml "Your test instruction"
 
 # Generate both HTML and XML reports (default)
 factifai-agent --model openai run --report-format both "Your test instruction"
+
+# Skip test case quality analysis for faster execution
+factifai-agent --model openai run --skip-analysis "Your test instruction"
+
+# Combine performance flags for maximum speed
+factifai-agent --model openai run --skip-analysis --skip-report "Your test instruction"
 ```
 
 #### Configuration Management
@@ -106,6 +112,10 @@ factifai-agent config --set OPENAI_MODEL=gpt-4.1
 factifai-agent config --set REPORT_FORMAT=html    # html, xml, or both
 factifai-agent config --set REPORT_FORMAT=xml     # useful for CI/CD
 factifai-agent config --set REPORT_FORMAT=both    # default - generates both formats
+
+# Set default analysis behavior (persists across sessions)
+factifai-agent config --set SKIP_ANALYSIS=true    # skip test case quality analysis
+factifai-agent config --set SKIP_ANALYSIS=false   # enable analysis (default)
 ```
 
 #### Model Management

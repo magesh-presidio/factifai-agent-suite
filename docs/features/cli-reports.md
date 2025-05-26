@@ -251,7 +251,63 @@ factifai-agent run --report-format xml "test instruction"
 
 # Performance testing - no reports
 factifai-agent run --skip-report "test instruction"
+
+# Skip test case analysis for faster parsing
+factifai-agent run --skip-analysis "test instruction"
+
+# Maximum performance - skip both analysis and reports
+factifai-agent run --skip-analysis --skip-report "test instruction"
 ```
+
+### Test Case Analysis Control
+
+For scenarios where you want to skip the test case quality analysis and suggestions step, you can use the `--skip-analysis` flag:
+
+```bash
+# Skip test case quality analysis for faster execution
+factifai-agent run --skip-analysis "Navigate to example.com and verify the page loads"
+```
+
+When `--skip-analysis` is used, the execution configuration will show:
+```
+📋 Execution Configuration:
+- Provider: bedrock
+- Model: us.anthropic.claude-3-7-sonnet-20250219-v1:0
+- Report Format: both
+- Test Analysis: Disabled (--skip-analysis)
+```
+
+### Analysis Configuration Management
+
+Set default analysis preferences that persist across runs:
+
+```bash
+# Skip analysis by default
+factifai-agent config --set SKIP_ANALYSIS=true
+
+# Enable analysis by default (default behavior)
+factifai-agent config --set SKIP_ANALYSIS=false
+
+# View current configuration including analysis settings
+factifai-agent config --show
+```
+
+The configuration display includes analysis settings:
+```
+Report Configuration:
+- REPORT_FORMAT: both (default)
+- SKIP_ANALYSIS: true
+```
+
+### Performance Optimization Priority
+
+Settings are resolved in this priority order:
+1. `--skip-report` flag (highest priority - disables all reports)
+2. `--report-format` CLI flag
+3. `REPORT_FORMAT` config setting
+4. `--skip-analysis` CLI flag
+5. `SKIP_ANALYSIS` config setting
+6. Defaults: "both" reports, analysis enabled
 
 ## Coming Soon
 

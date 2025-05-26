@@ -318,21 +318,42 @@ For CI/CD pipelines, you can optimize performance by controlling which reports a
     factifai-agent run --report-format both --file tests/full-test.txt
 ```
 
-### Environment-Specific Configuration
+### Test Case Analysis Control
 
-Configure different report formats for different environments:
+For CI/CD pipelines where speed is critical, you can skip test case quality analysis:
 
-```bash
-# Set CI-specific configuration
-factifai-agent config --set REPORT_FORMAT=xml
+```yaml
+# GitHub Actions example with analysis control
+- name: Run smoke tests (maximum speed)
+  run: |
+    factifai-agent run --skip-analysis --skip-report --file tests/smoke-test.txt
 
-# Or use environment-specific flags
-factifai-agent run --report-format xml "test instruction"  # CI/CD
-factifai-agent run --report-format html "test instruction" # Development
-factifai-agent run --skip-report "test instruction"        # Performance testing
+- name: Run regression tests (skip analysis, XML reports only)
+  run: |
+    factifai-agent run --skip-analysis --report-format xml --file tests/regression-test.txt
+
+- name: Run nightly tests (full analysis and reporting)
+  if: github.event_name == 'schedule'
+  run: |
+    factifai-agent run --report-format both --file tests/full-test.txt
 ```
 
-### Jenkins Pipeline with Report Control
+### Environment-Specific Configuration
+
+Configure different report formats and analysis settings for different environments:
+
+```bash
+# Set CI-specific configuration for maximum performance
+factifai-agent config --set REPORT_FORMAT=xml
+factifai-agent config --set SKIP_ANALYSIS=true
+
+# Or use environment-specific flags
+factifai-agent run --skip-analysis --report-format xml "test instruction"  # CI/CD
+factifai-agent run --report-format html "test instruction"                 # Development
+factifai-agent run --skip-analysis --skip-report "test instruction"        # Performance testing
+```
+
+### Jenkins Pipeline with Analysis Control
 
 ```groovy
 pipeline {
@@ -341,15 +362,28 @@ pipeline {
     stages {
         stage('Smoke Tests') {
             steps {
-                // Fast smoke tests without reports
-                sh 'factifai-agent run --skip-report --file tests/smoke.txt'
+                // Maximum speed - skip analysis and reports
+                sh 'factifai-agent run --skip-analysis --skip-report --file tests/smoke.txt'
             }
         }
         
         stage('Integration Tests') {
             steps {
-                // Full tests with XML reports for Jenkins integration
-                sh 'factifai-agent run --report-format xml --file tests/integration.txt'
+                // Skip analysis, XML reports only for Jenkins integration
+                sh 'factifai-agent run --skip-analysis --report-format xml --file tests/integration.txt'
+            }
+        }
+        
+        stage('Nightly Tests') {
+            when {
+                anyOf {
+                    triggeredBy 'TimerTrigger'
+                    branch 'main'
+                }
+            }
+            steps {
+                // Full analysis and reporting for comprehensive nightly tests
+                sh 'factifai-agent run --report-format both --file tests/comprehensive.txt'
             }
         }
     }
@@ -363,7 +397,7 @@ pipeline {
 }
 ```
 
-### GitLab CI with Report Control
+### GitLab CI with Analysis Control
 
 ```yaml
 stages:
@@ -374,14 +408,14 @@ stages:
 smoke-tests:
   stage: smoke
   script:
-    - factifai-agent run --skip-report --file tests/smoke.txt
+    - factifai-agent run --skip-analysis --skip-report --file tests/smoke.txt
   only:
     - merge_requests
 
 integration-tests:
   stage: test
   script:
-    - factifai-agent run --report-format xml --file tests/integration.txt
+    - factifai-agent run --skip-analysis --report-format xml --file tests/integration.txt
   artifacts:
     reports:
       junit: factifai-session-*/test\ report/*.xml
@@ -412,6 +446,15 @@ nightly-tests:
 - Use test categorization (smoke, regression, etc.) to run appropriate tests at different stages
 - Consider using headless browsers for faster execution
 - Implement test retries for flaky tests
+- **Use `--skip-analysis`** for faster test parsing in CI/CD environments
+- **Use `--skip-report`** for smoke tests where detailed reports aren't needed
+
+### Analysis and Reporting Strategy
+
+- **Smoke Tests**: Use `--skip-analysis --skip-report` for maximum speed
+- **Integration Tests**: Use `--skip-analysis --report-format xml` for CI integration
+- **Nightly Tests**: Use full analysis and reporting for comprehensive feedback
+- **Development**: Enable full analysis for test quality feedback
 
 ### Reporting and Notifications
 

@@ -75,6 +75,18 @@ factifai-agent --model openai run --file ./examples/test-case.txt
 
 # With custom session ID
 factifai-agent --model openai run --session my-test-123 "Your test instruction"
+
+# Skip all report generation (for performance)
+factifai-agent --model openai run --skip-report "Your test instruction"
+
+# Generate only HTML reports
+factifai-agent --model openai run --report-format html "Your test instruction"
+
+# Generate only XML reports (useful for CI/CD)
+factifai-agent --model openai run --report-format xml "Your test instruction"
+
+# Generate both HTML and XML reports (default)
+factifai-agent --model openai run --report-format both "Your test instruction"
 ```
 
 #### Configuration Management
@@ -89,6 +101,11 @@ factifai-agent config --model openai
 # Set individual configuration values (persists across sessions)
 factifai-agent config --set OPENAI_API_KEY=your-api-key
 factifai-agent config --set OPENAI_MODEL=gpt-4.1
+
+# Set default report format (persists across sessions)
+factifai-agent config --set REPORT_FORMAT=html    # html, xml, or both
+factifai-agent config --set REPORT_FORMAT=xml     # useful for CI/CD
+factifai-agent config --set REPORT_FORMAT=both    # default - generates both formats
 ```
 
 #### Model Management

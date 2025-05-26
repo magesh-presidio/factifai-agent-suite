@@ -9,12 +9,78 @@ The Factifai Agent Suite generates structured reports in HTML and XML formats, m
 
 ## How It Works
 
-When a test completes, Factifai Agent automatically generates:
+When a test completes, Factifai Agent can generate structured reports in multiple formats:
 
 1. **HTML Reports** - Clean, modern reports with detailed test information
 2. **XML Reports** - Structured reports in JUnit-compatible XML format
 
-These reports are saved to disk and can be viewed in a browser or processed by CI/CD tools.
+By default, both formats are generated, but you can control which formats are created using command-line flags or configuration settings.
+
+## Report Format Control
+
+### Selective Report Generation
+
+You can control which report formats are generated to optimize for your specific use case:
+
+```bash
+# Generate only HTML reports
+factifai-agent run --report-format html "Navigate to example.com and verify the page loads"
+
+# Generate only XML reports (useful for CI/CD)
+factifai-agent run --report-format xml "Navigate to example.com and verify the page loads"
+
+# Generate both HTML and XML reports (default)
+factifai-agent run --report-format both "Navigate to example.com and verify the page loads"
+
+# Skip all file reports (CLI reports only)
+factifai-agent run --skip-report "Navigate to example.com and verify the page loads"
+```
+
+### Configuration Management
+
+Set default report format preferences that persist across runs:
+
+```bash
+# Set default to HTML only
+factifai-agent config --set REPORT_FORMAT=html
+
+# Set default to XML only
+factifai-agent config --set REPORT_FORMAT=xml
+
+# Set default to both formats
+factifai-agent config --set REPORT_FORMAT=both
+
+# View current configuration
+factifai-agent config --show
+```
+
+### Execution Configuration Display
+
+When you run a test, the execution configuration shows your report settings:
+
+```
+📋 Execution Configuration:
+- Provider: bedrock
+- Model: us.anthropic.claude-3-7-sonnet-20250219-v1:0
+- Report Format: html
+```
+
+Or when reports are disabled:
+
+```
+📋 Execution Configuration:
+- Provider: bedrock
+- Model: us.anthropic.claude-3-7-sonnet-20250219-v1:0
+- Report Generation: Disabled (--skip-report)
+```
+
+### Priority Order
+
+Report format settings are resolved in this priority order:
+1. `--skip-report` flag (highest priority - disables all file reports)
+2. `--report-format` CLI flag
+3. `REPORT_FORMAT` config setting
+4. Default: "both" (HTML + XML reports)
 
 ## Benefits of Structured Reports
 

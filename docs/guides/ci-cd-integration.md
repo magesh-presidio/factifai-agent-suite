@@ -75,6 +75,12 @@ jobs:
         with:
           name: factifai-session
           path: factifai-session-*
+          
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v2
+        if: always()
+        with:
+          report_paths: 'factifai-session-*/test report/*.xml'
 
 > **Coming Soon:** Directory-based test running with the `--dir` option and custom report directories with `--report-dir` will be available in future releases.
 ```
@@ -289,6 +295,107 @@ Store your API keys as Azure DevOps Pipeline Variables:
 1. Navigate to your project > Pipelines > Edit your pipeline
 2. Click on "Variables" in the top right
 3. Add a variable with name `OPENAI_API_KEY` and mark it as "Secret"
+
+## Report Control in CI/CD
+
+### Performance Optimization with Report Control
+
+For CI/CD pipelines, you can optimize performance by controlling which reports are generated:
+
+```yaml
+# GitHub Actions example
+- name: Run smoke tests (no reports for speed)
+  run: |
+    factifai-agent run --skip-report --file tests/smoke-test.txt
+
+- name: Run full regression tests (XML only for CI integration)
+  run: |
+    factifai-agent run --report-format xml --file tests/regression-test.txt
+
+- name: Run nightly tests (full reporting)
+  if: github.event_name == 'schedule'
+  run: |
+    factifai-agent run --report-format both --file tests/full-test.txt
+```
+
+### Environment-Specific Configuration
+
+Configure different report formats for different environments:
+
+```bash
+# Set CI-specific configuration
+factifai-agent config --set REPORT_FORMAT=xml
+
+# Or use environment-specific flags
+factifai-agent run --report-format xml "test instruction"  # CI/CD
+factifai-agent run --report-format html "test instruction" # Development
+factifai-agent run --skip-report "test instruction"        # Performance testing
+```
+
+### Jenkins Pipeline with Report Control
+
+```groovy
+pipeline {
+    agent any
+    
+    stages {
+        stage('Smoke Tests') {
+            steps {
+                // Fast smoke tests without reports
+                sh 'factifai-agent run --skip-report --file tests/smoke.txt'
+            }
+        }
+        
+        stage('Integration Tests') {
+            steps {
+                // Full tests with XML reports for Jenkins integration
+                sh 'factifai-agent run --report-format xml --file tests/integration.txt'
+            }
+        }
+    }
+    
+    post {
+        always {
+            // Only process XML reports since that's what we generated
+            junit 'factifai-session-*/test\\ report/*.xml'
+        }
+    }
+}
+```
+
+### GitLab CI with Report Control
+
+```yaml
+stages:
+  - smoke
+  - test
+  - nightly
+
+smoke-tests:
+  stage: smoke
+  script:
+    - factifai-agent run --skip-report --file tests/smoke.txt
+  only:
+    - merge_requests
+
+integration-tests:
+  stage: test
+  script:
+    - factifai-agent run --report-format xml --file tests/integration.txt
+  artifacts:
+    reports:
+      junit: factifai-session-*/test\ report/*.xml
+
+nightly-tests:
+  stage: nightly
+  script:
+    - factifai-agent run --report-format both --file tests/full-suite.txt
+  artifacts:
+    paths:
+      - factifai-session-*
+  only:
+    - schedules
+```
 
 ## Best Practices for CI/CD Integration
 

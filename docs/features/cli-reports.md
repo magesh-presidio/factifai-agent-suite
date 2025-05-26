@@ -162,9 +162,96 @@ Critical Issues:
 ▲ Critical failure in logging in due to invalid credentials, blocking completion of the main workflow.
 ```
 
+## Report Control Options
+
+### Skip Report Generation
+
+For performance-critical scenarios or CI/CD pipelines where you only need test execution without detailed reporting, you can skip all report generation:
+
+```bash
+# Skip all report generation (CLI and file reports)
+factifai-agent run --skip-report "Navigate to example.com and verify the page loads"
+```
+
+When `--skip-report` is used, the execution configuration will show:
+```
+📋 Execution Configuration:
+- Provider: bedrock
+- Model: us.anthropic.claude-3-7-sonnet-20250219-v1:0
+- Report Generation: Disabled (--skip-report)
+```
+
+### Report Format Configuration
+
+You can control which report formats are generated using the `--report-format` flag or by setting a default in your configuration:
+
+```bash
+# Generate only CLI reports (no file reports)
+factifai-agent run --report-format html "test instruction"
+
+# Generate only XML reports for CI/CD integration
+factifai-agent run --report-format xml "test instruction"
+
+# Generate both HTML and XML reports (default)
+factifai-agent run --report-format both "test instruction"
+```
+
+### Configuration Management
+
+Set default report preferences that persist across runs:
+
+```bash
+# Set default report format
+factifai-agent config --set REPORT_FORMAT=html
+
+# View current configuration including report settings
+factifai-agent config --show
+```
+
+The configuration display includes report settings:
+```
+Report Configuration:
+- REPORT_FORMAT: html (or xml, both, both (default))
+```
+
+### Priority Order
+
+Report settings are resolved in this priority order:
+1. `--skip-report` flag (highest priority - disables all reports)
+2. `--report-format` CLI flag
+3. `REPORT_FORMAT` config setting
+4. Default: "both" (CLI + HTML + XML reports)
+
 ## Integration with CI/CD
 
 The CLI reports are designed to work well in CI/CD environments. The output is formatted to be readable in CI/CD logs while still providing detailed information about test execution.
+
+### Performance Optimization
+
+For CI/CD pipelines where you only need test execution results without detailed reporting:
+
+```bash
+# Fast execution without reports
+factifai-agent run --skip-report "test instruction"
+
+# Generate only XML reports for test result integration
+factifai-agent run --report-format xml "test instruction"
+```
+
+### Environment-Specific Configuration
+
+Configure different report formats for different environments:
+
+```bash
+# Development - full reporting
+factifai-agent config --set REPORT_FORMAT=both
+
+# CI/CD - XML only for integration
+factifai-agent run --report-format xml "test instruction"
+
+# Performance testing - no reports
+factifai-agent run --skip-report "test instruction"
+```
 
 ## Coming Soon
 

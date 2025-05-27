@@ -1,0 +1,46 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - "packages/**"
+
+jobs:
+  determine_workflow:
+    runs-on: ubuntu-latest
+    outputs:
+      workflow_type: ${{ steps.set-workflow.outputs.workflow_type }}
+      version: ${{ steps.set-workflow.outputs.version }}
+      environment: ${{ steps.set-workflow.outputs.environment }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Determine workflow type and version
+        id: set-workflow
+        run: |
+          # Get version from package.json
+          VERSION=$(node -e "console.log(require('./package.json').version);")
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          
+          # For PRs to develop, always use development environment
+          echo "workflow_type=development" >> $GITHUB_OUTPUT
+          echo "environment=development" >> $GITHUB_OUTPUT
+          echo "Running PR validation workflow v${VERSION}"
+
+  init_dependencies:
+    needs: [determine_workflow]
+    uses: ./.github/workflows/init.yml
+    with:
+      version: ${{ needs.determine_workflow.outputs.version }}
+      workflow_type: ${{ needs.determine_workflow.outputs.workflow_type }}
+
+  build:
+    needs: [determine_workflow, init_dependencies]
+    uses: ./.github/workflows/build.yml
+    with:
+      version: ${{ needs.determine_workflow.outputs.version }}
+      environment: ${{ needs.determine_workflow.outputs.environment }}
+    secrets: inherit

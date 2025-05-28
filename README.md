@@ -93,6 +93,7 @@ Seamlessly integrate with your workflow! Generate polished HTML reports for team
 |------|---------|-------------|
 | **[Factifai Agent](./packages/factifai-agent/)** | [@presidio-dev/factifai-agent](https://www.npmjs.com/package/@presidio-dev/factifai-agent) | CLI tool for AI-driven browser automation testing using natural language instructions ([documentation](./packages/factifai-agent/README.md)) |
 | **[Playwright Core](./packages/playwright-core/)** | [@presidio-dev/playwright-core](https://www.npmjs.com/package/@presidio-dev/playwright-core) | LLM-optimized wrapper around Playwright providing coordinate-based browser control ([documentation](./packages/playwright-core/README.md)) |
+| **[Factif-AI](https://github.com/presidio-oss/factif-ai)** | Web Version | Browser-based version of Factifai that provides the same AI-powered testing capabilities through a web interface |
 
 #### Factifai Agent
 
@@ -105,6 +106,12 @@ A CLI-first automation tool that allows you to write browser tests in plain Engl
 A specialized wrapper around Playwright designed specifically for LLMs to control web browsers through a coordinate-based interaction system. Unlike traditional browser automation that relies on complex DOM selectors, this package enables AI models to work with visual coordinates, automatically identifying interactive elements and providing enhanced debugging capabilities. It offers features like session management, automatic element detection, visual element highlighting, and a simplified API that abstracts away Playwright complexity.
 
 📚 **[View Full Documentation](./packages/playwright-core/README.md)** for detailed API reference, integration options, and advanced usage examples.
+
+#### Factif-AI (Web)
+
+The web-based counterpart to Factifai Agent that runs entirely in the browser. It provides the same AI-powered testing capabilities but with a graphical interface, making it accessible without CLI installation. Perfect for teams looking for a quick testing option or those who prefer a visual interface for test creation and execution.
+
+📚 **[View on GitHub](https://github.com/presidio-oss/factif-ai)** for more information and to try it online.
 
 ### What's Next?
 

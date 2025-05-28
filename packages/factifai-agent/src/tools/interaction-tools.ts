@@ -9,7 +9,7 @@ import {
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { logger } from "../common/utils/logger";
-import {SecretManager} from "../common/utils/secret-manager";
+import { SecretManager } from "../common/utils/secret-manager";
 
 export class InteractionTools {
   static getTools() {
@@ -74,8 +74,10 @@ export class InteractionTools {
       func: async (input) => {
         logger.info(`Typing text: ${input.text}`);
         try {
-          console.log('--- checking', input.text, SecretManager.has(input.text))
-          const actualText = SecretManager.has(input.text) ? SecretManager.get(input.text) : input.text
+          // Check if the text is a secret key
+          const actualText = SecretManager.has(input.text)
+            ? SecretManager.get(input.text)
+            : input.text;
           const result = await type(input.sessionId, actualText as string);
           return JSON.stringify(result);
         } catch (error) {

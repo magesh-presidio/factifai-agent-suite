@@ -92,6 +92,19 @@ export const State = Annotation.Root({
     default: () => null,
     reducer: (_, v) => v,
   }),
+  // Report generation control
+  noReport: Annotation<boolean>({
+    default: () => false,
+    reducer: (_, v) => v,
+  }),
+  reportFormat: Annotation<string>({
+    default: () => "both",
+    reducer: (_, v) => v,
+  }),
+  skipAnalysis: Annotation<boolean>({
+    default: () => false,
+    reducer: (_, v) => v,
+  }),
 });
 
 export type GraphStateType = (typeof State)["State"];

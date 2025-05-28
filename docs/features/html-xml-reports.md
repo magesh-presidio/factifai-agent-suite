@@ -9,12 +9,78 @@ The Factifai Agent Suite generates structured reports in HTML and XML formats, m
 
 ## How It Works
 
-When a test completes, Factifai Agent automatically generates:
+When a test completes, Factifai Agent can generate structured reports in multiple formats:
 
 1. **HTML Reports** - Clean, modern reports with detailed test information
 2. **XML Reports** - Structured reports in JUnit-compatible XML format
 
-These reports are saved to disk and can be viewed in a browser or processed by CI/CD tools.
+By default, both formats are generated, but you can control which formats are created using command-line flags or configuration settings.
+
+## Report Format Control
+
+### Selective Report Generation
+
+You can control which report formats are generated to optimize for your specific use case:
+
+```bash
+# Generate only HTML reports
+factifai-agent run --report-format html "Navigate to example.com and verify the page loads"
+
+# Generate only XML reports (useful for CI/CD)
+factifai-agent run --report-format xml "Navigate to example.com and verify the page loads"
+
+# Generate both HTML and XML reports (default)
+factifai-agent run --report-format both "Navigate to example.com and verify the page loads"
+
+# Skip all file reports (CLI reports only)
+factifai-agent run --skip-report "Navigate to example.com and verify the page loads"
+```
+
+### Configuration Management
+
+Set default report format preferences that persist across runs:
+
+```bash
+# Set default to HTML only
+factifai-agent config --set REPORT_FORMAT=html
+
+# Set default to XML only
+factifai-agent config --set REPORT_FORMAT=xml
+
+# Set default to both formats
+factifai-agent config --set REPORT_FORMAT=both
+
+# View current configuration
+factifai-agent config --show
+```
+
+### Execution Configuration Display
+
+When you run a test, the execution configuration shows your report settings:
+
+```
+📋 Execution Configuration:
+- Provider: bedrock
+- Model: us.anthropic.claude-3-7-sonnet-20250219-v1:0
+- Report Format: html
+```
+
+Or when reports are disabled:
+
+```
+📋 Execution Configuration:
+- Provider: bedrock
+- Model: us.anthropic.claude-3-7-sonnet-20250219-v1:0
+- Report Generation: Disabled (--skip-report)
+```
+
+### Priority Order
+
+Report format settings are resolved in this priority order:
+1. `--skip-report` flag (highest priority - disables all file reports)
+2. `--report-format` CLI flag
+3. `REPORT_FORMAT` config setting
+4. Default: "both" (HTML + XML reports)
 
 ## Benefits of Structured Reports
 
@@ -149,29 +215,33 @@ For failed tests, the XML includes error details:
 
 ## Report File Structure
 
-When you run a test with Factifai Agent, it automatically creates a session directory with the following structure:
+When you run a test with Factifai Agent, it automatically creates a directory structure with the following organization:
 
 ```
-factifai-session-[timestamp]/
-├── factifai.log         # Detailed log file of the test execution
-├── screenshots/         # Directory containing all captured screenshots
-│   ├── screenshot-[timestamp]-1.jpg
-│   ├── screenshot-[timestamp]-2.jpg
-│   └── ...
-└── test report/         # Directory containing HTML and XML reports
-    ├── test-report-[timestamp].html
-    └── test-report-[timestamp].xml
+factifai/                                    # Parent directory for all test sessions
+├── factifai-session-[timestamp1]/           # Session directory for first test
+│   ├── factifai.log                         # Detailed log file of this test execution
+│   ├── screenshots/                         # Directory containing screenshots from this test
+│   │   ├── screenshot-[timestamp]-1.jpg
+│   │   ├── screenshot-[timestamp]-2.jpg
+│   │   └── ...
+│   └── reports/                             # Directory containing HTML and XML reports for this test
+│       ├── test-report-[timestamp].html
+│       └── test-report-[timestamp].xml
+├── factifai-session-[timestamp2]/           # Session directory for second test
+│   ├── ...
+└── ...
 ```
 
-The session directory name includes a timestamp (e.g., `factifai-session-1747126071386`), making each test run uniquely identifiable.
+Each session directory name includes a timestamp (e.g., `factifai-session-1747126071386`), making each test run uniquely identifiable. All sessions are organized within the parent `factifai` directory to keep your workspace clean.
 
 ### Screenshots Directory
 
 The screenshots directory contains all the images captured during test execution, with filenames that include timestamps to show when they were taken. These screenshots provide visual evidence of what happened during each step of the test.
 
-### Test Report Directory
+### Reports Directory
 
-The test report directory contains both HTML and XML versions of the test report:
+The reports directory contains both HTML and XML versions of the test report:
 
 - **HTML Report**: A user-friendly report that can be opened in any web browser
 - **XML Report**: A structured report in JUnit format for CI/CD integration
@@ -197,7 +267,7 @@ pipeline {
     // ...
     post {
         always {
-            junit 'factifai-session-*/test\ report/*.xml'
+            junit 'factifai/factifai-session-*/reports/*.xml'
         }
     }
 }
@@ -219,7 +289,7 @@ jobs:
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v2
         with:
-          report_paths: 'factifai-session-*/test report/*.xml'
+          report_paths: 'factifai/factifai-session-*/reports/*.xml'
 ```
 
 ### GitLab CI Integration
@@ -233,9 +303,9 @@ test:
     - factifai-agent run "..."
   artifacts:
     paths:
-      - factifai-session-*
+      - factifai
     reports:
-      junit: factifai-session-*/test\ report/*.xml
+      junit: factifai/factifai-session-*/reports/*.xml
 ```
 
 ## Report Management
@@ -246,10 +316,10 @@ Since each test run creates a new session directory with a timestamp, you can fi
 
 ```bash
 # List all session directories, sorted by date
-ls -lt | grep factifai-session
+ls -lt factifai | grep factifai-session
 
 # Open the most recent HTML report in your default browser
-open "$(ls -td factifai-session-* | head -1)/test report/"*.html
+open "factifai/$(ls -t factifai | grep factifai-session | head -1)/reports/"*.html
 ```
 
 ### Archiving Reports
@@ -258,7 +328,7 @@ To keep a history of test reports, you can archive older session directories:
 
 ```bash
 # Archive session directories older than 30 days
-find . -name "factifai-session-*" -type d -mtime +30 -exec tar -czf {}.tar.gz {} \; -exec rm -rf {} \;
+find factifai -name "factifai-session-*" -type d -mtime +30 -exec tar -czf {}.tar.gz {} \; -exec rm -rf {} \;
 ```
 
 ### Sharing Reports
@@ -267,7 +337,7 @@ To share HTML reports with team members:
 
 1. Zip the session directory:
    ```bash
-   zip -r factifai-session-1747126071386.zip factifai-session-1747126071386
+   zip -r factifai-session-1747126071386.zip factifai/factifai-session-1747126071386
    ```
 
 2. Share the zip file with team members or upload it to a shared location
@@ -290,7 +360,7 @@ If CI/CD tools have trouble parsing the XML report:
 
 ```bash
 # Validate the XML report
-xmllint --noout "factifai-session-*/test report/"*.xml
+xmllint --noout "factifai/factifai-session-*/reports/"*.xml
 ```
 
 ### Report Generation Failures

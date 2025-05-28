@@ -74,7 +74,13 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: factifai-session
-          path: factifai-session-*
+          path: factifai
+          
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v2
+        if: always()
+        with:
+          report_paths: 'factifai/factifai-session-*/reports/*.xml'
 
 > **Coming Soon:** Directory-based test running with the `--dir` option and custom report directories with `--report-dir` will be available in future releases.
 ```
@@ -173,8 +179,8 @@ pipeline {
     
     post {
         always {
-            junit 'factifai-session-*/test\\ report/*.xml'
-            archiveArtifacts artifacts: 'factifai-session-*/**/*', allowEmptyArchive: true
+            junit 'factifai/factifai-session-*/reports/*.xml'
+            archiveArtifacts artifacts: 'factifai/**/*', allowEmptyArchive: true
         }
     }
 
@@ -215,9 +221,9 @@ factifai-tests:
     - factifai-agent run --file tests/first-test.txt
   artifacts:
     paths:
-      - factifai-session-*
+      - factifai
     reports:
-      junit: factifai-session-*/test\ report/*.xml
+      junit: factifai/factifai-session-*/reports/*.xml
 
 # Coming Soon: Directory-based test running with the --dir option and custom report directories with --report-dir
 ```
@@ -267,14 +273,14 @@ steps:
   - task: PublishTestResults@2
     inputs:
       testResultsFormat: 'JUnit'
-      testResultsFiles: 'factifai-session-*/test report/*.xml'
+      testResultsFiles: 'factifai/factifai-session-*/reports/*.xml'
       mergeTestResults: true
     displayName: 'Publish test results'
     condition: always()
 
   - task: PublishBuildArtifacts@1
     inputs:
-      pathToPublish: 'factifai-session-*'
+      pathToPublish: 'factifai'
       artifactName: 'factifai-session'
     displayName: 'Publish test reports'
     condition: always()
@@ -289,6 +295,141 @@ Store your API keys as Azure DevOps Pipeline Variables:
 1. Navigate to your project > Pipelines > Edit your pipeline
 2. Click on "Variables" in the top right
 3. Add a variable with name `OPENAI_API_KEY` and mark it as "Secret"
+
+## Report Control in CI/CD
+
+### Performance Optimization with Report Control
+
+For CI/CD pipelines, you can optimize performance by controlling which reports are generated:
+
+```yaml
+# GitHub Actions example
+- name: Run smoke tests (no reports for speed)
+  run: |
+    factifai-agent run --skip-report --file tests/smoke-test.txt
+
+- name: Run full regression tests (XML only for CI integration)
+  run: |
+    factifai-agent run --report-format xml --file tests/regression-test.txt
+
+- name: Run nightly tests (full reporting)
+  if: github.event_name == 'schedule'
+  run: |
+    factifai-agent run --report-format both --file tests/full-test.txt
+```
+
+### Test Case Analysis Control
+
+For CI/CD pipelines where speed is critical, you can skip test case quality analysis:
+
+```yaml
+# GitHub Actions example with analysis control
+- name: Run smoke tests (maximum speed)
+  run: |
+    factifai-agent run --skip-analysis --skip-report --file tests/smoke-test.txt
+
+- name: Run regression tests (skip analysis, XML reports only)
+  run: |
+    factifai-agent run --skip-analysis --report-format xml --file tests/regression-test.txt
+
+- name: Run nightly tests (full analysis and reporting)
+  if: github.event_name == 'schedule'
+  run: |
+    factifai-agent run --report-format both --file tests/full-test.txt
+```
+
+### Environment-Specific Configuration
+
+Configure different report formats and analysis settings for different environments:
+
+```bash
+# Set CI-specific configuration for maximum performance
+factifai-agent config --set REPORT_FORMAT=xml
+factifai-agent config --set SKIP_ANALYSIS=true
+
+# Or use environment-specific flags
+factifai-agent run --skip-analysis --report-format xml "test instruction"  # CI/CD
+factifai-agent run --report-format html "test instruction"                 # Development
+factifai-agent run --skip-analysis --skip-report "test instruction"        # Performance testing
+```
+
+### Jenkins Pipeline with Analysis Control
+
+```groovy
+pipeline {
+    agent any
+    
+    stages {
+        stage('Smoke Tests') {
+            steps {
+                // Maximum speed - skip analysis and reports
+                sh 'factifai-agent run --skip-analysis --skip-report --file tests/smoke.txt'
+            }
+        }
+        
+        stage('Integration Tests') {
+            steps {
+                // Skip analysis, XML reports only for Jenkins integration
+                sh 'factifai-agent run --skip-analysis --report-format xml --file tests/integration.txt'
+            }
+        }
+        
+        stage('Nightly Tests') {
+            when {
+                anyOf {
+                    triggeredBy 'TimerTrigger'
+                    branch 'main'
+                }
+            }
+            steps {
+                // Full analysis and reporting for comprehensive nightly tests
+                sh 'factifai-agent run --report-format both --file tests/comprehensive.txt'
+            }
+        }
+    }
+    
+    post {
+        always {
+            // Only process XML reports since that's what we generated
+            junit 'factifai/factifai-session-*/reports/*.xml'
+        }
+    }
+}
+```
+
+### GitLab CI with Analysis Control
+
+```yaml
+stages:
+  - smoke
+  - test
+  - nightly
+
+smoke-tests:
+  stage: smoke
+  script:
+    - factifai-agent run --skip-analysis --skip-report --file tests/smoke.txt
+  only:
+    - merge_requests
+
+integration-tests:
+  stage: test
+  script:
+    - factifai-agent run --skip-analysis --report-format xml --file tests/integration.txt
+  artifacts:
+    reports:
+      junit: factifai/factifai-session-*/reports/*.xml
+
+nightly-tests:
+  stage: nightly
+  script:
+    - factifai-agent run --report-format both --file tests/full-suite.txt
+  artifacts:
+    paths:
+      - factifai
+  only:
+    - schedules
+```
 
 ## Best Practices for CI/CD Integration
 
@@ -305,6 +446,15 @@ Store your API keys as Azure DevOps Pipeline Variables:
 - Use test categorization (smoke, regression, etc.) to run appropriate tests at different stages
 - Consider using headless browsers for faster execution
 - Implement test retries for flaky tests
+- **Use `--skip-analysis`** for faster test parsing in CI/CD environments
+- **Use `--skip-report`** for smoke tests where detailed reports aren't needed
+
+### Analysis and Reporting Strategy
+
+- **Smoke Tests**: Use `--skip-analysis --skip-report` for maximum speed
+- **Integration Tests**: Use `--skip-analysis --report-format xml` for CI integration
+- **Nightly Tests**: Use full analysis and reporting for comprehensive feedback
+- **Development**: Enable full analysis for test quality feedback
 
 ### Reporting and Notifications
 

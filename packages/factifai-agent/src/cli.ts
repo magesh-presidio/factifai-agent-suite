@@ -155,6 +155,21 @@ const cli = yargs(hideBin(process.argv))
           type: "string",
           describe: "Path to a file containing test instructions",
         })
+        .option("skip-report", {
+          type: "boolean",
+          describe: "Skip all report generation",
+          default: false
+        })
+        .option("report-format", {
+          type: "string",
+          describe: "Report format to generate (html, xml, both)",
+          choices: ["html", "xml", "both"],
+        })
+        .option("skip-analysis", {
+          type: "boolean",
+          describe: "Skip test case quality analysis and suggestions",
+          default: false
+        })
         .example(
           '$0 run "Check if google.com loads"',
           "Run with inline instruction"
@@ -243,12 +258,43 @@ const cli = yargs(hideBin(process.argv))
           }`
         );
       }
+      
+      // Show report configuration
+      const reportFormat = argv['report-format'] as string || 
+                         ConfigManager.get('REPORT_FORMAT') || 
+                         'both';
+      const skipReport = argv['skip-report'] as boolean;
+      const skipAnalysis = argv['skip-analysis'] as boolean || 
+                          ConfigManager.get('SKIP_ANALYSIS') === 'true';
+      
+      if (skipReport) {
+        console.log(`- Report Generation: Disabled (--skip-report)`);
+      } else {
+        console.log(`- Report Format: ${reportFormat}`);
+      }
+      
+      if (skipAnalysis) {
+        console.log(`- Test Analysis: Disabled (--skip-analysis)`);
+      } else {
+        console.log(`- Test Analysis: Enabled`);
+      }
+      
       console.log(""); // Empty line for better readability
 
       try {
+        // Get report format from CLI flag or config
+        const reportFormat = argv['report-format'] as string || 
+                           ConfigManager.get('REPORT_FORMAT') || 
+                           'both';
+        
         const result = await executeBrowserTask(
           instruction,
-          argv.session as string
+          argv.session as string,
+          { 
+            noReport: argv['skip-report'] as boolean,
+            reportFormat: reportFormat,
+            skipAnalysis: skipAnalysis
+          }
         );
 
         if (result.success) {
@@ -363,6 +409,23 @@ const cli = yargs(hideBin(process.argv))
           : "Not set" +
             (process.env.MODEL_PROVIDER === "bedrock" ? " - Required!" : "");
         console.log(`- AWS_SECRET_ACCESS_KEY: ${secretKeyStatus}`);
+
+        // Show report configuration
+        console.log("\nReport Configuration:");
+        console.log(
+          `- REPORT_FORMAT: ${
+            process.env.REPORT_FORMAT || 
+            config.REPORT_FORMAT || 
+            "both (default)"
+          }`
+        );
+        console.log(
+          `- SKIP_ANALYSIS: ${
+            process.env.SKIP_ANALYSIS || 
+            config.SKIP_ANALYSIS || 
+            "false (default)"
+          }`
+        );
 
         console.log(`\nConfiguration location: ${ConfigManager.configPath}`);
       } else if (argv.set) {
@@ -551,7 +614,7 @@ const cli = yargs(hideBin(process.argv))
   )
   .command(
     "secret",
-    "set secrets for the agent",
+    "Manage sensitive credentials needed for testing within agent",
     (yargs) => {
       return yargs.option("set", {
         alias: "s",
@@ -561,15 +624,51 @@ const cli = yargs(hideBin(process.argv))
         alias: 'l',
         type: 'string',
         describe: "List all the secrets"
+      }).option("delete", {
+        alias: 'd',
+        type: 'string',
+        describe: "Delete a secret by key"
       });
     },
     (argv) => {
       if (argv.set) {
-        const [key, value] = argv.set.split('=')
-        SecretManager.set(key,  value)
-        console.log('Secret Saved')
+        const [key, value] = argv.set.split('=');
+        if (!key || !value) {
+          console.error("Invalid format. Use --set KEY=VALUE");
+          return;
+        }
+        const success = SecretManager.set(key, value);
+        if (success) {
+          console.log(`✅ Secret ${key} has been saved successfully`);
+        } else {
+          console.error(`❌ Failed to save secret ${key}`);
+        }
+      } else if (argv.delete) {
+        const key = argv.delete;
+        const success = SecretManager.delete(key);
+        if (success) {
+          console.log(`✅ Secret ${key} has been deleted successfully`);
+        } else {
+          console.error(`❌ Secret ${key} not found or could not be deleted`);
+        }
       } else if (argv.hasOwnProperty('list')) {
-        console.log(SecretManager.getAll())
+        const secrets = SecretManager.getAll();
+        const secretCount = Object.keys(secrets).length;
+        
+        if (secretCount === 0) {
+          console.log("No secrets found");
+        } else {
+          console.log(`Found ${secretCount} secret(s):`);
+          for (const key of Object.keys(secrets)) {
+            console.log(`- ${key}: ********`);
+          }
+          console.log(`\nSecrets location: ${SecretManager.secretsPath}`);
+        }
+      } else {
+        console.log("Secret management options:");
+        console.log("- Use --set key=value to set a secret");
+        console.log("- Use --list to display all secret keys");
+        console.log("- Use --delete key to remove a secret");
       }
     }
   )

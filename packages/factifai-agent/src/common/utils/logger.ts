@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import { getSessionPath } from "./path-utils";
 import chalk from "chalk";
 import ora from "ora";
 import figures from "figures";
@@ -80,8 +81,9 @@ export const logger = {
     // Update the sessionId in the configuration
     this.config.sessionId = sessionId;
     
-    // Update the log file path to use the session directory structure
-    this.config.logFilePath = path.join(process.cwd(), sessionId, "factifai.log");
+    // Update the log file path to use the parent/session directory structure
+    const sessionDir = getSessionPath(sessionId);
+    this.config.logFilePath = path.join(sessionDir, "factifai.log");
     
     // Create the new log directory structure
     this.ensureLogDirectory();

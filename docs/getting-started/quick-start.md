@@ -53,6 +53,30 @@ When you run a test, you'll see real-time progress in your terminal:
 3. **Test Results**: A summary of the test execution is displayed in the terminal
 4. **Report Generation**: HTML and XML reports are generated for documentation and CI/CD integration
 
+## Managing Secrets for Tests
+
+For tests that require sensitive information like passwords or API keys, you can use the secret management feature:
+
+```bash
+# Store a test user password
+factifai-agent secret --set TEST_PASSWORD=mysecretpassword
+
+# Store an API key
+factifai-agent secret --set API_KEY=abcdef123456
+
+# List all stored secrets (values are masked)
+factifai-agent secret --list
+```
+
+You can then reference these secrets in your test instructions:
+
+```bash
+# Use stored credentials in a test
+factifai-agent run "Navigate to example.com/login, enter 'testuser' as username and use the password stored in TEST_PASSWORD, then click login"
+```
+
+This approach keeps sensitive information out of your test scripts and command history.
+
 ## Example Test Scenarios
 
 Here are some more examples of tests you can run:

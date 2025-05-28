@@ -61,6 +61,35 @@ factifai-agent config --set AWS_SECRET_ACCESS_KEY=your-secret-access-key
 factifai-agent config --set AWS_DEFAULT_REGION=us-west-2
 ```
 
+## Configuring Secrets
+
+In addition to API keys, you may want to store other sensitive information like test account credentials or API tokens that will be used during testing. Factifai Agent provides a dedicated secret management system for this purpose:
+
+```bash
+# Store a test account username
+factifai-agent secret --set TEST_USERNAME=test_user@example.com
+
+# Store a test account password
+factifai-agent secret --set TEST_PASSWORD=secure_password123
+
+# Store an API token for testing
+factifai-agent secret --set TEST_API_TOKEN=your-api-token-here
+```
+
+These secrets are stored separately from configuration in `~/.factifai/secret.json` and are automatically loaded as environment variables during test execution.
+
+To view all stored secrets (with values masked):
+
+```bash
+factifai-agent secret --list
+```
+
+To delete a secret when it's no longer needed:
+
+```bash
+factifai-agent secret --delete TEST_PASSWORD
+```
+
 ## Development Setup
 
 If you want to contribute to the Factifai Agent Suite or run it from source, follow these steps:

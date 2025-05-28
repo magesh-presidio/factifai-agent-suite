@@ -74,13 +74,13 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: factifai-session
-          path: factifai-session-*
+          path: factifai
           
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v2
         if: always()
         with:
-          report_paths: 'factifai-session-*/test report/*.xml'
+          report_paths: 'factifai/factifai-session-*/reports/*.xml'
 
 > **Coming Soon:** Directory-based test running with the `--dir` option and custom report directories with `--report-dir` will be available in future releases.
 ```
@@ -179,8 +179,8 @@ pipeline {
     
     post {
         always {
-            junit 'factifai-session-*/test\\ report/*.xml'
-            archiveArtifacts artifacts: 'factifai-session-*/**/*', allowEmptyArchive: true
+            junit 'factifai/factifai-session-*/reports/*.xml'
+            archiveArtifacts artifacts: 'factifai/**/*', allowEmptyArchive: true
         }
     }
 
@@ -221,9 +221,9 @@ factifai-tests:
     - factifai-agent run --file tests/first-test.txt
   artifacts:
     paths:
-      - factifai-session-*
+      - factifai
     reports:
-      junit: factifai-session-*/test\ report/*.xml
+      junit: factifai/factifai-session-*/reports/*.xml
 
 # Coming Soon: Directory-based test running with the --dir option and custom report directories with --report-dir
 ```
@@ -273,14 +273,14 @@ steps:
   - task: PublishTestResults@2
     inputs:
       testResultsFormat: 'JUnit'
-      testResultsFiles: 'factifai-session-*/test report/*.xml'
+      testResultsFiles: 'factifai/factifai-session-*/reports/*.xml'
       mergeTestResults: true
     displayName: 'Publish test results'
     condition: always()
 
   - task: PublishBuildArtifacts@1
     inputs:
-      pathToPublish: 'factifai-session-*'
+      pathToPublish: 'factifai'
       artifactName: 'factifai-session'
     displayName: 'Publish test reports'
     condition: always()
@@ -391,7 +391,7 @@ pipeline {
     post {
         always {
             // Only process XML reports since that's what we generated
-            junit 'factifai-session-*/test\\ report/*.xml'
+            junit 'factifai/factifai-session-*/reports/*.xml'
         }
     }
 }
@@ -418,7 +418,7 @@ integration-tests:
     - factifai-agent run --skip-analysis --report-format xml --file tests/integration.txt
   artifacts:
     reports:
-      junit: factifai-session-*/test\ report/*.xml
+      junit: factifai/factifai-session-*/reports/*.xml
 
 nightly-tests:
   stage: nightly
@@ -426,7 +426,7 @@ nightly-tests:
     - factifai-agent run --report-format both --file tests/full-suite.txt
   artifacts:
     paths:
-      - factifai-session-*
+      - factifai
   only:
     - schedules
 ```

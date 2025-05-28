@@ -3,6 +3,7 @@ import * as path from "path";
 import { TEST_STATUS } from "../schemas";
 import { formatDuration } from "../../../../common/utils/time-utils";
 import { logger } from "../../../../common/utils/logger";
+import { getSessionSubdirPath, REPORTS_DIR_NAME } from "../../../../common/utils/path-utils";
 import { htmlStyles } from "../templates/html-styles";
 
 /**
@@ -241,17 +242,8 @@ function generateCriticalIssuesHtml(criticalIssues: string[] | null): string {
  */
 export function writeHtmlReport(html: string, sessionId: string): string {
   try {
-    // Create sessionId directory if it doesn't exist
-    const sessionDir = path.join(process.cwd(), sessionId);
-    if (!fs.existsSync(sessionDir)) {
-      fs.mkdirSync(sessionDir, { recursive: true });
-    }
-    
-    // Create test report directory within sessionId directory
-    const reportDir = path.join(sessionDir, "test report");
-    if (!fs.existsSync(reportDir)) {
-      fs.mkdirSync(reportDir, { recursive: true });
-    }
+    // Create reports directory within factifai/sessionId directory
+    const reportDir = getSessionSubdirPath(sessionId, REPORTS_DIR_NAME);
 
     // Generate filename with timestamp
     const timestamp = new Date()

@@ -7,6 +7,7 @@ import {
 import chalk from "chalk";
 import { GraphStateType } from "../../graph/graph";
 import { logger } from "../../../common/utils/logger";
+import { getSessionSubdirPath, SCREENSHOTS_DIR_NAME } from "../../../common/utils/path-utils";
 import { getModel } from "../../models/models";
 import { ALL_TOOLS } from "../../../tools";
 import { removeImageUrlsFromMessage } from "../../../common/utils/llm-utils";
@@ -31,14 +32,8 @@ const captureCurrentState = async (sessionId: string) => {
       const fs = require("fs");
       const path = require("path");
 
-      // Create directory path with sessionId/screenshots structure
-      const sessionDir = path.join(process.cwd(), sessionId);
-      const screenshotsDir = path.join(sessionDir, "screenshots");
-
-      // Ensure screenshots directory exists
-      if (!fs.existsSync(screenshotsDir)) {
-        fs.mkdirSync(screenshotsDir, { recursive: true });
-      }
+      // Create directory path with factifai/sessionId/screenshots structure
+      const screenshotsDir = getSessionSubdirPath(sessionId, SCREENSHOTS_DIR_NAME);
 
       // Generate a timestamp for the filename
       const timestamp = new Date()

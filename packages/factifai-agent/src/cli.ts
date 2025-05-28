@@ -4,10 +4,14 @@ import { hideBin } from "yargs/helpers";
 import { executeBrowserTask, displayFactifaiLogo } from "./index";
 import dotenv from "dotenv";
 import { ConfigManager } from "./common/utils/config-manager";
+import {SecretManager} from "./common/utils/secret-manager";
 
 // Initialize configuration
 ConfigManager.initialize();
 ConfigManager.applyToEnvironment();
+
+SecretManager.initialize();
+SecretManager.applyToEnvironment();
 
 // Load environment variables from .env file (lower priority than config)
 dotenv.config();
@@ -543,6 +547,30 @@ const cli = yargs(hideBin(process.argv))
       console.log("\nTo change the model provider:");
       console.log('  factifai-agent --model openai run "your instruction"');
       console.log("  factifai-agent config --model bedrock");
+    }
+  )
+  .command(
+    "secret",
+    "set secrets for the agent",
+    (yargs) => {
+      return yargs.option("set", {
+        alias: "s",
+        type: "string",
+        describe: "Set a secret value (key=value)",
+      }).option("list", {
+        alias: 'l',
+        type: 'string',
+        describe: "List all the secrets"
+      });
+    },
+    (argv) => {
+      if (argv.set) {
+        const [key, value] = argv.set.split('=')
+        SecretManager.set(key,  value)
+        console.log('Secret Saved')
+      } else if (argv.hasOwnProperty('list')) {
+        console.log(SecretManager.getAll())
+      }
     }
   )
   .demandCommand(1, "You must provide a valid command")

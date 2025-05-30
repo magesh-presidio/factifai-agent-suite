@@ -1,5 +1,11 @@
 # @presidio-dev/factifai-agent
 
+## 1.1.2
+
+### Patch Changes
+
+- Fixed cli breaking bug by downgrading major yargs update
+
 ## 1.1.1
 
 ### Patch Changes

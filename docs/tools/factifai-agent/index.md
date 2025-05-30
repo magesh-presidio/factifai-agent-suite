@@ -32,6 +32,9 @@ Built on LangGraph and Playwright, Factifai Agent enables testers and developers
 # Install globally
 npm install -g @presidio-dev/factifai-agent
 
+# Install Playwright globally
+npm install -g playwright
+
 # Install Playwright and dependencies
 npx playwright install --with-deps
 ```

@@ -24,13 +24,17 @@ pnpm add -g @presidio-dev/factifai-agent
 
 ## Step 2: Install Playwright Dependencies
 
-Factifai Agent uses Playwright for browser automation. Install the necessary browser dependencies:
+Factifai Agent uses Playwright for browser automation. First install Playwright globally, then install the necessary browser dependencies:
 
 ```bash
+# Install Playwright globally
+npm install -g playwright
+
+# Install browser dependencies
 npx playwright install --with-deps
 ```
 
-This command installs browser binaries for Chromium, Firefox, and WebKit, along with any necessary system dependencies.
+This process installs browser binaries for Chromium, Firefox, and WebKit, along with any necessary system dependencies.
 
 ## Step 3: Configure API Credentials
 

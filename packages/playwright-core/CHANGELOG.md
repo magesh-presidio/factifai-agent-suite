@@ -1,12 +1,6 @@
-# @presidio-dev/factifai-agent
+# @presidio-dev/playwright-core
 
-## 1.1.2
-
-### Patch Changes
-
-- Fixed cli breaking bug by downgrading major yargs update
-
-## 1.1.1
+## 1.0.5
 
 ### Patch Changes
 
@@ -28,27 +22,3 @@
   - **Improved CI/CD examples**: Updated CI/CD integration examples to reflect the correct installation sequence
 
   These changes ensure a smoother installation experience and resolve the issues with CLI command availability when installing packages from npm.
-
-- Updated dependencies [b687def]
-  - @presidio-dev/playwright-core@1.0.6
-
-## 1.1.0
-
-### Minor Changes
-
-- 9c98a27: ## Added Features
-
-  - Added `--skip-analysis` flag to bypass test case quality analysis for improved performance
-  - Reorganized output folder structure into a centralized `factifai/` directory
-  - Renamed "test report/" directory to "reports/" for cleaner organization
-  - Enhanced configuration options for controlling test output and reporting
-
-  ## Performance Improvements
-
-  - Optimized test execution flow with optional analysis step
-  - Added configuration system for report and analysis settings
-
-  ## Refactoring
-
-  - Refactored report generation code for better organization
-  - Enhanced path handling with centralized directory structure

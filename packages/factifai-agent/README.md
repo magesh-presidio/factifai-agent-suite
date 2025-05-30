@@ -56,6 +56,9 @@ Built on LangGraph and Playwright, it enables testers and developers to write te
 # Install globally
 npm install -g @presidio-dev/factifai-agent
 
+# Install Playwright globally
+npm install -g playwright
+
 # Install Playwright and dependencies
 npx playwright install --with-deps
 ```
@@ -295,6 +298,7 @@ factifai-agent run "Your test instructions"
        - uses: actions/checkout@v3
        - run: |
            npm install -g @presidio-dev/factifai-agent
+           npm install -g playwright
            npx playwright install --with-deps
            factifai-agent config --set OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
            factifai-agent run --file tests/e2e-tests.txt --retries 2

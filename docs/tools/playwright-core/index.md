@@ -156,14 +156,19 @@ This separation of concerns allows Factifai Agent to focus on natural language p
 # Install the package
 npm install @presidio-dev/playwright-core
 
-# IMPORTANT: Install browser dependencies (required)
+# IMPORTANT: Install Playwright globally first
+npm install -g playwright
+
+# Then install browser dependencies (required)
 npx playwright install --with-deps
 ```
 
-The `npx playwright install --with-deps` command is crucial as it installs:
-- Browser binaries (Chromium, Firefox, WebKit)
-- Required system dependencies for proper browser operation
-- Font packages and media codecs needed for complete rendering
+The installation process is crucial:
+1. First, install Playwright globally to ensure the CLI tools are properly recognized
+2. Then run `npx playwright install --with-deps` which installs:
+   - Browser binaries (Chromium, Firefox, WebKit)
+   - Required system dependencies for proper browser operation
+   - Font packages and media codecs needed for complete rendering
 
 ## Next Steps
 

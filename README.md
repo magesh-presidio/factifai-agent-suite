@@ -135,6 +135,9 @@ The web-based counterpart to Factifai Agent that runs entirely in the browser. I
 # Install factifai-agent globally
 npm install -g @presidio-dev/factifai-agent
 
+# Install Playwright globally (required)
+npm install -g playwright
+
 # Install Playwright dependencies (required)
 npx playwright install --with-deps
 
@@ -178,6 +181,9 @@ pnpm i
 
 # Build all packages
 pnpm -r build
+
+# Install Playwright globally (required)
+npm install -g playwright
 
 # Install Playwright dependencies (required)
 npx playwright install --with-deps

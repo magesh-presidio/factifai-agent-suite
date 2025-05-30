@@ -59,6 +59,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm install -g @presidio-dev/factifai-agent
+          npm install -g playwright
           npx playwright install --with-deps
           
       - name: Configure Factifai Agent
@@ -165,6 +166,7 @@ pipeline {
         stage('Setup') {
             steps {
                 sh 'npm install -g @presidio-dev/factifai-agent'
+                sh 'npm install -g playwright'
                 sh 'npx playwright install --with-deps'
                 sh 'factifai-agent config --set OPENAI_API_KEY=${OPENAI_API_KEY}'
             }
@@ -212,6 +214,7 @@ stages:
 
 before_script:
   - npm install -g @presidio-dev/factifai-agent
+  - npm install -g playwright
   - npx playwright install --with-deps
   - factifai-agent config --set OPENAI_API_KEY=$OPENAI_API_KEY
 
@@ -259,6 +262,7 @@ steps:
 
   - script: |
       npm install -g @presidio-dev/factifai-agent
+      npm install -g playwright
       npx playwright install --with-deps
     displayName: 'Install dependencies'
 

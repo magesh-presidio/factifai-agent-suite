@@ -1,6 +1,6 @@
 <div align="center">
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License" />
-  <img src="https://img.shields.io/badge/pnpm-10.10.0-orange?logo=pnpm" alt="pnpm" />
+  <img src="https://img.shields.io/badge/pnpm-10.11.0-orange?logo=pnpm" alt="pnpm" />
   <img src="https://img.shields.io/github/issues/presidio-oss/factifai-agent-suite" alt="Issues" />
   <img src="https://img.shields.io/github/stars/presidio-oss/factifai-agent-suite" alt="Stars" />
   <img src="https://img.shields.io/github/forks/presidio-oss/factifai-agent-suite" alt="Forks" />
@@ -126,7 +126,7 @@ The web-based counterpart to Factifai Agent that runs entirely in the browser. I
 ### Prerequisites
 
 - Node.js 18+
-- pnpm 10.10.0+
+- pnpm 10.11.0+
 - OpenAI API key or AWS Bedrock credentials
 
 ### Installation

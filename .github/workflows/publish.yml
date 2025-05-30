@@ -33,7 +33,7 @@ jobs:
       - name: Setup PNPM
         uses: pnpm/action-setup@v2
         with:
-          version: 10.10.0
+          version: 10.11.0
           run_install: false
 
       - name: Restore Frontend Cache
@@ -44,6 +44,12 @@ jobs:
             .pnpm-store
             packages/*/node_modules
           key: ${{ runner.os }}-pnpm-${{ github.ref_name }}-${{ hashFiles('./pnpm-lock.yaml') }}
+
+      - name: Set executable permissions for CLI files
+        run: |
+          echo "Setting executable permissions for CLI files..."
+          chmod +x packages/factifai-agent/dist/cli.js
+          ls -la packages/factifai-agent/dist/cli.js
 
       - name: Publish Packages
         run: |

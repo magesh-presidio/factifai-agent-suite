@@ -7,7 +7,7 @@ This guide will help you run your first tests with the Factifai Agent Suite. We'
 Before you begin, make sure you have:
 
 1. [Installed the Factifai Agent Suite](/getting-started/installation)
-2. [Configured your API keys](/getting-started/installation#configuring-api-keys) (OpenAI or AWS Bedrock)
+2. [Configured your API keys](/getting-started/installation#configuring-api-keys) (OpenAI or Azure OpenAI or AWS Bedrock)
 3. [Installed Playwright dependencies](/getting-started/installation#installing-playwright-dependencies)
 
 ## Running Your First Test with OpenAI
@@ -26,6 +26,16 @@ This command will:
 4. Submit the search
 5. Wait for the results to load
 6. Generate a report of the test execution
+
+## Running Your First Test with Azure OpenAI
+
+If you've configured your Azure OpenAI API key, instance name, deployment name and API version, you can run a simple test like this:
+
+
+```bash
+# Run a test using natural language
+factifai-agent --model azure-openai run "Navigate to duckduckgo.com and search for 'testing automation'"
+```
 
 ## Running Your First Test with AWS Bedrock
 

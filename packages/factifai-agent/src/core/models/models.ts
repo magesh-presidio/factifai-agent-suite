@@ -1,14 +1,14 @@
-import { ChatOpenAI } from "@langchain/openai";
+import { ChatOpenAI, AzureChatOpenAI } from "@langchain/openai";
 import { BedrockChat } from "@langchain/community/chat_models/bedrock";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 
 // Define model provider types
-export type ModelProvider = "openai" | "bedrock";
+export type ModelProvider = "openai" | "bedrock" | "azure-openai";
 
 // Get the model provider from environment
 export const getModelProvider = (): ModelProvider | undefined => {
   const provider = process.env.MODEL_PROVIDER?.toLowerCase();
-  return provider === "openai" || provider === "bedrock"
+  return provider === "openai" || provider === "bedrock" || provider === "azure-openai"
     ? (provider as ModelProvider)
     : undefined;
 };
@@ -25,6 +25,33 @@ export const OpenAIModel = (streaming?: boolean, maxTokens = 12000) => {
     streaming: streaming,
     maxTokens,
     supportsStrictToolCalling: true,
+  });
+};
+
+export const AzureOpenAIModel = (streaming?: boolean, maxTokens = 12000) => {
+  if (process.env.MODEL_PROVIDER === "azure-openai") {
+    const requiredEnvVars = [
+      "AZURE_OPENAI_API_KEY",
+      "AZURE_OPENAI_API_INSTANCE_NAME",
+      "AZURE_OPENAI_API_DEPLOYMENT_NAME",
+      "AZURE_OPENAI_API_VERSION",
+    ];
+    
+    const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+    
+    if (missingEnvVars.length > 0) {
+      throw new Error(`The following Azure OpenAI environment variables are required: ${missingEnvVars.join(", ")}. Please set these environment variables.`);
+    }
+  }
+
+  return new AzureChatOpenAI({
+    modelName: process.env.AZURE_OPENAI_MODEL || "gpt-4.1",
+    azureOpenAIApiKey: process.env.AZURE_OPENAI_API_KEY,
+    azureOpenAIApiInstanceName: process.env.AZURE_OPENAI_API_INSTANCE_NAME,
+    azureOpenAIApiDeploymentName: process.env.AZURE_OPENAI_API_DEPLOYMENT_NAME,
+    azureOpenAIApiVersion: process.env.AZURE_OPENAI_API_VERSION,
+    streaming: streaming,
+    maxTokens,
   });
 };
 
@@ -88,6 +115,8 @@ export const getModel = (
       return OpenAIModel(streaming, maxTokens);
     case "bedrock":
       return BedrockModel(streaming, maxTokens);
+    case "azure-openai":
+      return AzureOpenAIModel(streaming, maxTokens);
     default:
       throw new Error(`Unsupported model provider: ${modelProvider}`);
   }

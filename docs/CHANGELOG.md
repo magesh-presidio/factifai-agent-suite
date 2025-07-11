@@ -1,5 +1,11 @@
 # docs
 
+## 1.1.0
+
+### Minor Changes
+
+- 32d427c: add support for Azure OpenAI in Factifai Agent
+
 ## 1.0.1
 
 ### Patch Changes

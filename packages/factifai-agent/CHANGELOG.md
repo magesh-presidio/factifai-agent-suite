@@ -1,5 +1,11 @@
 # @presidio-dev/factifai-agent
 
+## 1.2.0
+
+### Minor Changes
+
+- 32d427c: add support for Azure OpenAI in Factifai Agent
+
 ## 1.1.2
 
 ### Patch Changes

@@ -62,7 +62,7 @@ Run multiple tests simultaneously to dramatically reduce testing time, especiall
 
 ### Configurable LLM Providers
 
-Choose between different LLM providers (OpenAI, AWS Bedrock) based on your needs and preferences.
+Choose between different LLM providers (OpenAI, Azure OpenAI, AWS Bedrock) based on your needs and preferences.
 
 ### Coordinate-Based Browser Control
 

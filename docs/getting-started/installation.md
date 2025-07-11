@@ -8,7 +8,7 @@ Before installing the Factifai Agent Suite, ensure you have the following prereq
 
 - **Node.js 18+** - The runtime environment for JavaScript
 - **pnpm 10.11.0+** - The package manager used by Factifai Agent Suite
-- **OpenAI API key** or **AWS Bedrock credentials** - Required for the AI capabilities
+- **OpenAI API key** or **Azure OpenAI credentials** or **AWS Bedrock credentials** - Required for the AI capabilities
 
 ## Installing Factifai Agent
 
@@ -51,6 +51,19 @@ To use Factifai Agent with OpenAI models, you need to configure your API key:
 ```bash
 # Configure OpenAI API key (only needed once)
 factifai-agent config --set OPENAI_API_KEY=your-api-key-here
+```
+
+### Azure OpenAI
+
+To use Factifai Agent with Azure OpenAI models, you need to configure your API key, instance name, deployment name and API version:
+
+
+```bash
+# Configure Azure OpenAI API key, instance name, deployment name and API version (only needed once)
+factifai-agent config --set AZURE_OPENAI_API_KEY=your-api-key-here
+factifai-agent config --set AZURE_OPENAI_API_INSTANCE_NAME=your-instance-name
+factifai-agent config --set AZURE_OPENAI_API_DEPLOYMENT_NAME=your-deployment-name
+factifai-agent config --set AZURE_OPENAI_API_VERSION=your-api-version
 ```
 
 ### AWS Bedrock

@@ -51,6 +51,20 @@ factifai-agent config --set OPENAI_API_KEY=your-api-key-here
 factifai-agent --model openai run "Navigate to duckduckgo.com and search 'eagles'"
 ```
 
+### With Azure OpenAI
+
+```bash
+# Set your API key, instance name, deployment name and API version (only needed once, persists across sessions)
+factifai-agent config --set AZURE_OPENAI_API_KEY=your-api-key-here
+factifai-agent config --set AZURE_OPENAI_API_INSTANCE_NAME=your-instance-name
+factifai-agent config --set AZURE_OPENAI_API_DEPLOYMENT_NAME=your-deployment-name
+factifai-agent config --set AZURE_OPENAI_API_VERSION=your-api-version
+
+# Run your test
+factifai-agent --model azure-openai run "Navigate to duckduckgo.com and search 'eagles'"
+```
+
+
 ### With AWS Bedrock
 
 ```bash

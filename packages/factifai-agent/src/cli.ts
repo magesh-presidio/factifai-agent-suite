@@ -32,7 +32,24 @@ function validateEnvironmentVariables(): { valid: boolean; message?: string } {
           "OPENAI_API_KEY is required when using the OpenAI model. Please set this environment variable.",
       };
     }
-  } else if (modelProvider === "bedrock") {
+  } else if (modelProvider === "azure-openai") { 
+    const requiredEnvVars = [
+      "AZURE_OPENAI_API_KEY",
+      "AZURE_OPENAI_API_INSTANCE_NAME",
+      "AZURE_OPENAI_API_DEPLOYMENT_NAME",
+      "AZURE_OPENAI_API_VERSION",
+    ];
+    
+    const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+    
+    if (missingEnvVars.length > 0) {
+      return {
+        valid: false,
+        message: `The following Azure OpenAI environment variables are required: ${missingEnvVars.join(", ")}. Please set these environment variables.`,
+      };
+    }
+  }
+  else if (modelProvider === "bedrock") {
     // Check AWS credentials
     const missingCredentials = [];
 
@@ -126,7 +143,7 @@ const cli = yargs(hideBin(process.argv))
     alias: "m",
     type: "string",
     describe: "Model provider to use (openai or bedrock)",
-    choices: ["openai", "bedrock"],
+    choices: ["openai", "bedrock", "azure-openai"],
   })
   .example('$0 run "Navigate to duckduckgo.com"', "Run with direct instruction")
   .example("$0 run --file ./tests/my-test.txt", "Run from a file")
@@ -250,7 +267,10 @@ const cli = yargs(hideBin(process.argv))
       console.log(`- Provider: ${process.env.MODEL_PROVIDER}`);
       if (process.env.MODEL_PROVIDER === "openai") {
         console.log(`- Model: ${process.env.OPENAI_MODEL || "gpt-4.1"}`);
-      } else if (process.env.MODEL_PROVIDER === "bedrock") {
+      } else if (process.env.MODEL_PROVIDER === "azure-openai") {
+        console.log(`- Model: ${process.env.AZURE_OPENAI_MODEL || "gpt-4.1"}`);
+      }
+      else if (process.env.MODEL_PROVIDER === "bedrock") {
         console.log(
           `- Model: ${
             process.env.BEDROCK_MODEL ||
@@ -344,7 +364,7 @@ const cli = yargs(hideBin(process.argv))
         .option("model", {
           type: "string",
           describe: "Set the default model provider",
-          choices: ["openai", "bedrock"],
+          choices: ["openai", "bedrock", "azure-openai"],
         });
     },
     (argv) => {
@@ -375,6 +395,46 @@ const cli = yargs(hideBin(process.argv))
           : "Not set" +
             (process.env.MODEL_PROVIDER === "openai" ? " - Required!" : "");
         console.log(`- OPENAI_API_KEY: ${openaiKeyStatus}`);
+
+        // Show Azure OpenAI configuration
+        console.log("\nAzure OpenAI Configuration:");
+        console.log(
+          `- AZURE_OPENAI_MODEL: ${
+            process.env.AZURE_OPENAI_MODEL || config.AZURE_OPENAI_MODEL || "gpt-4.1"
+          }`
+        );
+
+        const azureOpenaiKeyStatus = process.env.AZURE_OPENAI_API_KEY
+          ? "******** (Set in environment)"
+          : config.AZURE_OPENAI_API_KEY
+          ? "******** (Set in config)"
+          : "Not set" +
+            (process.env.MODEL_PROVIDER === "azure-openai" ? " - Required!" : "");
+        console.log(`- AZURE_OPENAI_API_KEY: ${azureOpenaiKeyStatus}`);
+
+        const azureOpenaiInstanceNameStatus = process.env.AZURE_OPENAI_API_INSTANCE_NAME
+          ? "******** (Set in environment)"
+          : config.AZURE_OPENAI_API_INSTANCE_NAME
+          ? "******** (Set in config)"
+          : "Not set" +
+            (process.env.MODEL_PROVIDER === "azure-openai" ? " - Required!" : "");
+        console.log(`- AZURE_OPENAI_API_INSTANCE_NAME: ${azureOpenaiInstanceNameStatus}`);
+
+        const azureOpenaiDeploymentNameStatus = process.env.AZURE_OPENAI_API_DEPLOYMENT_NAME
+          ? "******** (Set in environment)"
+          : config.AZURE_OPENAI_API_DEPLOYMENT_NAME
+          ? "******** (Set in config)"
+          : "Not set" +
+            (process.env.MODEL_PROVIDER === "azure-openai" ? " - Required!" : "");
+        console.log(`- AZURE_OPENAI_API_DEPLOYMENT_NAME: ${azureOpenaiDeploymentNameStatus}`);
+
+        const azureOpenaiApiVersionStatus = process.env.AZURE_OPENAI_API_VERSION
+          ? "******** (Set in environment)"
+          : config.AZURE_OPENAI_API_VERSION
+          ? "******** (Set in config)"
+          : "Not set" +
+            (process.env.MODEL_PROVIDER === "azure-openai" ? " - Required!" : "");
+        console.log(`- AZURE_OPENAI_API_VERSION: ${azureOpenaiApiVersionStatus}`);
 
         // Show Bedrock configuration
         console.log("\nAWS Bedrock Configuration:");
@@ -465,7 +525,22 @@ const cli = yargs(hideBin(process.argv))
                 console.log(
                   "  factifai-agent config --set OPENAI_API_KEY=your-api-key"
                 );
-              } else if (value === "bedrock") {
+              } else if (value === "azure-openai") {
+                console.log("\nYou can set your Azure OpenAI credentials with:");
+                console.log(
+                  "  factifai-agent config --set AZURE_OPENAI_API_KEY=your-api-key"
+                );
+                console.log(
+                  "  factifai-agent config --set AZURE_OPENAI_API_INSTANCE_NAME=your-instance-name"
+                );
+                console.log(
+                  "  factifai-agent config --set AZURE_OPENAI_API_DEPLOYMENT_NAME=your-deployment-name"
+                );
+                console.log(
+                  "  factifai-agent config --set AZURE_OPENAI_API_VERSION=your-api-version"
+                );
+              }
+              else if (value === "bedrock") {
                 console.log("\nYou can set your AWS credentials with:");
                 console.log(
                   "  factifai-agent config --set AWS_ACCESS_KEY_ID=your-access-key"
@@ -507,7 +582,22 @@ const cli = yargs(hideBin(process.argv))
               console.log(
                 "  factifai-agent config --set OPENAI_API_KEY=your-api-key"
               );
-            } else if (modelValue === "bedrock") {
+            } else if (modelValue === "azure-openai") {
+              console.log("\nYou can set your Azure OpenAI credentials with:");
+              console.log(
+                "  factifai-agent config --set AZURE_OPENAI_API_KEY=your-api-key"
+              );
+              console.log(
+                "  factifai-agent config --set AZURE_OPENAI_API_INSTANCE_NAME=your-instance-name"
+              );
+              console.log(
+                "  factifai-agent config --set AZURE_OPENAI_API_DEPLOYMENT_NAME=your-deployment-name"
+              );
+              console.log(
+                "  factifai-agent config --set AZURE_OPENAI_API_VERSION=your-api-version"
+              );
+            }
+            else if (modelValue === "bedrock") {
               console.log("\nYou can set your AWS credentials with:");
               console.log(
                 "  factifai-agent config --set AWS_ACCESS_KEY_ID=your-access-key"

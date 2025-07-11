@@ -16,7 +16,7 @@ Before integrating Factifai Agent with your CI/CD pipeline, make sure you have:
 
 - A working test project with Factifai Agent (see [Setting Up a Test Project](/guides/setup-test-project))
 - Access to a CI/CD system (GitHub Actions, Jenkins, GitLab CI, etc.)
-- API credentials for your chosen LLM provider (OpenAI or AWS Bedrock)
+- API credentials for your chosen LLM provider (OpenAI or Azure OpenAI or AWS Bedrock)
 
 ## General Integration Steps
 

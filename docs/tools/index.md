@@ -14,7 +14,7 @@ Key features:
 - Natural language test instructions
 - Real-time test execution visualization
 - Comprehensive reporting (CLI, HTML, XML)
-- Multiple LLM provider support (OpenAI, AWS Bedrock)
+- Multiple LLM provider support (OpenAI, Azure OpenAI, AWS Bedrock)
 - Cross-browser testing
 
 ### Playwright Core

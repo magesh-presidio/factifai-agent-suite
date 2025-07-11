@@ -8,7 +8,7 @@ Before you begin, make sure you have:
 
 - **Node.js 18+** installed on your system
 - **npm or pnpm** for package management
-- **An OpenAI API key** or **AWS Bedrock credentials** for the AI capabilities
+- **An OpenAI API key** or **Azure OpenAI credentials** or **AWS Bedrock credentials** for the AI capabilities
 
 ## Step 1: Install Factifai Agent
 
@@ -44,6 +44,15 @@ Configure your API credentials for the LLM provider you want to use:
 
 ```bash
 factifai-agent config --set OPENAI_API_KEY=your-api-key-here
+```
+
+### For Azure OpenAI
+
+```bash
+factifai-agent config --set AZURE_OPENAI_API_KEY=your-api-key-here
+factifai-agent config --set AZURE_OPENAI_API_INSTANCE_NAME=your-instance-name
+factifai-agent config --set AZURE_OPENAI_API_DEPLOYMENT_NAME=your-deployment-name
+factifai-agent config --set AZURE_OPENAI_API_VERSION=your-api-version
 ```
 
 ### For AWS Bedrock
@@ -115,6 +124,9 @@ Run your first test using the Factifai Agent CLI:
 ```bash
 # Using OpenAI
 factifai-agent --model openai run --file tests/first-test.txt
+
+# Using Azure OpenAI
+factifai-agent --model azure-openai run --file tests/first-test.txt
 
 # Using AWS Bedrock
 factifai-agent --model bedrock run --file tests/first-test.txt

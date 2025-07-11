@@ -43,7 +43,7 @@ Built on LangGraph and Playwright, it enables testers and developers to write te
 - **Detailed Test Reporting**: Generates comprehensive test execution reports
 - **Step-by-Step Verification**: Validates each test step against expected outcomes
 - **Automatic Retry Mechanism**: Intelligently retries failed steps
-- **Multiple LLM Providers**: Supports OpenAI and AWS Bedrock
+- **Multiple LLM Providers**: Supports OpenAI, Azure OpenAI and AWS Bedrock
 
 ## Requirements
 
@@ -73,6 +73,19 @@ factifai-agent config --set OPENAI_API_KEY=your-api-key-here
 
 # Run your test
 factifai-agent --model openai run "Navigate to duckduckgo.com and search 'eagles'"
+```
+
+### With Azure OpenAI
+
+```bash
+# Set your API key, instance name, deployment name and API version (only needed once, persists across sessions)
+factifai-agent config --set AZURE_OPENAI_API_KEY=your-api-key-here
+factifai-agent config --set AZURE_OPENAI_API_INSTANCE_NAME=your-instance-name
+factifai-agent config --set AZURE_OPENAI_API_DEPLOYMENT_NAME=your-deployment-name
+factifai-agent config --set AZURE_OPENAI_API_VERSION=your-api-version
+
+# Run your test
+factifai-agent --model azure-openai run "Navigate to duckduckgo.com and search 'eagles'"
 ```
 
 ### With AWS Bedrock
@@ -167,12 +180,16 @@ Factifai Agent uses a persistent configuration system that stores settings in `~
 
 ```bash
 # Model selection
-factifai-agent config --set MODEL_PROVIDER=openai  # "openai" | "bedrock"
+factifai-agent config --set MODEL_PROVIDER=openai  # "openai" | "azure-openai" | "bedrock"
 factifai-agent config --set OPENAI_MODEL=gpt-4.1
 factifai-agent config --set BEDROCK_MODEL=us.anthropic.claude-3-7-sonnet-20250219-v1:0
 
 # API credentials
 factifai-agent config --set OPENAI_API_KEY=your-api-key-here
+factifai-agent config --set AZURE_OPENAI_API_KEY=your-api-key-here
+factifai-agent config --set AZURE_OPENAI_API_INSTANCE_NAME=your-instance-name
+factifai-agent config --set AZURE_OPENAI_API_DEPLOYMENT_NAME=your-deployment-name
+factifai-agent config --set AZURE_OPENAI_API_VERSION=your-api-version
 factifai-agent config --set AWS_DEFAULT_REGION=us-west-2
 factifai-agent config --set AWS_ACCESS_KEY_ID=your-access-key-id
 factifai-agent config --set AWS_SECRET_ACCESS_KEY=your-secret-access-key
@@ -222,6 +239,7 @@ factifai-agent run "Your test instructions"
 | Provider | Configuration | Available Models |
 |----------|--------------|-----------------|
 | **OpenAI** | `OPENAI_API_KEY` | `gpt-4.1` (default)<br>`gpt-4o` |
+| **Azure OpenAI** | `AZURE_OPENAI_API_KEY`<br>`AZURE_OPENAI_API_INSTANCE_NAME`<br>`AZURE_OPENAI_API_DEPLOYMENT_NAME`<br>`AZURE_OPENAI_API_VERSION` | `gpt-4.1` (default)<br>`gpt-4o` |
 | **AWS Bedrock** | `AWS_ACCESS_KEY_ID`<br>`AWS_SECRET_ACCESS_KEY`<br>`AWS_DEFAULT_REGION` | `us.anthropic.claude-3-7-sonnet-20250219-v1:0` (default)<br>`anthropic.claude-3-5-sonnet-20240620-v1:0` |
 
 ## 💡 Best Practices for Test Creation

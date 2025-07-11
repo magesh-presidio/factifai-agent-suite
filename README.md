@@ -97,7 +97,7 @@ Seamlessly integrate with your workflow! Generate polished HTML reports for team
 
 #### Factifai Agent
 
-A CLI-first automation tool that allows you to write browser tests in plain English. It translates natural language instructions into precise browser actions using LLMs, executes them through a structured LangGraph workflow, and provides rich terminal visualization of test progress. The agent supports multiple LLM providers (OpenAI and AWS Bedrock), cross-browser testing, and seamless CI/CD integration, making automated testing more accessible to team members without specialized testing expertise.
+A CLI-first automation tool that allows you to write browser tests in plain English. It translates natural language instructions into precise browser actions using LLMs, executes them through a structured LangGraph workflow, and provides rich terminal visualization of test progress. The agent supports multiple LLM providers (OpenAI, Azure OpenAI and AWS Bedrock), cross-browser testing, and seamless CI/CD integration, making automated testing more accessible to team members without specialized testing expertise.
 
 📚 **[View Full Documentation](./packages/factifai-agent/README.md)** for detailed usage instructions, configuration options, and best practices.
 
@@ -127,7 +127,7 @@ The web-based counterpart to Factifai Agent that runs entirely in the browser. I
 
 - Node.js 18+
 - pnpm 10.11.0+
-- OpenAI API key or AWS Bedrock credentials
+- OpenAI API key or AWS Bedrock credentials or Azure OpenAI credentials
 
 ### Installation
 
@@ -168,6 +168,20 @@ factifai-agent config --set OPENAI_API_KEY=your-api-key-here
 # Run a test using natural language
 factifai-agent --model openai run "Navigate to duckduckgo.com and search for 'testing automation'"
 ```
+
+#### Factifai Agent with Azure OpenAI
+
+```bash
+# Configure Azure OpenAI API key, instance name, deployment name and API version (only needed once)
+factifai-agent config --set AZURE_OPENAI_API_KEY=your-api-key-here
+factifai-agent config --set AZURE_OPENAI_API_INSTANCE_NAME=your-instance-name
+factifai-agent config --set AZURE_OPENAI_API_DEPLOYMENT_NAME=your-deployment-name
+factifai-agent config --set AZURE_OPENAI_API_VERSION=your-api-version
+
+# Run a test using natural language
+factifai-agent --model azure-openai run "Navigate to duckduckgo.com and search for 'testing automation'"
+```
+
 
 ### Development Setup
 

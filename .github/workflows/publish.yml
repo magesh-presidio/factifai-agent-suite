@@ -23,7 +23,7 @@ jobs:
         with:
           name: build-artifacts
           path: |
-            packages/*/dist
+            packages/
 
       - uses: actions/setup-node@v4
         with:

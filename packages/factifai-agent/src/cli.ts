@@ -470,6 +470,13 @@ const cli = yargs(hideBin(process.argv))
             (process.env.MODEL_PROVIDER === "bedrock" ? " - Required!" : "");
         console.log(`- AWS_SECRET_ACCESS_KEY: ${secretKeyStatus}`);
 
+        const sessionTokenStatus = process.env.AWS_SESSION_TOKEN
+          ? "******** (Set in environment)"
+          : config.AWS_SESSION_TOKEN
+          ? "******** (Set in config)"
+          : "Not set (required for temporary credentials)";
+        console.log(`- AWS_SESSION_TOKEN: ${sessionTokenStatus}`);
+
         // Show report configuration
         console.log("\nReport Configuration:");
         console.log(
@@ -551,6 +558,9 @@ const cli = yargs(hideBin(process.argv))
                 console.log(
                   "  factifai-agent config --set AWS_DEFAULT_REGION=your-region"
                 );
+                console.log(
+                  "  factifai-agent config --set AWS_SESSION_TOKEN=your-session-token"
+                );
               }
             }
           }
@@ -607,6 +617,9 @@ const cli = yargs(hideBin(process.argv))
               );
               console.log(
                 "  factifai-agent config --set AWS_DEFAULT_REGION=your-region"
+              );
+              console.log(
+                "  factifai-agent config --set AWS_SESSION_TOKEN=your-session-token"
               );
             }
           } else {

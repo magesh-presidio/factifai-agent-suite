@@ -474,7 +474,7 @@ const cli = yargs(hideBin(process.argv))
           ? "******** (Set in environment)"
           : config.AWS_SESSION_TOKEN
           ? "******** (Set in config)"
-          : "Not set (required for temporary credentials)";
+          : "Not set (optional - only needed for temporary credentials)";
         console.log(`- AWS_SESSION_TOKEN: ${sessionTokenStatus}`);
 
         // Show report configuration
@@ -559,7 +559,7 @@ const cli = yargs(hideBin(process.argv))
                   "  factifai-agent config --set AWS_DEFAULT_REGION=your-region"
                 );
                 console.log(
-                  "  factifai-agent config --set AWS_SESSION_TOKEN=your-session-token"
+                  "  factifai-agent config --set AWS_SESSION_TOKEN=your-session-token #Optional: only needed for temporary credentials"
                 );
               }
             }

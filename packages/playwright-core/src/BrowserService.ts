@@ -10,7 +10,7 @@ export class BrowserService {
   // Replace single page map with an array of pages per session
   private readonly pageStacks: Map<string, Page[]> = new Map();
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): BrowserService {
     if (!BrowserService.instance) {
@@ -328,12 +328,12 @@ export class BrowserService {
           const checkVisibilityResult =
             "checkVisibility" in element
               ? (element as any).checkVisibility({
-                  checkOpacity: true,
-                  checkVisibilityCSS: true,
-                  contentVisibilityAuto: true,
-                  opacityProperty: true,
-                  visibilityProperty: true,
-                })
+                checkOpacity: true,
+                checkVisibilityCSS: true,
+                contentVisibilityAuto: true,
+                opacityProperty: true,
+                visibilityProperty: true,
+              })
               : true;
 
           const style = getComputedStyle(element);
@@ -367,24 +367,24 @@ export class BrowserService {
 
           return elementVisibility(element)
             ? {
-                type:
-                  (element as HTMLInputElement).type ||
-                  element.tagName.toLowerCase(),
-                tagName: element.tagName.toLowerCase(),
-                text: element.textContent?.trim(),
-                placeholder: (element as HTMLInputElement).placeholder,
-                coordinate: {
-                  x: Math.round(left + width / 2),
-                  y: Math.round(top + height / 2),
-                },
-                attributes,
-                isVisibleInCurrentViewPort,
-                isVisuallyVisible: checkIfElementIsVisuallyVisible(
-                  element,
-                  Math.round(left + width / 2),
-                  Math.round(top + height / 2)
-                ),
-              }
+              type:
+                (element as HTMLInputElement).type ||
+                element.tagName.toLowerCase(),
+              tagName: element.tagName.toLowerCase(),
+              text: element.textContent?.trim(),
+              placeholder: (element as HTMLInputElement).placeholder,
+              coordinate: {
+                x: Math.round(left + width / 2),
+                y: Math.round(top + height / 2),
+              },
+              attributes,
+              isVisibleInCurrentViewPort,
+              isVisuallyVisible: checkIfElementIsVisuallyVisible(
+                element,
+                Math.round(left + width / 2),
+                Math.round(top + height / 2)
+              ),
+            }
             : null;
         }
 

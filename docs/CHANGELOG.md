@@ -1,14 +1,5 @@
 # docs
 
-## 1.2.0
-
-### Minor Changes
-
-- 87821a0: Enhanced AWS and Azure OpenAI support in Factifai Agent
-
-  - Added support for Azure OpenAI in Factifai Agent
-  - Added AWS session token support for Bedrock authentication
-
 ## 1.1.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @presidio-dev/factifai-agent
 
+## 1.3.0
+
+### Minor Changes
+
+- 87821a0: Added AWS session token support for Bedrock authentication
+
 ## 1.2.0
 
 ### Minor Changes

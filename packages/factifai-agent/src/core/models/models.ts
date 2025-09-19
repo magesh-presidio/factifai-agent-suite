@@ -79,15 +79,26 @@ export const BedrockModel = (streaming?: boolean, maxTokens = 12000) => {
     }
   }
 
+  const credentials: {
+    accessKeyId: string;
+    secretAccessKey: string;
+    sessionToken?: string;
+  } = {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
+  };
+
+  // Add session token if available (for temporary credentials)
+  if (process.env.AWS_SESSION_TOKEN) {
+    credentials.sessionToken = process.env.AWS_SESSION_TOKEN;
+  }
+
   return new BedrockChat({
     model:
       process.env.BEDROCK_MODEL ||
       "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
     region: process.env.AWS_DEFAULT_REGION,
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
-    },
+    credentials,
     modelKwargs: {
       anthropic_version: "bedrock-2023-05-31",
     },

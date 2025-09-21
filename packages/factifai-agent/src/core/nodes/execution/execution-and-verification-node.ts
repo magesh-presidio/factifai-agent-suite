@@ -457,6 +457,75 @@ export const executeAndVerifyNode = async ({
             )
           );
         }
+
+        // Log successful action details for Playwright script generation (for ALL successful actions)
+        if (verification.result === "SUCCESS") {
+          // Look for tool calls in messages to get actual coordinates/actions
+          let toolCallData = null;
+
+          // Check previous messages for the most recent tool call
+          if (messages && messages.length > 0) {
+            for (let i = messages.length - 1; i >= 0; i--) {
+              const msg = messages[i];
+              if (msg && msg.tool_calls && msg.tool_calls.length > 0) {
+                const lastToolCall = msg.tool_calls[msg.tool_calls.length - 1];
+                toolCallData = {
+                  name: lastToolCall.name,
+                  args: lastToolCall.args
+                };
+                break;
+              }
+            }
+          }
+
+          const playwrightActionData: any = {
+            success: true,
+            action: lastAction,
+            verificationResult: verification.result,
+            explanation: verification.explanation,
+            timestamp: Date.now(),
+          };
+
+          // Extract actual action data from tool calls using mapping
+          if (toolCallData) {
+            logger.appendToFile(`DEBUG: Found tool call: ${toolCallData.name} with args: ${JSON.stringify(toolCallData.args)}`);
+
+            const toolCallHandlers = {
+              clickByCoordinates: (args: any) => ({
+                actionType: "click",
+                coordinates: { x: args.x, y: args.y }
+              }),
+              type: (args: any) => ({
+                actionType: "type",
+                text: args.text
+              }),
+              clearInput: () => ({
+                actionType: "clear"
+              }),
+              scrollBy: (args: any) => ({
+                actionType: "scroll",
+                coordinates: { x: args.dx, y: args.dy }
+              }),
+              scrollToNextChunk: () => ({
+                actionType: "scroll",
+                coordinates: { x: 0, y: 720 }
+              }),
+              scrollToPrevChunk: () => ({
+                actionType: "scroll",
+                coordinates: { x: 0, y: -720 }
+              })
+            };
+
+            const handler = toolCallHandlers[toolCallData.name as keyof typeof toolCallHandlers];
+            if (handler) {
+              const actionData = handler(toolCallData.args);
+              Object.assign(playwrightActionData, actionData);
+              logger.appendToFile(`PLAYWRIGHT_SUCCESS: ${JSON.stringify(playwrightActionData)}`);
+            }
+          } else {
+            logger.appendToFile(`DEBUG: No tool call data found for successful action: ${lastAction}`);
+          }
+        }
       }
     }
 

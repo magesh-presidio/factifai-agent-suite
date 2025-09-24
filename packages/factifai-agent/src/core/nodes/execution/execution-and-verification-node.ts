@@ -12,6 +12,7 @@ import { getModel } from "../../models/models";
 import { ALL_TOOLS } from "../../../tools";
 import { removeImageUrlsFromMessage } from "../../../common/utils/llm-utils";
 import { convertElementsToXml } from "../../../common/utils/xml-formatter";
+import { processSuccessfulAction } from "../playwright/playwright-utils/action-extractor";
 
 // Helper function to capture current browser state
 const captureCurrentState = async (sessionId: string) => {
@@ -379,12 +380,18 @@ export const executeAndVerifyNode = async ({
     // Cast the model to any to bypass TypeScript errors
     const modelWithTools = (model as any).bindTools(ALL_TOOLS);
 
+    //log the messages variable
+    logger.appendToFile(chalk.gray(JSON.stringify(messages, null, 2)));
+
     // Execute with model - single invocation for both verification and action
     const response = await modelWithTools.invoke([
       systemPrompt,
       ...messages,
       humanMessage,
+      
     ]);
+
+    logger.appendToFile(chalk.gray(JSON.stringify(response, null, 2)));
 
     // Filter out duplicate tool_use elements
     if (typeof response.content !== "string") {
@@ -456,6 +463,11 @@ export const executeAndVerifyNode = async ({
               `Action "${lastAction}" succeeded after ${retryCount} retries!`
             )
           );
+        }
+        
+        // If verification was successful, store the action for Playwright script generation
+        if (verification.result === "SUCCESS") {
+          processSuccessfulAction(sessionId, messages);
         }
       }
     }

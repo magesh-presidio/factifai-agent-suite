@@ -12,7 +12,8 @@ import { executeAndVerifyNode } from "../nodes/execution/execution-and-verificat
 import { trackAndUpdateStepsNode } from "../nodes/tracking/tracking-node";
 import { parseTestStepsNode } from "../nodes/parsing/parsing-node";
 import { preprocessTestInputNode } from "../nodes/preprocessing/preprocessing-node";
-import { shouldContinueEdge, shouldGenerateReport } from "../edges/edges";
+import { shouldContinueEdge, shouldGenerateReport, shouldGeneratePlaywrightScript } from "../edges/edges";
+import { generatePlaywrightScriptNode } from "../nodes/playwright/generate-playwright-script-node";
 
 export const State = Annotation.Root({
   // Base fields
@@ -85,7 +86,7 @@ export const State = Annotation.Root({
     reducer: (_, v) => v,
   }),
   testEndTime: Annotation<number | null>({
-    default: () => null, 
+    default: () => null,
     reducer: (_, v) => v,
   }),
   testDuration: Annotation<number | null>({
@@ -105,6 +106,10 @@ export const State = Annotation.Root({
     default: () => false,
     reducer: (_, v) => v,
   }),
+  generatePlaywright: Annotation<boolean>({
+    default: () => true,
+    reducer: (_, v) => v,
+  }),
 });
 
 export type GraphStateType = (typeof State)["State"];
@@ -118,6 +123,7 @@ export const browserAutomationGraph = new StateGraph(State)
   .addNode("track", trackAndUpdateStepsNode)
   .addNode("tools", new ToolNode(ALL_TOOLS))
   .addNode("report", generateReportNode)
+  .addNode("playwrightScript", generatePlaywrightScriptNode)
   .addEdge(START, "preprocess")
   .addEdge("preprocess", "parse")
   .addEdge("parse", "execute")
@@ -125,7 +131,12 @@ export const browserAutomationGraph = new StateGraph(State)
     tools: "tools",
     end: "track", // call track for final verification
   })
-  .addConditionalEdges("track", shouldGenerateReport, {
+  .addConditionalEdges("track", shouldGeneratePlaywrightScript, {
+    playwrightScript: "playwrightScript",
+    report: "report",
+    end: END,
+  })
+  .addConditionalEdges("playwrightScript", shouldGenerateReport, {
     report: "report",
     end: END,
   })

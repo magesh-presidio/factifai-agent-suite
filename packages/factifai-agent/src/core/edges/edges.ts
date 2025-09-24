@@ -20,3 +20,21 @@ export const shouldGenerateReport = (state: GraphStateType) => {
 
   return "end";
 };
+
+
+export const shouldGeneratePlaywrightScript = (state: GraphStateType): "playwrightScript" | "report" | "end" => {
+  if (state.generatePlaywright && state.isComplete && !state.lastError && state.sessionId) {
+    return "playwrightScript";
+  }
+
+  // If we're not generating Playwright scripts, proceed to report generation check
+  if (state.noReport) {
+    return "end";
+  }
+
+  if (state.isComplete || state.lastError) {
+    return "report";
+  }
+
+  return "end";
+};

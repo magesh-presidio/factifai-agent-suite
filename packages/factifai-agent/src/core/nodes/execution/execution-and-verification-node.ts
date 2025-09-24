@@ -380,9 +380,6 @@ export const executeAndVerifyNode = async ({
     // Cast the model to any to bypass TypeScript errors
     const modelWithTools = (model as any).bindTools(ALL_TOOLS);
 
-    //log the messages variable
-    logger.appendToFile(chalk.gray(JSON.stringify(messages, null, 2)));
-
     // Execute with model - single invocation for both verification and action
     const response = await modelWithTools.invoke([
       systemPrompt,
@@ -390,8 +387,6 @@ export const executeAndVerifyNode = async ({
       humanMessage,
       
     ]);
-
-    logger.appendToFile(chalk.gray(JSON.stringify(response, null, 2)));
 
     // Filter out duplicate tool_use elements
     if (typeof response.content !== "string") {

@@ -37,6 +37,7 @@ The Factifai Agent Suite provides a collection of AI-powered tools designed to a
   - [Real-Time Test Execution Visualization](#-real-time-test-execution-visualization)
   - [Instant, Detailed Test Results](#-instant-detailed-test-results)
   - [Professional Reports for Teams & CI/CD](#-professional-reports-for-teams--cicd)
+  - [Automatic Playwright Script Generation](#-automatic-playwright-script-generation)
 - [Tools](#-tools)
   - [Currently Available](#currently-available)
   - [What's Next?](#whats-next)
@@ -84,6 +85,9 @@ No more digging through logs! Get comprehensive, beautifully formatted test resu
 Seamlessly integrate with your workflow! Generate polished HTML reports for team sharing and structured XML outputs for your CI/CD pipelines.
 
 ![HTML & XML Reports](assets/images/gifs/test-report.gif)
+
+### 🎭 Automatic Playwright Script Generation
+Transform your successful natural language tests into reusable Playwright scripts! The AI automatically generates coordinate-based Playwright code from your test execution, creating robust reusable automation code.
 
 ## 🧰 Tools
 
@@ -229,7 +233,7 @@ The Factifai Agent Suite follows a modular, pipeline-based architecture that tra
 
 - **Factifai Agent**: Orchestrates the end-to-end testing process
   - **LLM Orchestration Layer** (LangGraph): Manages the AI workflow for parsing instructions
-  - **Node Pipeline**: Preprocessing → Parsing → Execution → Tracking → Reporting
+  - **Node Pipeline**: Preprocessing → Parsing → Execution → Tracking → Script Generation → Reporting
   - **Configuration System**: Handles API keys and settings with persistent storage
 
 - **Playwright Core**: Provides the browser automation foundation for factifai-agent

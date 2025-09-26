@@ -17,13 +17,9 @@ export async function generatePlaywrightScript(
     actions: any[]
 ): Promise<string> {
     try {
-        logger.info(chalk.cyan('Generating Playwright script from recorded actions...'));
-
         if (actions.length === 0) {
             throw new Error('No actions provided for script generation');
         }
-        
-        logger.info(chalk.cyan(`Found ${actions.length} actions for script generation`));
 
         // Get the LLM model
         const model = getModel(false);
@@ -123,8 +119,6 @@ export function savePlaywrightScript(sessionId: string, script: string): string 
 
         // Write the script to the file
         fs.writeFileSync(scriptPath, script);
-
-        logger.info(`Playwright script saved to: ${scriptPath}`);
 
         return scriptPath;
     } catch (error) {

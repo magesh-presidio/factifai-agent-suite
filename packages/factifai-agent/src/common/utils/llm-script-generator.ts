@@ -54,7 +54,8 @@ export async function generatePlaywrightScript(
   
   
   PLAYWRIGHT BEST PRACTICES TO INCORPORATE:
-  - Do not use page.waitForLoadState() as it causes issues, especially networkidle which may give false signals of completion
+  - For navigation, only use page.goto(url, { timeout: 60000 }) with explicit timeout
+  - Strictly avoid load state parameters: page.waitForLoadState() or waitUntil options ("load", "domcontentloaded", "networkidle", "commit") as they cause issues and may give false signals of completion
   - Add appropriate try/catch blocks for error handling
   - Include page.waitForTimeout() between actions when needed for proper timing
   - Structure the script with async/await patterns

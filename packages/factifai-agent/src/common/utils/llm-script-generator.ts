@@ -49,13 +49,18 @@ export async function generatePlaywrightScript(
   - tool: The name of the tool used (navigate, clickByCoordinates, type, etc.)
   - args: The arguments passed to the tool (coordinates, text, etc.)
   - timestamp: When the action was performed
+  - description: A detailed description of what the tool is performing for better context
+
+  
   
   PLAYWRIGHT BEST PRACTICES TO INCORPORATE:
-  - Use page.waitForLoadState() after navigation (Do not use networkidle to determine readiness, as this method is discouraged because it may give false signals of completion)
+  - Do not use page.waitForLoadState() as it causes issues, especially networkidle which may give false signals of completion
   - Add appropriate try/catch blocks for error handling
-  - Include page.waitForTimeout() between actions when needed
+  - Include page.waitForTimeout() between actions when needed for proper timing
   - Structure the script with async/await patterns
   - Add meaningful comments and section headers
+  - Use viewport size consistently: Fix the browser viewport (page.setViewportSize({ width: 1280, height: 720 })) to avoid shifting coordinates across runs
+  - Use the description and timing information to calculate the most appropriate timeouts for each action to ensure correct execution. Consider the nature of each action (navigation, form filling, button clicks, etc.) when determining timeout values.
   
   Your output should be a complete, runnable Playwright script that accurately reproduces the test scenario and follows best practices for maintainability and reliability. Strictly don't include any additional explanations outside of the script. Return only the script alone.
 `;

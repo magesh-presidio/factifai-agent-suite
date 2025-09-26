@@ -462,7 +462,7 @@ export const executeAndVerifyNode = async ({
         
         // If verification was successful, store the action for Playwright script generation
         if (verification.result === "SUCCESS") {
-          processSuccessfulAction(sessionId, messages);
+          processSuccessfulAction(sessionId, messages, verification.explanation);
         }
       }
     }

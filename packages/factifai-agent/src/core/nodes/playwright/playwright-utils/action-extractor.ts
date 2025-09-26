@@ -112,9 +112,10 @@ export function getScriptsDirectoryPath(sessionId: string): string {
  * Process and store successful action from messages
  * @param sessionId The session ID
  * @param messages Array of messages to search for tool calls
+ * @param verificationExplanation Optional explanation from verification result
  * @returns void
  */
-export function processSuccessfulAction(sessionId: string, messages: any[]): void {
+export function processSuccessfulAction(sessionId: string, messages: any[], verificationExplanation?: string): void {
   // Look for tool calls in messages to get actual coordinates/actions
   let toolCallData = null;
 
@@ -226,6 +227,11 @@ export function processSuccessfulAction(sessionId: string, messages: any[]): voi
     }
 
     if (actionData) {
+      // Add verification explanation as description if available
+      if (verificationExplanation) {
+        (actionData as any).description = verificationExplanation;
+      }
+
       // Store the successful action
       storeSuccessfulAction(sessionId, actionData);
     }

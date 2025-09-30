@@ -32,3 +32,18 @@ export interface VisibleElement {
   trimmedText?: string;
   coords: { x: number; y: number };
 }
+
+/**
+ * Detailed element information for marked elements
+ */
+export interface ElementData {
+  tagName: string;
+  id?: string;
+  className?: string;
+  textContent?: string;
+  attributes: Record<string, string>;
+  href?: string;
+  type?: string;
+  value?: string;
+  placeholder?: string;
+}

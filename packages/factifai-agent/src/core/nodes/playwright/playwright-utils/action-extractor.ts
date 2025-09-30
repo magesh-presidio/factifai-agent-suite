@@ -116,19 +116,38 @@ export function getScriptsDirectoryPath(sessionId: string): string {
  * @returns void
  */
 export function processSuccessfulAction(sessionId: string, messages: any[], verificationExplanation?: string): void {
-  // Look for tool calls in messages to get actual coordinates/actions
+  // Look for tool calls and their responses in messages
   let toolCallData = null;
+  let toolResponse = null;
 
-  // Check previous messages for the most recent tool call
+  // Check previous messages for the most recent tool call and its response
   if (messages && messages.length > 0) {
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i];
+
+      // Look for tool call
       if (msg && msg.tool_calls && msg.tool_calls.length > 0) {
         const lastToolCall = msg.tool_calls[msg.tool_calls.length - 1];
         toolCallData = {
           name: lastToolCall.name,
           args: lastToolCall.args
         };
+
+        // Look for corresponding tool response in subsequent messages
+        for (let j = i + 1; j < messages.length; j++) {
+          const responseMsg = messages[j];
+          if (responseMsg && responseMsg.content) {
+            try {
+              const parsedResponse = JSON.parse(responseMsg.content);
+              if (parsedResponse && typeof parsedResponse === 'object') {
+                toolResponse = parsedResponse;
+                break;
+              }
+            } catch (e) {
+              // Not a JSON response, continue looking
+            }
+          }
+        }
         break;
       }
     }
@@ -145,10 +164,18 @@ export function processSuccessfulAction(sessionId: string, messages: any[], veri
         actionData = {
           tool: "click",
           args: {
-            x: toolCallData.args.x,
-            y: toolCallData.args.y
+            coordinates: {
+              x: toolCallData.args.x,
+              y: toolCallData.args.y
+            }
           }
         };
+
+        // Get element data from tool response (captured at click time)
+        if (toolResponse && toolResponse.element) {
+          (actionData.args as any).element = toolResponse.element;
+        }
+
         break;
       case 'type':
         actionData = {

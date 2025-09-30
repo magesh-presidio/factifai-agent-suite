@@ -11,6 +11,7 @@ export {
   goForward,
   markVisibleElements,
   removeElementMarkers,
+  getElementAtCoordinates
 } from "./actions/navigate";
 
 export {

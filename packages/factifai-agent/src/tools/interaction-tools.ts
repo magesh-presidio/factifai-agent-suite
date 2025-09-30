@@ -5,6 +5,7 @@ import {
   scrollToNextChunk,
   scrollToPrevChunk,
   scrollBy,
+  getElementAtCoordinates,
 } from "@presidio-dev/playwright-core";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
@@ -48,10 +49,14 @@ export class InteractionTools {
       func: async (input) => {
         logger.info(`Clicking at coordinates: (${input.x}, ${input.y})`);
         try {
+          const elementData = await getElementAtCoordinates(input.sessionId, input.x, input.y);
           const result = await click(input.sessionId, {
             x: input.x,
             y: input.y,
           });
+          if (elementData.success && elementData.element) {
+            (result as any).element = elementData.element;
+          }
           return JSON.stringify(result);
         } catch (error) {
           logger.error("Error clicking by coordinates:", error);

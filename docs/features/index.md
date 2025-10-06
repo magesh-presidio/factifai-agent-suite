@@ -48,6 +48,17 @@ Generate polished HTML reports for team sharing and structured XML outputs for y
   Your browser does not support the video tag.
 </video>
 
+### 🎭 Automatic Playwright Script Generation
+
+Transform your successful natural language tests into reusable Playwright scripts! The AI automatically generates both selector-based and coordinate-based Playwright code from your test execution, giving you flexible, robust automation scripts that suit your needs.
+
+[Learn more about Playwright Script Generation](/features/playwright-script-generation)
+
+<video controls autoplay loop muted class="feature-video">
+  <source src="/assets/playwright-script-generation-demo.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
 ## Additional Features
 
 Beyond the core features highlighted above, the Factifai Agent Suite also offers:
@@ -80,6 +91,7 @@ Click on any of the links below to learn more about each feature:
 - [Live Test Progress](/features/live-progress)
 - [CLI Reports](/features/cli-reports)
 - [HTML & XML Reports](/features/html-xml-reports)
+- [Playwright Script Generation](/features/playwright-script-generation)
 
 <style>
 .feature-video {

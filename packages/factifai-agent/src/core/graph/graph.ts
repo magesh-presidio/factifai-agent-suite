@@ -106,8 +106,8 @@ export const State = Annotation.Root({
     default: () => false,
     reducer: (_, v) => v,
   }),
-  generatePlaywright: Annotation<boolean>({
-    default: () => true,
+  skipPlaywright: Annotation<boolean>({
+    default: () => false,
     reducer: (_, v) => v,
   }),
 });

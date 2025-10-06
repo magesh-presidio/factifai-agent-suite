@@ -87,9 +87,9 @@ Seamlessly integrate with your workflow! Generate polished HTML reports for team
 ![HTML & XML Reports](assets/images/gifs/test-report.gif)
 
 ### 🎭 Automatic Playwright Script Generation
-Transform your successful natural language tests into reusable Playwright scripts! The AI automatically generates coordinate-based Playwright code from your test execution, creating robust reusable automation code.
+Transform your successful natural language tests into reusable Playwright scripts! The AI automatically generates both selector-based and coordinate-based Playwright code from your test execution, giving you flexible, robust reusable automation code.
 
-![Playwright Coordinate Script](assets/images/gifs/playwright-coordinate-script.gif)
+![Playwright Coordinate Script](assets/images/gifs/playwright-script-generation.gif)
 
 ## 🧰 Tools
 

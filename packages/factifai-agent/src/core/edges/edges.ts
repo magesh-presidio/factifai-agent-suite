@@ -23,11 +23,12 @@ export const shouldGenerateReport = (state: GraphStateType) => {
 
 
 export const shouldGeneratePlaywrightScript = (state: GraphStateType): "playwrightScript" | "report" | "end" => {
-  if (state.generatePlaywright && state.isComplete && !state.lastError && state.sessionId) {
+  // Generate Playwright script if conditions are met and not skipped
+  if (!state.skipPlaywright && state.isComplete && !state.lastError && state.sessionId) {
     return "playwrightScript";
   }
 
-  // If we're not generating Playwright scripts, proceed to report generation check
+  // Proceed to report generation check
   if (state.noReport) {
     return "end";
   }

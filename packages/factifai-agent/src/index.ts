@@ -35,10 +35,10 @@ export const displayFactifaiLogo = (): void => {
 export const executeBrowserTask = async (
   instruction: string,
   sessionId: string,
-  options: { noReport?: boolean; reportFormat?: string; skipAnalysis?: boolean } = {}
+  options: { noReport?: boolean; reportFormat?: string; skipAnalysis?: boolean; skipPlaywright?: boolean } = {}
 ) => {
   sessionId = sessionId || `factifai-session-${Date.now()}`;
-  
+
   // Configure logger to use the session directory for logs
   logger.setSessionId(sessionId);
 
@@ -55,6 +55,7 @@ export const executeBrowserTask = async (
         noReport: options.noReport || false,
         reportFormat: options.reportFormat || "both",
         skipAnalysis: options.skipAnalysis || false,
+        skipPlaywright: options.skipPlaywright || false,
       },
       runConfig
     );

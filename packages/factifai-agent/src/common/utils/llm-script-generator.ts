@@ -44,10 +44,10 @@ export async function generatePlaywrightCoordinateScript(
     }
 
     // Create a system prompt for the LLM
-    const systemPrompt = `You are an expert Playwright test automation engineer. Generate a complete, production-ready Playwright test script that replays browser interactions using ONLY mouse coordinates and keyboard input.
+    const systemPrompt = `You are an expert Playwright test automation engineer. Generate a complete, production-ready Playwright test script in TypeScript that replays browser interactions using ONLY mouse coordinates and keyboard input.
 
 CRITICAL OUTPUT REQUIREMENTS:
-- Output ONLY valid JavaScript/TypeScript code - NO markdown fences, NO explanations, NO commentary outside code comments
+- Output ONLY valid TypeScript code - NO markdown fences, NO explanations, NO commentary outside code comments
 - Use Playwright Test framework: import { test, expect } from '@playwright/test';
 - Structure: test.describe() with test() blocks and test.step() for organization
 - All actions must use coordinates exclusively - NEVER use selectors, locators, or DOM queries
@@ -58,7 +58,7 @@ test.describe('Test Suite Name', () => {
   test('test description', async ({ page }) => {
     // Set viewport for consistency
     await page.setViewportSize({ width: 1280, height: 720 });
-    
+
     // Your test steps here
   });
 });
@@ -108,7 +108,7 @@ STRICT RULES:
 
 EXAMPLE STRUCTURE:
 
-const { test, expect } = require('@playwright/test');
+import { test, expect } from '@playwright/test';
 
 test.describe('Website Interaction Test', () => {
   test('should complete user flow', async ({ page }) => {
@@ -197,22 +197,22 @@ export async function generatePlaywrightSelectorScript(
     }
 
     // Create a system prompt for the LLM
-    const systemPrompt = `You are an expert Playwright test automation engineer. Generate a complete, production-ready Playwright test script using ONLY Playwright locators and selectors. NEVER use coordinates.
+    const systemPrompt = `You are an expert Playwright test automation engineer. Generate a complete, production-ready Playwright test script in TypeScript using ONLY Playwright locators and selectors. NEVER use coordinates.
 
 CRITICAL OUTPUT REQUIREMENTS:
-- Output ONLY valid JavaScript/TypeScript code - NO markdown fences, NO explanations, NO commentary outside code comments
+- Output ONLY valid TypeScript code - NO markdown fences, NO explanations, NO commentary outside code comments
 - Use Playwright Test framework: import { test, expect } from '@playwright/test';
 - Structure: test.describe() with test() blocks and test.step() for organization
 - All interactions must use Playwright's modern locator APIs
 
 BROWSER SETUP (required):
-\`\`\`javascript
+
 test.describe('Test Suite Name', () => {
   test('test description', async ({ page }) => {
     // Your test steps here
   });
 });
-\`\`\`
+
 
 NAVIGATION:
 - Use: await page.goto(url, { timeout: 60000 });
@@ -296,10 +296,8 @@ ERROR HANDLING:
 - Use test.step() for logical sections
 - Add descriptive console.log() statements
 - Optional assertions to verify success:
-  \`\`\`javascript
   await expect(page).toHaveURL(/expected-path/);
   await expect(locator).toBeVisible();
-  \`\`\`
 
 STRICT RULES:
 1. NEVER use coordinates or page.mouse
@@ -311,8 +309,8 @@ STRICT RULES:
 7. Output ONLY the test code - no explanations
 
 EXAMPLE STRUCTURE:
-\`\`\`javascript
-const { test, expect } = require('@playwright/test');
+
+import { test, expect } from '@playwright/test';
 
 test.describe('Website Interaction Test', () => {
   test('should complete user flow', async ({ page }) => {
@@ -344,7 +342,7 @@ test.describe('Website Interaction Test', () => {
     });
   });
 });
-\`\`\`
+
 
 CRITICAL: Analyze the element data carefully to build the most specific, reliable locator possible. Avoid brittle selectors.
 
@@ -383,7 +381,107 @@ Generate the complete test script now.`;
 }
 
 /**
- * Save a generated Playwright script to the session directory
+ * Initialize Playwright project structure in scripts directory
+ * Creates package.json, playwright.config.ts, .gitignore, and tests folder
+ * @param scriptsDir The scripts directory path
+ */
+function initializePlaywrightProject(scriptsDir: string): void {
+  // Create package.json
+  const packageJson = {
+    name: "playwright-tests",
+    version: "1.0.0",
+    description: "Generated Playwright tests",
+    main: "index.js",
+    scripts: {},
+    keywords: [],
+    author: "",
+    license: "ISC",
+    packageManager: "pnpm@10.17.0",
+    devDependencies: {
+      "@playwright/test": "^1.55.1",
+      "@types/node": "^24.7.0"
+    }
+  };
+
+  const packageJsonPath = path.join(scriptsDir, 'package.json');
+  if (!fs.existsSync(packageJsonPath)) {
+    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+  }
+
+  // Create playwright.config.ts
+  const playwrightConfig = `import { defineConfig, devices } from '@playwright/test';
+
+/**
+ * See https://playwright.dev/docs/test-configuration.
+ */
+export default defineConfig({
+  testDir: './tests',
+  /* Run tests in files in parallel */
+  fullyParallel: true,
+  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  forbidOnly: !!process.env.CI,
+  /* Retry on CI only */
+  retries: process.env.CI ? 2 : 0,
+  /* Opt out of parallel tests on CI. */
+  workers: process.env.CI ? 1 : undefined,
+  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  reporter: 'html',
+  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  use: {
+    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    trace: 'on-first-retry',
+  },
+
+  /* Configure projects for major browsers */
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+  ],
+});
+`;
+
+  const configPath = path.join(scriptsDir, 'playwright.config.ts');
+  if (!fs.existsSync(configPath)) {
+    fs.writeFileSync(configPath, playwrightConfig);
+  }
+
+  // Create .gitignore
+  const gitignore = `
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+`;
+
+  const gitignorePath = path.join(scriptsDir, '.gitignore');
+  if (!fs.existsSync(gitignorePath)) {
+    fs.writeFileSync(gitignorePath, gitignore);
+  }
+
+  // Create tests directory
+  const testsDir = path.join(scriptsDir, 'tests');
+  if (!fs.existsSync(testsDir)) {
+    fs.mkdirSync(testsDir, { recursive: true });
+  }
+}
+
+/**
+ * Save a generated Playwright script to the scripts/tests directory
  * @param sessionId The session ID
  * @param script The generated script content
  * @param type The type of script (coordinate or selector)
@@ -404,14 +502,20 @@ export function savePlaywrightScript(
       fs.mkdirSync(scriptsDir, { recursive: true });
     }
 
+    // Initialize Playwright project structure
+    initializePlaywrightProject(scriptsDir);
+
+    // Tests directory
+    const testsDir = path.join(scriptsDir, 'tests');
+
     // Generate a timestamp for the filename
     const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\./g, '-');
 
-    // Create the script filename based on type
-    const filename = `playwright-${type}-script-${timestamp}.js`;
+    // Create the script filename based on type (using .spec.ts convention)
+    const filename = `playwright-${type}-script-${timestamp}.spec.ts`;
 
     // Full path to the script file
-    const scriptPath = path.join(scriptsDir, filename);
+    const scriptPath = path.join(testsDir, filename);
 
     // Write the script to the file
     fs.writeFileSync(scriptPath, script);

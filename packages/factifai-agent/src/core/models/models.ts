@@ -1,6 +1,7 @@
 import { ChatOpenAI, AzureChatOpenAI } from "@langchain/openai";
 import { BedrockChat } from "@langchain/community/chat_models/bedrock";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import { logger } from "../../common/utils/logger";
 
 // Define model provider types
 export type ModelProvider = "openai" | "bedrock" | "azure-openai";
@@ -19,11 +20,14 @@ export const OpenAIModel = (streaming?: boolean, maxTokens = 12000) => {
     throw new Error("OPENAI_API_KEY is required when using the OpenAI model. Please set this environment variable.");
   }
 
+  const modelName = process.env.OPENAI_MODEL || "gpt-4.1";
+  const isGPT5 = modelName.includes("gpt-5");
+
   return new ChatOpenAI({
-    modelName: process.env.OPENAI_MODEL || "gpt-4.1",
+    modelName,
     apiKey: process.env.OPENAI_API_KEY,
     streaming: streaming,
-    maxTokens,
+    ...(isGPT5 ? { modelKwargs: { max_completion_tokens: maxTokens } } : { maxTokens }),
     supportsStrictToolCalling: true,
   });
 };
@@ -44,6 +48,9 @@ export const AzureOpenAIModel = (streaming?: boolean, maxTokens = 12000) => {
     }
   }
 
+  const modelName = process.env.AZURE_OPENAI_MODEL || "gpt-4.1";
+  const isGPT5 = modelName.includes("gpt-5");
+
   return new AzureChatOpenAI({
     modelName: process.env.AZURE_OPENAI_MODEL || "gpt-4.1",
     azureOpenAIApiKey: process.env.AZURE_OPENAI_API_KEY,
@@ -51,7 +58,7 @@ export const AzureOpenAIModel = (streaming?: boolean, maxTokens = 12000) => {
     azureOpenAIApiDeploymentName: process.env.AZURE_OPENAI_API_DEPLOYMENT_NAME,
     azureOpenAIApiVersion: process.env.AZURE_OPENAI_API_VERSION,
     streaming: streaming,
-    maxTokens,
+    ...(isGPT5 ? { modelKwargs: { max_completion_tokens: maxTokens } } : { maxTokens }),
   });
 };
 

@@ -9,8 +9,8 @@ import { PLAYWRIGHT_DIR_NAME, SCRIPTS_SUBDIR_NAME } from '../../core/nodes/playw
  * Script generation types
  */
 export enum ScriptType {
-  COORDINATE = 'coordinate',
-  SELECTOR = 'selector'
+  COORDINATE = 'coordinate-based',
+  SELECTOR = 'selector-based'
 }
 
 /**
@@ -53,7 +53,7 @@ CRITICAL OUTPUT REQUIREMENTS:
 - All actions must use coordinates exclusively - NEVER use selectors, locators, or DOM queries
 
 BROWSER SETUP (required):
-\`\`\`javascript
+
 test.describe('Test Suite Name', () => {
   test('test description', async ({ page }) => {
     // Set viewport for consistency
@@ -62,7 +62,7 @@ test.describe('Test Suite Name', () => {
     // Your test steps here
   });
 });
-\`\`\`
+
 
 NAVIGATION:
 - Use: await page.goto(url, { timeout: 60000 });
@@ -107,7 +107,7 @@ STRICT RULES:
 6. Output ONLY the test code - no explanations
 
 EXAMPLE STRUCTURE:
-\`\`\`javascript
+
 const { test, expect } = require('@playwright/test');
 
 test.describe('Website Interaction Test', () => {
@@ -127,7 +127,7 @@ test.describe('Website Interaction Test', () => {
     // More steps...
   });
 });
-\`\`\`
+
 
 Generate the complete test script now.`;
 

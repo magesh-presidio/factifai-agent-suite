@@ -1,5 +1,11 @@
 # @presidio-dev/playwright-core
 
+## 2.0.0
+
+### Major Changes
+
+- d7543ae: Implemented functionality to identify and return elements at given coordinates, supporting automated Playwright script generation using coordinate and selector mapping.
+
 ## 1.0.5
 
 ### Patch Changes

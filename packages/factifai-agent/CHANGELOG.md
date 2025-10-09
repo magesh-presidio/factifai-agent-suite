@@ -1,5 +1,16 @@
 # @presidio-dev/factifai-agent
 
+## 2.0.0
+
+### Major Changes
+
+- a108f4d: Added a feature for automatic Playwright script generation based on coordinates and selectors after all test cases pass.
+
+### Patch Changes
+
+- Updated dependencies [d7543ae]
+  - @presidio-dev/playwright-core@2.0.0
+
 ## 1.3.0
 
 ### Minor Changes

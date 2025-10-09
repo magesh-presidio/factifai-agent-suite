@@ -1,5 +1,11 @@
 # docs
 
+## 2.0.0
+
+### Major Changes
+
+- d7543ae: Updated documentation to provide clearer guidance on the Playwright script generation feature.
+
 ## 1.1.0
 
 ### Minor Changes

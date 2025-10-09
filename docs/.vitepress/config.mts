@@ -46,6 +46,7 @@ export default defineConfig({
             { text: 'Overview', link: '/features/' },
             { text: 'Test Parsing', link: '/features/test-parsing' },
             { text: 'Live Test Progress', link: '/features/live-progress' },
+            { text: 'Playwright Script Generation', link: '/features/playwright-script-generation' },
             { text: 'CLI Reports', link: '/features/cli-reports' },
             { text: 'HTML & XML Reports', link: '/features/html-xml-reports' }
           ]

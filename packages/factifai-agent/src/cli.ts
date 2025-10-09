@@ -187,6 +187,11 @@ const cli = yargs(hideBin(process.argv))
           describe: "Skip test case quality analysis and suggestions",
           default: false
         })
+        .option("skip-playwright", {
+          type: "boolean",
+          describe: "Skip Playwright script generation",
+          default: false
+        })
         .example(
           '$0 run "Check if google.com loads"',
           "Run with inline instruction"
@@ -280,40 +285,49 @@ const cli = yargs(hideBin(process.argv))
       }
       
       // Show report configuration
-      const reportFormat = argv['report-format'] as string || 
-                         ConfigManager.get('REPORT_FORMAT') || 
+      const reportFormat = argv['report-format'] as string ||
+                         ConfigManager.get('REPORT_FORMAT') ||
                          'both';
       const skipReport = argv['skip-report'] as boolean;
-      const skipAnalysis = argv['skip-analysis'] as boolean || 
+      const skipAnalysis = argv['skip-analysis'] as boolean ||
                           ConfigManager.get('SKIP_ANALYSIS') === 'true';
-      
+      const skipPlaywright = argv['skip-playwright'] as boolean ||
+                            ConfigManager.get('SKIP_PLAYWRIGHT') === 'true';
+
       if (skipReport) {
         console.log(`- Report Generation: Disabled (--skip-report)`);
       } else {
         console.log(`- Report Format: ${reportFormat}`);
       }
-      
+
       if (skipAnalysis) {
         console.log(`- Test Analysis: Disabled (--skip-analysis)`);
       } else {
         console.log(`- Test Analysis: Enabled`);
       }
-      
+
+      if (skipPlaywright) {
+        console.log(`- Playwright Script Generation: Disabled (--skip-playwright)`);
+      } else {
+        console.log(`- Playwright Script Generation: Enabled`);
+      }
+
       console.log(""); // Empty line for better readability
 
       try {
         // Get report format from CLI flag or config
-        const reportFormat = argv['report-format'] as string || 
-                           ConfigManager.get('REPORT_FORMAT') || 
+        const reportFormat = argv['report-format'] as string ||
+                           ConfigManager.get('REPORT_FORMAT') ||
                            'both';
-        
+
         const result = await executeBrowserTask(
           instruction,
           argv.session as string,
-          { 
+          {
             noReport: argv['skip-report'] as boolean,
             reportFormat: reportFormat,
-            skipAnalysis: skipAnalysis
+            skipAnalysis: skipAnalysis,
+            skipPlaywright: skipPlaywright
           }
         );
 
@@ -481,15 +495,22 @@ const cli = yargs(hideBin(process.argv))
         console.log("\nReport Configuration:");
         console.log(
           `- REPORT_FORMAT: ${
-            process.env.REPORT_FORMAT || 
-            config.REPORT_FORMAT || 
+            process.env.REPORT_FORMAT ||
+            config.REPORT_FORMAT ||
             "both (default)"
           }`
         );
         console.log(
           `- SKIP_ANALYSIS: ${
-            process.env.SKIP_ANALYSIS || 
-            config.SKIP_ANALYSIS || 
+            process.env.SKIP_ANALYSIS ||
+            config.SKIP_ANALYSIS ||
+            "false (default)"
+          }`
+        );
+        console.log(
+          `- SKIP_PLAYWRIGHT: ${
+            process.env.SKIP_PLAYWRIGHT ||
+            config.SKIP_PLAYWRIGHT ||
             "false (default)"
           }`
         );

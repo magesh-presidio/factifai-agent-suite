@@ -34,6 +34,10 @@ features:
     title: Professional Reports for Teams & CI/CD
     details: Generate polished HTML reports for team sharing and structured XML outputs for your CI/CD pipelines.
     link: /features/html-xml-reports
+  - icon: 🎭
+    title: Automated Playwright Script Generation
+    details: Convert successful test runs into reusable TypeScript Playwright scripts with both selector-based and coordinate-based approaches.
+    link: /features/playwright-script-generation
 ---
 
 <div class="demo-container">

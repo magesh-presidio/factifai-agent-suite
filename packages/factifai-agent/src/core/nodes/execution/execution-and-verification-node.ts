@@ -12,6 +12,7 @@ import { getModel } from "../../models/models";
 import { ALL_TOOLS } from "../../../tools";
 import { removeImageUrlsFromMessage } from "../../../common/utils/llm-utils";
 import { convertElementsToXml } from "../../../common/utils/xml-formatter";
+import { processSuccessfulAction } from "../playwright/playwright-utils/action-extractor";
 
 // Helper function to capture current browser state
 const captureCurrentState = async (sessionId: string) => {
@@ -304,6 +305,7 @@ export const executeAndVerifyNode = async ({
   retryAction = "",
   maxRetries = 3,
   testStartTime,
+  skipPlaywright
 }: GraphStateType) => {
   // Check if we're in the process of shutting down
   if (isShuttingDown) {
@@ -384,6 +386,7 @@ export const executeAndVerifyNode = async ({
       systemPrompt,
       ...messages,
       humanMessage,
+      
     ]);
 
     // Filter out duplicate tool_use elements
@@ -456,6 +459,11 @@ export const executeAndVerifyNode = async ({
               `Action "${lastAction}" succeeded after ${retryCount} retries!`
             )
           );
+        }
+        
+        // If verification was successful, store the action for Playwright script generation
+        if (verification.result === "SUCCESS" && !skipPlaywright) {
+          processSuccessfulAction(sessionId, messages, verification.explanation);
         }
       }
     }

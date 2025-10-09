@@ -21,4 +21,5 @@ export {
   scrollToPrevChunk,
   scrollBy,
   setCursorVisibility,
+  getElementAtCoordinates
 } from "./actions/interact";

@@ -107,4 +107,4 @@ export const executeBrowserTask = async (
 
 export * from "./core/graph/graph";
 export { BrowserService } from "@presidio-dev/playwright-core";
-export type { Page } from "playwright";
+export type { Page } from "@presidio-dev/playwright-core";

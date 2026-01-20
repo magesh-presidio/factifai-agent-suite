@@ -4,6 +4,11 @@ import boxen from "boxen";
 import chalk from "chalk";
 import { ConfigManager } from "./common/utils/config-manager";
 import { logger } from "./common/utils/logger";
+import { BrowserService } from "@presidio-dev/playwright-core";
+
+// Using 'any' for Page type to avoid version conflicts between different playwright installations
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Page = any;
 
 // Initialize configuration manager
 ConfigManager.initialize();
@@ -35,12 +40,25 @@ export const displayFactifaiLogo = (): void => {
 export const executeBrowserTask = async (
   instruction: string,
   sessionId: string,
-  options: { noReport?: boolean; reportFormat?: string; skipAnalysis?: boolean; skipPlaywright?: boolean } = {}
+  options: {
+    noReport?: boolean;
+    reportFormat?: string;
+    skipAnalysis?: boolean;
+    skipPlaywright?: boolean;
+    existingPage?: Page;  // Inject existing page for workflow orchestration
+    scriptFormat?: 'spec' | 'module';  // Script output format: 'spec' (default) or 'module' for reusable functions
+  } = {}
 ) => {
   sessionId = sessionId || `factifai-session-${Date.now()}`;
 
   // Configure logger to use the session directory for logs
   logger.setSessionId(sessionId);
+
+  // If an existing page is provided, inject it into BrowserService
+  if (options.existingPage) {
+    const browserService = BrowserService.getInstance();
+    await browserService.setExternalPage(sessionId, options.existingPage);
+  }
 
   const runConfig = {
     recursionLimit: 100,
@@ -56,6 +74,7 @@ export const executeBrowserTask = async (
         reportFormat: options.reportFormat || "both",
         skipAnalysis: options.skipAnalysis || false,
         skipPlaywright: options.skipPlaywright || false,
+        scriptFormat: options.scriptFormat || "spec",
       },
       runConfig
     );
@@ -87,3 +106,5 @@ export const executeBrowserTask = async (
 };
 
 export * from "./core/graph/graph";
+export { BrowserService } from "@presidio-dev/playwright-core";
+export type { Page } from "@presidio-dev/playwright-core";

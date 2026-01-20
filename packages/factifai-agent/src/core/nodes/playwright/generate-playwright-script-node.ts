@@ -3,11 +3,12 @@ import figures from 'figures';
 import boxen from 'boxen';
 import { GraphStateType } from '../../graph/graph';
 import { enhancedLogger } from '../../../common/services/console-display-service';
-import { 
-  generatePlaywrightCoordinateScript, 
-  generatePlaywrightSelectorScript, 
+import {
+  generatePlaywrightCoordinateScript,
+  generatePlaywrightSelectorScript,
   savePlaywrightScript,
-  ScriptType
+  ScriptType,
+  ScriptFormat
 } from '../../../common/utils/llm-script-generator';
 import { getActionsFilePath, getSessionActions } from './playwright-utils/action-extractor';
 
@@ -42,6 +43,7 @@ export const generatePlaywrightScriptNode = async ({
   testEndTime,
   testDuration,
   testSteps,
+  scriptFormat,
 }: GraphStateType) => {
   // Only generate script if test completed successfully
   if (!isComplete || !testEndTime || !testDuration) {
@@ -81,50 +83,82 @@ export const generatePlaywrightScriptNode = async ({
       `${chalk.blue(figures.pointer)} Generating Playwright script...`
     );
 
+    // Extract script name from sessionId (e.g., "factifai-session-123" -> "script")
+    // Or use a more meaningful name based on instruction if available
+    const scriptBaseName = 'script';
+
+    // Determine the script format to use (default to SPEC for backward compatibility)
+    const format = scriptFormat === 'module' ? ScriptFormat.MODULE : ScriptFormat.SPEC;
+    const formatLabel = format === ScriptFormat.MODULE ? 'module' : 'spec';
+
     // Show progress for coordinate-based script generation
     enhancedLogger.info(
-      `${chalk.blue(figures.pointer)} Generating coordinate-based Playwright script...`
+      `${chalk.blue(figures.pointer)} Generating coordinate-based Playwright ${formatLabel}...`
     );
 
     // Generate the coordinate-based Playwright script
-    const coordinateScript = await generatePlaywrightCoordinateScript(sessionId, actions);
+    const coordinateScript = await generatePlaywrightCoordinateScript(
+      sessionId,
+      actions,
+      format,
+      `${scriptBaseName}Coordinate`
+    );
 
     // Save the coordinate-based script to the session directory
-    const coordinateScriptPath = savePlaywrightScript(sessionId, coordinateScript, ScriptType.COORDINATE);
+    const coordinateScriptPath = savePlaywrightScript(
+      sessionId,
+      coordinateScript,
+      ScriptType.COORDINATE,
+      format,
+      `${scriptBaseName}-coordinate`
+    );
 
     enhancedLogger.success(
-      `${chalk.green(figures.tick)} Coordinate-based Playwright script generated successfully`
+      `${chalk.green(figures.tick)} Coordinate-based Playwright ${formatLabel} generated successfully`
     );
 
     // Show progress for selector-based script generation
     enhancedLogger.info(
-      `${chalk.blue(figures.pointer)} Generating selector-based Playwright script...`
+      `${chalk.blue(figures.pointer)} Generating selector-based Playwright ${formatLabel}...`
     );
 
     // Generate the selector-based Playwright script
-    const selectorScript = await generatePlaywrightSelectorScript(sessionId, actions);
+    const selectorScript = await generatePlaywrightSelectorScript(
+      sessionId,
+      actions,
+      format,
+      `${scriptBaseName}Selector`
+    );
 
     // Save the selector-based script to the session directory
-    const selectorScriptPath = savePlaywrightScript(sessionId, selectorScript, ScriptType.SELECTOR);
+    const selectorScriptPath = savePlaywrightScript(
+      sessionId,
+      selectorScript,
+      ScriptType.SELECTOR,
+      format,
+      `${scriptBaseName}-selector`
+    );
 
     enhancedLogger.success(
-      `${chalk.green(figures.tick)} Selector-based Playwright script generated successfully`
+      `${chalk.green(figures.tick)} Selector-based Playwright ${formatLabel} generated successfully`
     );
 
     const actionsFilePath = getActionsFilePath(sessionId);
 
     // Display the script paths in a box
+    const formatTitle = format === ScriptFormat.MODULE ? 'Modules' : 'Scripts';
+    const formatDesc = format === ScriptFormat.MODULE ? 'reusable modules' : 'test specs';
     console.log(
       boxen(
-        chalk.bold.green("Playwright Scripts Generated") +
+        chalk.bold.green(`Playwright ${formatTitle} Generated`) +
           "\n\n" +
-          chalk.white(`Coordinate Script: ${coordinateScriptPath}`) +
+          chalk.white(`Coordinate ${formatLabel}: ${coordinateScriptPath}`) +
           "\n" +
-          chalk.white(`Selector Script: ${selectorScriptPath}`) +
+          chalk.white(`Selector ${formatLabel}: ${selectorScriptPath}`) +
           "\n" +
           chalk.white(`Actions: ${actionsFilePath}`) +
           "\n" +
-          chalk.dim(`(${actions.length} actions converted)`),
+          chalk.dim(`(${actions.length} actions converted to ${formatDesc})`),
         {
           padding: 1,
           margin: { top: 1, bottom: 1 },

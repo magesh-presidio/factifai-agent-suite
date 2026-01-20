@@ -14,14 +14,26 @@ export enum ScriptType {
 }
 
 /**
+ * Script output formats
+ */
+export enum ScriptFormat {
+  SPEC = 'spec',      // Traditional .spec.ts format for Playwright test runner
+  MODULE = 'module'   // Export function format for workflow orchestration
+}
+
+/**
  * Generate a Playwright script from test execution data using coordinates
  * @param sessionId The session ID
  * @param actions The recorded actions with timestamps
+ * @param format The output format (spec or module)
+ * @param scriptName Optional name for the exported function (used in module format)
  * @returns Promise with the generated script
  */
 export async function generatePlaywrightCoordinateScript(
   _sessionId: string,
-  actions: any[]
+  actions: any[],
+  format: ScriptFormat = ScriptFormat.MODULE,
+  scriptName?: string
 ): Promise<string> {
   try {
     if (actions.length === 0) {
@@ -43,8 +55,126 @@ export async function generatePlaywrightCoordinateScript(
       throw new Error('Failed to initialize model');
     }
 
-    // Create a system prompt for the LLM
-    const systemPrompt = `You are an expert Playwright test automation engineer. Generate a complete, production-ready Playwright test script in TypeScript that replays browser interactions using ONLY mouse coordinates and keyboard input.
+    // Create system prompt based on format
+    const modulePrompt = `You are an expert Playwright test automation engineer. Generate a reusable TypeScript module that exports an async function for browser automation using ONLY mouse coordinates and keyboard input.
+
+CRITICAL OUTPUT REQUIREMENTS:
+- Output ONLY valid TypeScript code - NO markdown fences, NO explanations, NO commentary outside code comments
+- Export an async function that takes a Page object as parameter
+- Return a result object with success status and message
+- All actions must use coordinates exclusively - NEVER use selectors, locators, or DOM queries
+
+REQUIRED STRUCTURE:
+
+import { Page } from 'playwright';
+
+export interface ScriptResult {
+  success: boolean;
+  message: string;
+}
+
+export async function ${scriptName || 'executeScript'}(page: Page): Promise<ScriptResult> {
+  try {
+    // Set viewport for consistency
+    await page.setViewportSize({ width: 1280, height: 720 });
+
+    // Your steps here with console.log for each step
+    console.log('Step 1: Description...');
+    // [T=timestamp] Action description
+
+    return {
+      success: true,
+      message: 'Script completed successfully'
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: \`Script failed - \${error}\`
+    };
+  }
+}
+
+
+NAVIGATION:
+- Use: await page.goto(url, { timeout: 60000 });
+- Add wait after navigation: await page.waitForTimeout(2000);
+
+TIMING STRATEGY (critical for reliability):
+Analyze timestamp deltas between actions from the 'timestamp' field:
+- Delta < 200ms → await page.waitForTimeout(200);
+- Delta 200-1000ms → await page.waitForTimeout(Math.round(delta));
+- Delta 1000-5000ms → await page.waitForTimeout(Math.min(delta, 3000));
+- Delta > 5000ms → await page.waitForTimeout(2000);
+- After navigation → await page.waitForTimeout(2000);
+- After click that opens/closes elements → await page.waitForTimeout(500);
+
+MOUSE ACTIONS:
+- Click: await page.mouse.click(x, y);
+- Double-click: await page.mouse.dblclick(x, y);
+- Right-click: await page.mouse.click(x, y, { button: 'right' });
+- Hover: await page.mouse.move(x, y);
+
+KEYBOARD ACTIONS:
+- Type text: await page.keyboard.type('text', { delay: 50 });
+- Special keys: await page.keyboard.press('Enter' | 'Tab' | 'Escape' | 'Backspace');
+- Newline in text: await page.keyboard.press('Enter');
+
+ERROR HANDLING & LOGGING:
+- Add console.log() before major actions: console.log('Step N: Clicking login button...');
+- Include timestamp references in comments: // [T=1759222754.022] Navigate to homepage
+- Use descriptive step numbers for tracking progress
+
+CODE ORGANIZATION:
+- Group actions into logical steps based on description field
+- Add brief comments derived from description: // Close promotional popup
+- Use async/await consistently
+
+STRICT RULES:
+1. NEVER use: page.locator(), page.getByRole(), page.getByText(), CSS selectors, XPath
+2. NEVER use: waitForSelector, waitForLoadState, waitUntil options
+3. ALWAYS use coordinates from the data
+4. NEVER invent actions not in the provided data
+5. NEVER add assertions unless specifically verifying test success at the end
+6. Output ONLY the code - no explanations
+
+EXAMPLE:
+
+import { Page } from 'playwright';
+
+export interface ScriptResult {
+  success: boolean;
+  message: string;
+}
+
+export async function ${scriptName || 'executeScript'}(page: Page): Promise<ScriptResult> {
+  try {
+    await page.setViewportSize({ width: 1280, height: 720 });
+
+    console.log('Step 1: Navigating to website...');
+    // [T=1759222754.022] Navigate to homepage
+    await page.goto('https://example.com', { timeout: 60000 });
+    await page.waitForTimeout(2000);
+
+    console.log('Step 2: Closing popup...');
+    // [T=1759222756.500] Close promotional popup
+    await page.mouse.click(1089, 45);
+    await page.waitForTimeout(500);
+
+    return {
+      success: true,
+      message: 'Script completed successfully'
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: \`Script failed - \${error}\`
+    };
+  }
+}
+
+Generate the complete module now.`;
+
+    const specPrompt = `You are an expert Playwright test automation engineer. Generate a complete, production-ready Playwright test script in TypeScript that replays browser interactions using ONLY mouse coordinates and keyboard input.
 
 CRITICAL OUTPUT REQUIREMENTS:
 - Output ONLY valid TypeScript code - NO markdown fences, NO explanations, NO commentary outside code comments
@@ -69,7 +199,7 @@ NAVIGATION:
 - Add wait after navigation: await page.waitForTimeout(2000);
 
 TIMING STRATEGY (critical for reliability):
-Analyze timestamp deltas between actions:
+Analyze timestamp deltas between actions from the 'timestamp' field:
 - Delta < 200ms → await page.waitForTimeout(200);
 - Delta 200-1000ms → await page.waitForTimeout(Math.round(delta));
 - Delta 1000-5000ms → await page.waitForTimeout(Math.min(delta, 3000));
@@ -113,23 +243,26 @@ import { test, expect } from '@playwright/test';
 test.describe('Website Interaction Test', () => {
   test('should complete user flow', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
-    
+
     await test.step('Navigate to website', async () => {
+      // [T=1759222754.022] Navigate to homepage
       await page.goto('https://example.com', { timeout: 60000 });
       await page.waitForTimeout(2000);
     });
-    
+
     await test.step('Close popup', async () => {
+      // [T=1759222756.500] Close promotional popup
       await page.mouse.click(1089, 45);
       await page.waitForTimeout(500);
     });
-    
+
     // More steps...
   });
 });
 
-
 Generate the complete test script now.`;
+
+    const systemPrompt = format === ScriptFormat.MODULE ? modulePrompt : specPrompt;
 
 
 
@@ -167,11 +300,15 @@ Generate the complete test script now.`;
  * Generate a Playwright script from test execution data using selectors/locators
  * @param sessionId The session ID
  * @param actions The recorded actions with timestamps
+ * @param format The output format (spec or module)
+ * @param scriptName Optional name for the exported function (used in module format)
  * @returns Promise with the generated script
  */
 export async function generatePlaywrightSelectorScript(
   _sessionId: string,
-  actions: any[]
+  actions: any[],
+  format: ScriptFormat = ScriptFormat.MODULE,
+  scriptName?: string
 ): Promise<string> {
   try {
     if (actions.length === 0) {
@@ -196,28 +333,53 @@ export async function generatePlaywrightSelectorScript(
       throw new Error('Failed to initialize model');
     }
 
-    // Create a system prompt for the LLM
-    const systemPrompt = `You are an expert Playwright test automation engineer. Generate a complete, production-ready Playwright test script in TypeScript using ONLY Playwright locators and selectors. NEVER use coordinates.
+    // Create system prompt based on format
+    const selectorModulePrompt = `You are an expert Playwright test automation engineer. Generate a reusable TypeScript module that exports an async function for browser automation using Playwright locators and selectors. NEVER use coordinates.
 
 CRITICAL OUTPUT REQUIREMENTS:
 - Output ONLY valid TypeScript code - NO markdown fences, NO explanations, NO commentary outside code comments
-- Use Playwright Test framework: import { test, expect } from '@playwright/test';
-- Structure: test.describe() with test() blocks and test.step() for organization
+- Export an async function that takes a Page object as parameter
+- Return a result object with success status and message
 - All interactions must use Playwright's modern locator APIs
 
-BROWSER SETUP (required):
+REQUIRED STRUCTURE:
 
-test.describe('Test Suite Name', () => {
-  test('test description', async ({ page }) => {
-    // Your test steps here
-  });
-});
+import { Page } from 'playwright';
+
+export interface ScriptResult {
+  success: boolean;
+  message: string;
+}
+
+export async function ${scriptName || 'executeScript'}(page: Page): Promise<ScriptResult> {
+  try {
+    // Your steps here with console.log for each step
+    console.log('Step 1: Description...');
+    // [T=timestamp] Action description
+
+    return {
+      success: true,
+      message: 'Script completed successfully'
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: \`Script failed - \${error}\`
+    };
+  }
+}
 
 
 NAVIGATION:
 - Use: await page.goto(url, { timeout: 60000 });
 - Playwright auto-waits for most actions - minimal explicit waits needed
 - Use await page.waitForTimeout() only when absolutely necessary (e.g., after navigation or for dynamic content)
+
+TIMING STRATEGY (use when necessary):
+Analyze timestamp deltas between actions from the 'timestamp' field for guidance:
+- After navigation → await page.waitForTimeout(2000);
+- After click that triggers dynamic content → await page.waitForTimeout(500);
+- Playwright's auto-wait handles most cases, but add waits for animations/transitions
 
 LOCATOR STRATEGY (priority order, use first applicable):
 1. **getByRole** - button, link, textbox, checkbox, radio (use role + name)
@@ -243,70 +405,126 @@ Product link: { attributes: { "href": "/products/item-1" } }
 
 Checkout button: { attributes: { "data-testid": "checkout" } }
 → page.getByTestId('checkout')
-If strict mode violations occur:
+
+ACTIONS:
+- Click: await locator.click();
+- Fill: await locator.fill('text');
+- Press key: await locator.press('Enter');
+- Check: await locator.check();
+- Select: await locator.selectOption('value');
+
+HANDLING STRICT MODE VIOLATIONS:
+If multiple elements match:
 - Add .first() with comment: // Multiple instances, using first visible
 - Use .filter({ hasText: /specific/i }): locator.filter({ hasText: /cart/i })
 - Scope to parent: page.locator('#parent-id').getByRole(...)
 - Use nth(): locator.nth(0) only if order is deterministic
 
-LOCATOR SELECTION (analyze element.attributes and choose the first match):
+ERROR HANDLING & LOGGING:
+- Add console.log() before major actions: console.log('Step N: Clicking login button...');
+- Include timestamp references in comments: // [T=1759222754.022] Navigate to homepage
+- Use descriptive step numbers for tracking progress
 
-**Data Attributes** (highest priority - most specific):
-- data-testid → page.getByTestId('value')
-- data-test → page.locator('[data-test="value"]')
-- data-gtm-tag → page.locator('[data-gtm-tag="value"]')
-- Any other data-* → page.locator('[data-*="value"]')
-
-**Semantic Attributes**:
-- placeholder → page.getByPlaceholder(/text/i)
-- aria-label on button/link/input → page.getByRole(role, { name: /text/i })
-
-**Content & Role**:
-- button with text → page.getByRole('button', { name: /text/i })
-- link with text → page.getByRole('link', { name: /text/i })
-- visible text → page.getByText(/text/i)
-
-**Stable Attributes**:
-- href → page.locator('[href="value"]')
-- type → page.locator('[type="value"]') or appropriate getByRole
-
-**Last Resort**:
-- Stable class names → page.locator('.class-name')
-
-**Key Rules**:
-- Scan element.attributes top to bottom - use the first applicable attribute
-- data-test and data-testid are different attributes requiring different methods
-- Always use case-insensitive regex for text: /text/i
-- Never invent attributes not present in the element data
-
-ACTIONS:
-- Click: await locator.click();
-- Fill input: await locator.fill('text');
-- Type with delay: await locator.pressSequentially('text', { delay: 50 });
-- Press key: await locator.press('Enter');
-- Hover: await locator.hover();
-
-WAITING & TIMING:
-- Playwright auto-waits - no explicit waits unless:
-  - After navigation: await page.waitForTimeout(2000);
-  - Dynamic content: await page.waitForTimeout(500); (sparingly)
-  - Specific element: await locator.waitFor({ state: 'visible' });
-
-ERROR HANDLING:
-- Use test.step() for logical sections
-- Add descriptive console.log() statements
-- Optional assertions to verify success:
-  await expect(page).toHaveURL(/expected-path/);
-  await expect(locator).toBeVisible();
+CODE ORGANIZATION:
+- Group actions into logical steps based on description field
+- Add brief comments derived from description: // Close promotional popup
+- Use async/await consistently
 
 STRICT RULES:
 1. NEVER use coordinates or page.mouse
-2. NEVER use page.waitForSelector, waitForLoadState, or waitUntil options
-3. ALWAYS use case-insensitive regex for text matching: /text/i
-4. ALWAYS handle strict mode violations explicitly
-5. NEVER invent selectors - derive from provided element data
-6. PREFER getByRole over CSS selectors
-7. Output ONLY the test code - no explanations
+2. ALWAYS use case-insensitive regex: /text/i
+3. NEVER invent selectors - derive from element data
+4. NEVER add assertions unless specifically verifying test success at the end
+5. Output ONLY the code - no explanations
+6. Use descriptive console.log() for each step
+
+CRITICAL: Analyze the element data carefully to build the most specific, reliable locator possible. Avoid brittle selectors.
+
+Generate the complete module now.`;
+
+    const selectorSpecPrompt = `You are an expert Playwright test automation engineer. Generate a complete, production-ready Playwright test script in TypeScript using ONLY Playwright locators and selectors. NEVER use coordinates.
+
+CRITICAL OUTPUT REQUIREMENTS:
+- Output ONLY valid TypeScript code - NO markdown fences, NO explanations, NO commentary outside code comments
+- Use Playwright Test framework: import { test, expect } from '@playwright/test';
+- Structure: test.describe() with test() blocks and test.step() for organization
+- All interactions must use Playwright's modern locator APIs
+
+BROWSER SETUP (required):
+
+test.describe('Test Suite Name', () => {
+  test('test description', async ({ page }) => {
+    // Your test steps here
+  });
+});
+
+
+NAVIGATION:
+- Use: await page.goto(url, { timeout: 60000 });
+- Playwright auto-waits for most actions - minimal explicit waits needed
+- Use await page.waitForTimeout() only when absolutely necessary (e.g., after navigation or for dynamic content)
+
+TIMING STRATEGY (use when necessary):
+Analyze timestamp deltas between actions from the 'timestamp' field for guidance:
+- After navigation → await page.waitForTimeout(2000);
+- After click that triggers dynamic content → await page.waitForTimeout(500);
+- Playwright's auto-wait handles most cases, but add waits for animations/transitions
+
+LOCATOR STRATEGY (priority order, use first applicable):
+1. **getByRole** - button, link, textbox, checkbox, radio (use role + name)
+2. **getByPlaceholder** - inputs with placeholder text
+3. **getByText** - visible text content
+4. **getByLabel** - form inputs with associated labels
+5. **getByTestId** - ONLY for data-testid attribute
+6. **locator('[attribute]')** - data-test, data-gtm-tag, href, type, stable classes
+
+ELEMENT ANALYSIS EXAMPLES:
+
+Login button: { attributes: { "data-test": "login-button" } }
+→ page.locator('[data-test="login-button"]')
+
+Username input: { attributes: { "placeholder": "Username" } }
+→ page.getByPlaceholder(/username/i)
+
+Add to cart: { tagName: "button", textContent: "Add to Cart" }
+→ page.getByRole('button', { name: /add to cart/i })
+
+Product link: { attributes: { "href": "/products/item-1" } }
+→ page.locator('[href="/products/item-1"]')
+
+Checkout button: { attributes: { "data-testid": "checkout" } }
+→ page.getByTestId('checkout')
+
+ACTIONS:
+- Click: await locator.click();
+- Fill: await locator.fill('text');
+- Press key: await locator.press('Enter');
+- Check: await locator.check();
+- Select: await locator.selectOption('value');
+
+HANDLING STRICT MODE VIOLATIONS:
+If multiple elements match:
+- Add .first() with comment: // Multiple instances, using first visible
+- Use .filter({ hasText: /specific/i }): locator.filter({ hasText: /cart/i })
+- Scope to parent: page.locator('#parent-id').getByRole(...)
+- Use nth(): locator.nth(0) only if order is deterministic
+
+ERROR HANDLING & LOGGING:
+- Wrap critical sections in test.step() with descriptive names
+- Add console.log() before major actions: console.log('Navigating to website...');
+
+CODE ORGANIZATION:
+- Group actions into logical test.step() blocks based on description field
+- Add brief comments derived from description: // Close promotional popup
+- Use async/await consistently
+- Include timestamp references in comments: // [T=1759222754.022] Navigate to homepage
+
+STRICT RULES:
+1. NEVER use coordinates or page.mouse
+2. ALWAYS use case-insensitive regex: /text/i
+3. NEVER invent selectors - derive from element data
+4. NEVER add assertions unless specifically verifying test success at the end
+5. Output ONLY the test code - no explanations
 
 EXAMPLE STRUCTURE:
 
@@ -314,39 +532,37 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Website Interaction Test', () => {
   test('should complete user flow', async ({ page }) => {
-    
     await test.step('Navigate to website', async () => {
       await page.goto('https://example.com', { timeout: 60000 });
       await page.waitForTimeout(2000);
     });
-    
+
     await test.step('Search for product', async () => {
-      const searchButton = page.getByRole('button', { name: /search/i });
-      await searchButton.click();
-      
+      // [T=1759222756.500] Enter search term
       const searchInput = page.getByPlaceholder(/search/i);
-      await searchInput.fill('product name');
+      await searchInput.fill('laptop');
       await searchInput.press('Enter');
       await page.waitForTimeout(1000);
     });
-    
+
     await test.step('Select and add product to cart', async () => {
       const productLink = page.locator('[href="/products/product-name"]').first();
       await productLink.click();
-      
+
       const addToCartBtn = page.locator('[data-gtm-tag*="add-to-cart"]');
       await addToCartBtn.click();
-      
+
       // Verify
       await expect(page.getByText(/cart.*1 item/i)).toBeVisible();
     });
   });
 });
 
-
 CRITICAL: Analyze the element data carefully to build the most specific, reliable locator possible. Avoid brittle selectors.
 
 Generate the complete test script now.`;
+
+    const systemPrompt = format === ScriptFormat.MODULE ? selectorModulePrompt : selectorSpecPrompt;
 
     // Create a prompt with the actions
     const userPrompt = `
@@ -485,12 +701,16 @@ node_modules/
  * @param sessionId The session ID
  * @param script The generated script content
  * @param type The type of script (coordinate or selector)
+ * @param format The script format (spec or module)
+ * @param scriptName Optional custom name for the script file
  * @returns The path to the saved script file
  */
 export function savePlaywrightScript(
   sessionId: string,
   script: string,
-  type: ScriptType = ScriptType.COORDINATE
+  type: ScriptType = ScriptType.COORDINATE,
+  format: ScriptFormat = ScriptFormat.MODULE,
+  scriptName?: string
 ): string {
   try {
     // Create the playwright/scripts directory within the session directory
@@ -502,20 +722,29 @@ export function savePlaywrightScript(
       fs.mkdirSync(scriptsDir, { recursive: true });
     }
 
-    // Initialize Playwright project structure
-    initializePlaywrightProject(scriptsDir);
+    // Initialize Playwright project structure (only for spec format)
+    if (format === ScriptFormat.SPEC) {
+      initializePlaywrightProject(scriptsDir);
+    }
 
-    // Tests directory
-    const testsDir = path.join(scriptsDir, 'tests');
+    // Determine output directory based on format
+    const outputDir = format === ScriptFormat.SPEC
+      ? path.join(scriptsDir, 'tests')
+      : scriptsDir;
 
-    // Generate a timestamp for the filename
+    // Ensure output directory exists
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    // Generate filename based on format
     const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\./g, '-');
-
-    // Create the script filename based on type (using .spec.ts convention)
-    const filename = `playwright-${type}-script-${timestamp}.spec.ts`;
+    const baseName = scriptName || `playwright-${type}-script-${timestamp}`;
+    const extension = format === ScriptFormat.SPEC ? '.spec.ts' : '.ts';
+    const filename = `${baseName}${extension}`;
 
     // Full path to the script file
-    const scriptPath = path.join(testsDir, filename);
+    const scriptPath = path.join(outputDir, filename);
 
     // Write the script to the file
     fs.writeFileSync(scriptPath, script);

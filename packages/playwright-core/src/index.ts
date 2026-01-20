@@ -23,3 +23,5 @@ export {
   setCursorVisibility,
   getElementAtCoordinates
 } from "./actions/interact";
+
+export type { Page } from "playwright";

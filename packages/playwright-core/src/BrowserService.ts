@@ -9,6 +9,8 @@ export class BrowserService {
   private readonly contexts: Map<string, BrowserContext> = new Map();
   // Replace single page map with an array of pages per session
   private readonly pageStacks: Map<string, Page[]> = new Map();
+  // Track sessions with externally injected pages
+  private readonly externalSessions: Set<string> = new Set();
 
   private constructor() { }
 
@@ -17,6 +19,50 @@ export class BrowserService {
       BrowserService.instance = new BrowserService();
     }
     return BrowserService.instance;
+  }
+
+  /**
+   * Inject an external page for a session (for workflow orchestration)
+   * This allows continuing test execution from an existing browser state
+   * @param sessionId The session identifier
+   * @param page The existing Playwright Page to use
+   * @param context Optional BrowserContext (will be extracted from page if not provided)
+   */
+  async setExternalPage(sessionId: string, page: Page, context?: BrowserContext): Promise<void> {
+    // Mark this session as external (won't be closed by closeAll unless explicitly requested)
+    this.externalSessions.add(sessionId);
+
+    // Set the page stack for this session
+    this.pageStacks.set(sessionId, [page]);
+
+    // Set the context if provided, or get it from the page
+    if (context) {
+      this.contexts.set(sessionId, context);
+    } else {
+      // Get context from page
+      const pageContext = page.context();
+      this.contexts.set(sessionId, pageContext);
+    }
+
+    // Set up tab tracking for this context
+    this.setupTabTracking(sessionId, this.contexts.get(sessionId)!);
+  }
+
+  /**
+   * Check if a session is using an external (injected) page
+   * @param sessionId The session identifier
+   * @returns true if the session was created with an external page
+   */
+  isExternalSession(sessionId: string): boolean {
+    return this.externalSessions.has(sessionId);
+  }
+
+  /**
+   * Clear external session marker (call before closing if you want to close external sessions)
+   * @param sessionId The session identifier
+   */
+  clearExternalSession(sessionId: string): void {
+    this.externalSessions.delete(sessionId);
   }
 
   private async initBrowser(): Promise<void> {
@@ -162,7 +208,7 @@ export class BrowserService {
         type: "jpeg",
         quality: 90,
         fullPage: false,
-        timeout: 5000,
+        timeout: 50000,
       });
       return buffer.toString("base64");
     } catch (error) {
@@ -404,6 +450,15 @@ export class BrowserService {
   }
 
   async closePage(sessionId: string): Promise<void> {
+    // For external sessions, just clear the references without closing
+    // The external caller is responsible for managing the browser lifecycle
+    if (this.externalSessions.has(sessionId)) {
+      this.pageStacks.delete(sessionId);
+      this.contexts.delete(sessionId);
+      this.externalSessions.delete(sessionId);
+      return;
+    }
+
     const pageStack = this.pageStacks.get(sessionId) || [];
 
     // Close all pages in the stack

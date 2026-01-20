@@ -110,6 +110,11 @@ export const State = Annotation.Root({
     default: () => false,
     reducer: (_, v) => v,
   }),
+  // Script format: 'spec' for traditional .spec.ts files, 'module' for reusable function exports
+  scriptFormat: Annotation<'spec' | 'module'>({
+    default: () => 'spec',
+    reducer: (_, v) => v,
+  }),
 });
 
 export type GraphStateType = (typeof State)["State"];
